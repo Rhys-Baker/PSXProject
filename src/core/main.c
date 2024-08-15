@@ -1,5 +1,5 @@
 /*
- * ps1-bare-metal - (C) 2023 spicyjpeg
+ * (C) 2024 Rhys Baker, spicyjpeg
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -12,124 +12,331 @@
  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- *
- *
- * In this tutorial we're going to initialize the GPU, set it up and display
- * some simple hardware-rendered graphics (namely, a shaded triangle).
- *
- * While the PS1's GPU may appear complicated and daunting, its principle of
- * operation is in actual fact very simple. At a high level it is simply a
- * "rasterization machine" capable of drawing triangles, quads, rectangles and
- * lines in 2D space (with 3D transformations being entirely the CPU's
- * responsibility) and of displaying a rectangular cutout of its 1024x512x16bpp
- * framebuffer, which resides in dedicated memory (VRAM). It is controlled using
- * only two registers, one (GP0) for drawing commands and the other (GP1) for
- * display control and other commands; we're going to see how to configure the
- * video output and draw our triangle by writing the right commands to these
- * registers.
- *
- * This tutorial will use the ps1/gpucmd.h header file I wrote, which contains
- * enumerations and inline functions for all commands supported by the GPU. If
- * you wish to write such a header yourself, you'll want to check out the
- * GPU register and command documentation at:
- *     https://psx-spx.consoledev.net/graphicsprocessingunitgpu
  */
 
+/*
+ * I would like to thank spicyjpeg for the ps1-bare-metal tutorial series I 
+ * relied upon heavily as well as for their continued support throughout this project. 
+ * The tutorial series and source code can be found at: https://github.com/spicyjpeg/ps1-bare-metal
+ *
+ * I would also like to extend my gratitude to the lovely people in the PSX.Dev Discord server. 
+ * Without them, this project would have taken MUCH longer.
+ * The PSX.Dev Discord server can be found at: https://discord.com/invite/psx-dev-642647820683444236
+ */
+
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
-#include "ps1/gpucmd.h"
-#include "ps1/registers.h"
 
-static void setupGPU(GP1VideoMode mode, int width, int height) {
-	// Set the origin of the displayed framebuffer. These "magic" values,
-	// derived from the GPU's internal clocks, will center the picture on most
-	// displays and upscalers.
-	int x = 0x760;
-	int y = (mode == GP1_MODE_PAL) ? 0xa3 : 0x88;
+#include "camera.h"
+#include "controller.h"
+#include "font.h"
+#include "gpu.h"
+#include "gte.h"
+#include "trig.h"
+#include "cop0gte.h"
+#include "gpucmd.h"
+#include "registers.h"
 
-	// Set the resolution. The GPU provides a number of fixed horizontal (256,
-	// 320, 368, 512, 640) and vertical (240-256, 480-512) resolutions to pick
-	// from, which affect how fast pixels are output and thus how "stretched"
-	// the framebuffer will appear.
-	GP1HorizontalRes horizontalRes = GP1_HRES_320;
-	GP1VerticalRes   verticalRes   = GP1_VRES_256;
+#include "RoomModel.h"
 
-	// Set the number of displayed rows and columns. These values are in GPU
-	// clock units rather than pixels, thus they are dependent on the selected
-	// resolution.
-	int offsetX = (width  * gp1_clockMultiplierH(horizontalRes)) / 2;
-	int offsetY = (height / gp1_clockDividerV(verticalRes))      / 2;
+#define SCREEN_WIDTH     320
+#define SCREEN_HEIGHT    256
+#define FONT_WIDTH       96
+#define FONT_HEIGHT      56
 
-	// Hand all parameters over to the GPU by sending GP1 commands.
-	GPU_GP1 = gp1_resetGPU();
-	GPU_GP1 = gp1_fbRangeH(x - offsetX, x + offsetX);
-	GPU_GP1 = gp1_fbRangeV(y - offsetY, y + offsetY);
-	GPU_GP1 = gp1_fbMode(
-		horizontalRes, verticalRes, mode, false, GP1_COLOR_16BPP
-	);
+// 6 select colours for rendering polys in "coloured" mode
+uint32_t colors[6] = {
+   0x0000FF,
+   0x00FF00,
+   0xFF0000,
+   0x00FFFF,
+   0xFF00FF,
+   0xFFFF00
+};
+
+
+void loadVerts(GTEVector32 *vertList, int *vertListLength, GTEVector32 *objectVerts, int objectVertsLength){
+   for(int i = 0; i<objectVertsLength; i++){
+      vertList[*vertListLength + i] = objectVerts[i];
+   }
+   vertListLength += objectVertsLength;
+}
+void loadTris(Tri_Textured *triList, int *triListLength, Tri_Textured *objectTris, int objectTrisLength){
+   for(int i = 0; i<objectTrisLength; i++){
+      triList[*triListLength + i] = objectTris[i];
+   }
+   triListLength += objectTrisLength;
 }
 
-static void waitForGP0Ready(void) {
-	// Block until the GPU reports to be ready to accept commands through its
-	// status register (which has the same address as GP1 but is read-only).
-	while (!(GPU_GP1 & GP1_STAT_CMD_READY))
-		__asm__ volatile("");
-}
 
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+int main(){
+   initControllerBus();
 
-int main(int argc, const char **argv) {
-	// Initialize the serial interface. The initSerialIO() function is defined
-	// in src/libc/misc.c and does basically the same things we did in the
-	// previous example. Afterwards, we'll be able to use puts(), printf() and
-	// a few other standard I/O functions as they are declared in the libc
-	// directory (with printf() being provided by a third-party library).
-	initSerialIO(115200);
+   // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
+   if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
+      setupGPU(GP1_MODE_PAL, SCREEN_WIDTH, SCREEN_HEIGHT);
+   } else {
+      setupGPU(GP1_MODE_NTSC, SCREEN_WIDTH, SCREEN_HEIGHT);
+   }
+   // Set up the Geometry Transformation Engine with the width and height of our screen
+   setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-	// Read the GPU's status register to check if it was left in PAL or NTSC
-	// mode by the BIOS/loader.
-	if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL) {
-		puts("Using PAL mode");
-		setupGPU(GP1_MODE_PAL, SCREEN_WIDTH, SCREEN_HEIGHT);
-	} else {
-		puts("Using NTSC mode");
-		setupGPU(GP1_MODE_NTSC, SCREEN_WIDTH, SCREEN_HEIGHT);
-	}
+   // Enable the GPU's DMA channel
+   DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_GPU * 4);
+   DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_OTC * 4);
 
-	// Wait for the GPU to become ready, then send some GP0 commands to tell it
-	// which area of the framebuffer we want to draw to and enable dithering.
-	waitForGP0Ready();
-	GPU_GP0 = gp0_texpage(0, true, false);
-	GPU_GP0 = gp0_fbOffset1(0, 0);
-	GPU_GP0 = gp0_fbOffset2(SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
-	GPU_GP0 = gp0_fbOrigin(0, 0);
+   GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
+   GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
 
-	// Send a VRAM fill command to quickly fill our area with solid gray. Note
-	// that the coordinates passed to this specific command are *not* relative
-	// to the ones we've just sent to the GPU!
-	waitForGP0Ready();
-	GPU_GP0 = gp0_rgb(64, 64, 64) | gp0_vramFill();
-	GPU_GP0 = gp0_xy(0, 0);
-	GPU_GP0 = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
+   DMAChain dmaChains[2];
+   bool usingSecondFrame = false;
 
-	// Tell the GPU to draw a Gouraud shaded triangle whose vertices are red,
-	// green and blue respectively at the center of our drawing area.
-	waitForGP0Ready();
-	GPU_GP0 = gp0_rgb(255, 0, 0) | gp0_shadedTriangle(true, false, false);
-	GPU_GP0 = gp0_xy(SCREEN_WIDTH / 2, 32);
-	GPU_GP0 = gp0_rgb(0, 255, 0);
-	GPU_GP0 = gp0_xy(32, SCREEN_HEIGHT - 32);
-	GPU_GP0 = gp0_rgb(0, 0, 255);
-	GPU_GP0 = gp0_xy(SCREEN_WIDTH - 32, SCREEN_HEIGHT - 32);
+   
+   // Include texture data files
+   extern const uint8_t fontData[];
+   extern const uint8_t fontPalette[];
+   extern const uint8_t reference_64Data[];
+   extern const uint8_t reference_64Palette[];
 
-	// Send two GP1 commands to set the origin of the area we want to display
-	// and switch on the display output.
-	GPU_GP1 = gp1_fbOffset(0, 0);
-	GPU_GP1 = gp1_dispBlank(false);
+   // Load the font and wall textures into VRAM
+   TextureInfo font;
+   uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
+      fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP
+   );
+   TextureInfo reference_64;
+   uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, 0, 64, 64,
+   reference_64Palette,SCREEN_WIDTH, 64, GP0_COLOR_4BPP);
 
-	// Continue by doing nothing.
-	for (;;)
-		__asm__ volatile("");
+   // Used to see if the button is being held down still.
+   bool trianglePressed = false;
+   bool squarePressed = false;
+   // We only want to update these values once per press, not per frame.
+   bool showingHelp = true;
+   bool renderTextured = false;
+   
+   // Create and initialise the camera.
+   Camera camera;
+   camera.x = 0;
+   camera.y = -1000;
+   camera.z = 0;
+   camera.yaw   = 0;
+   camera.roll  = 0;
+   camera.pitch = 0;
 
-	return 0;
+   // controllerInfo will contain which buttons are pressed, etc.
+   ControllerInfo controllerInfo;
+   
+   // Somewhere to store the Sine and Cosine of the camera's yaw value.
+   // This saves us from recalculating it multiple times per frame.
+   int16_t yawSin;
+   int16_t yawCos;
+   
+   // Will hold the z value of each point on a triangle.
+   // It's used later to see if any part of the triangle is visible.
+   int z0, z1, z2;
+
+   // Keep track of how many polygons are being drawn.
+   int polyCount;
+   
+   // the X and Y of the buffer we are currently using.
+   int bufferX = 0;
+   int bufferY = 0;
+
+   // The pointer to the DMA packet.
+   // We allocate space for each packet before we use it.
+   uint32_t *ptr;
+
+   for(;;){
+      // Point to the relevant DMA chain for this frame, then swap the active frame.
+      DMAChain *chain = &dmaChains[usingSecondFrame];
+      usingSecondFrame = !usingSecondFrame;
+
+      // Reset the ordering table to a blank state.
+      clearOrderingTable((chain->orderingTable), ORDERING_TABLE_SIZE);
+      chain->nextPacket = chain->data;
+      
+      // Set the Identity Matrix.
+      // Anything mutliplied by this matrix remains unchanged.
+      // Its like setting the camera's rotation to its initial state.
+      gte_setRotationMatrix(
+         ONE,   0,   0,
+         0, ONE,   0,
+         0,   0, ONE
+      );
+      // Now we update the rotation matrix by multiplying the roll, yaw, and pitch appropriately.
+      rotateCurrentMatrix(-camera.roll, camera.yaw, camera.pitch);
+
+      // Update the translation matrix to move the camera in 3d space.
+      updateTranslationMatrix(-camera.x, -camera.y, -camera.z);
+
+      // Reset the polygon counter to 0
+      polyCount = 0;
+
+      // Iterate over every face in the model specified in RoomModel.h
+      for(uint16_t i = 0; i<roomModel.faceCount; i++){
+         
+         const Tri_Textured *tri = &roomModel.faces[i];
+         
+         // Load the 3 verts into their respective V register.
+         gte_loadV0(&roomModel.verts[tri->vertices[0]]);
+         gte_loadV1(&roomModel.verts[tri->vertices[1]]);
+         gte_loadV2(&roomModel.verts[tri->vertices[2]]);
+         // Perform a perspective transformation on the 3 verts, then perform "Normal Clipping."
+         gte_command(GTE_CMD_RTPT | GTE_SF);
+         gte_command(GTE_CMD_NCLIP);
+         // If the face is facing away from us, don't bother rendering it.
+         if(gte_getMAC0() <= 0){
+            continue;
+         }
+
+         // Calculate the average Z value of all 3 verts.
+         gte_command(GTE_CMD_AVSZ3 | GTE_SF);
+         int zIndex = gte_getOTZ();
+         
+         // If it is too far from the camera, clip it.
+         if((zIndex >= ORDERING_TABLE_SIZE)){
+            continue;
+         }
+         
+         // If the average value is behind the camera,
+         // Check if any of the corners are in view of the camera.
+         // If not, skip it.
+         if((zIndex <= 0)){
+            //__asm__ volatile(
+            //   "\tmfc2 %0, $16\n"
+            //   "\tmfc2 %1, $17\n"
+            //   "\tmfc2 %2, $18\n"
+            //   : "=r"(z0), "=r"(z1), "=r"(z2)
+            //);
+            //if(z0 + z1 + z2 == 0){
+               continue;
+            //}
+         }
+
+         
+         if(renderTextured){
+            // Calculate the texture UV coords for the verts in this face.
+            uint32_t uv0 = gp0_uv(reference_64.u + roomModel.faces[i].UVs[0].u, reference_64.v + roomModel.faces[i].UVs[0].v, reference_64.clut);
+            uint32_t uv1 = gp0_uv(reference_64.u + roomModel.faces[i].UVs[1].u, reference_64.v + roomModel.faces[i].UVs[1].v, reference_64.page);
+            uint32_t uv2 = gp0_uv(reference_64.u + roomModel.faces[i].UVs[2].u, reference_64.v + roomModel.faces[i].UVs[2].v, 0);
+
+            // Render a triangle at the XY coords calculated via the GTE with the texture UVs calculated above
+            ptr = allocatePacket(chain, zIndex, 7);
+            ptr[0] = 0x808080 | gp0_shadedTriangle(false, true, false);
+            ptr[1] = gte_getSXY0();
+            ptr[2] = uv0;
+            ptr[3] = gte_getSXY1();
+            ptr[4] = uv1;
+            ptr[5] = gte_getSXY2();
+            ptr[6] = uv2;
+         } else {
+            // Render a triangle at the XY coords calculated via the GTE with a flat colour selected using the poly's index.
+            ptr = allocatePacket(chain, zIndex, 4);
+            ptr[0] = colors[i%6] | gp0_shadedTriangle(false, false, false);
+            ptr[1] = gte_getSXY0();
+            ptr[2] = gte_getSXY1();
+            ptr[3] = gte_getSXY2();
+         }
+         // Increment the polygon counter as we rendered another polygon
+         polyCount++;
+
+      }
+
+      // Print the help/debug menu
+      if(showingHelp){
+         char textBuffer[1024]= "\t\tControls\n======================\nL: \t \tMove\nR: \t \tLook\nL2/R2: \tDown/Up\nTriangle:\tToggle this menu\nSquare:\tToggle Textures/Colours\n";
+         sprintf(textBuffer, "%s\nX:%i\nY:%i\nZ:%i\n\np: %d/%d", textBuffer, (int32_t)(camera.x), (int32_t)(camera.y), (int32_t)(camera.z), polyCount, CHAIN_BUFFER_SIZE/8);
+         printString(chain, &font, 0, 0, textBuffer);
+      }
+
+      // Place the framebuffer offset and screen clearing commands last.
+      // This means they will be executed first and be at the back of the screen.
+      ptr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);
+      ptr[0] = gp0_rgb(64, 64, 64) | gp0_vramFill();
+      ptr[1] = gp0_xy(bufferX, bufferY);
+      ptr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+      ptr = allocatePacket(chain, ORDERING_TABLE_SIZE - 1, 4);
+      ptr[0] = gp0_texpage(0, true, false);
+      ptr[1] = gp0_fbOffset1(bufferX, bufferY);
+      ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
+      ptr[3] = gp0_fbOrigin(bufferX, bufferY);
+
+
+      // Check if there is a controller connected to port 0 (Port 1 on the console) and read it's info.
+      if(getControllerInfo(0, &controllerInfo)){
+
+         // Store the Sine and Cosine values for the camera's yaw as we use it multiple times
+         yawSin = isin(camera.yaw);
+         yawCos = icos(camera.yaw);
+         
+         // Up/Down
+         if(controllerInfo.buttons & BUTTON_MASK_L2) camera.y += 16;
+         if(controllerInfo.buttons & BUTTON_MASK_R2) camera.y -= 16;
+
+         // If the controller type is Dualshock, read the analogue stick values to move and look around
+         if(controllerInfo.type == 0x07){
+            if(controllerInfo.lx>156 || controllerInfo.lx < 100){\
+               camera.x += (((((controllerInfo.lx-127)) * yawCos)>>6) * MOVEMENT_SPEED)>>12;
+               camera.z -= (((((controllerInfo.lx-127)) * -yawSin)>>6) * MOVEMENT_SPEED)>>12;
+            }
+            if(controllerInfo.ly>156 || controllerInfo.ly < 100){
+               camera.x+=(((((controllerInfo.ly-127)) * yawSin)>>6) * MOVEMENT_SPEED)>>12;
+               camera.z-=(((((controllerInfo.ly-127)) * yawCos)>>6) * MOVEMENT_SPEED)>>12;
+            }
+            if(controllerInfo.rx>156 || controllerInfo.rx < 100){
+               camera.yaw -= (((controllerInfo.rx-127)>>6) * CAMERA_SENSITIVITY);
+            }
+            // Update camera pitch
+            if(controllerInfo.ry>156 || controllerInfo.ry<100){
+               camera.pitch += (((controllerInfo.ry-127)>>6) * CAMERA_SENSITIVITY);
+
+               // Lock camera pitch to 90 degrees up or down
+               if((int16_t)camera.pitch > 1024){
+                  camera.pitch = 1024;
+               }
+               if((int16_t)camera.pitch < -1024){
+                  camera.pitch = -1024;
+               }
+            }
+         }
+
+         // Toggle help menu only if the button isn't still being held.
+         // This prevents the menu from toggling every single frame.
+         if(controllerInfo.buttons & BUTTON_MASK_TRIANGLE){
+            if(!trianglePressed){
+               trianglePressed = true;
+               showingHelp = !showingHelp;
+            }
+         }else{
+            trianglePressed = false;
+         }
+
+         // Similar code for toggling the render type
+         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
+            if(!squarePressed){
+               squarePressed = true;
+               renderTextured = !renderTextured;
+            }
+         }else{
+            squarePressed = false;
+         }
+      }
+
+      // Wait for the GPU to finish drawing and also wait for Vsync.
+      waitForGP0Ready();
+      waitForVSync();
+
+      // Swap the frame buffers.
+      bufferY = usingSecondFrame ? SCREEN_HEIGHT : 0;
+      GPU_GP1 = gp1_fbOffset(bufferX, bufferY); 
+
+      // Give DMA a pointer to the last item in the ordering table.
+      // We don't need to add a terminator, as it is already done for us by the OTC.
+      sendLinkedList(&(chain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
+   }
+
+   // Stops intellisense from yelling at me.
+   return 0; // 100% totally necessary.
 }
