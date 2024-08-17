@@ -109,5 +109,7 @@ SECTIONS {
 
 	/DISCARD/ : {
 		*(.gnu.lto_*)
+		*(.MIPS.abiflags)
+		*(.note.*)
 	}
 }
