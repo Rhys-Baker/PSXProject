@@ -66,7 +66,7 @@ S_FILES_16BPP := $(DAT_FILES_16BPP:.dat=.s)
 S_FILES := $(S_FILES_4BPP) $(S_FILES_8BPP) $(S_FILES_16BPP)
 
 # Rules for all .dat and .s files
-all: convertImages build
+all: convertImages build buildCD
 
 convertImages: $(DAT_FILES) $(S_FILES)
 
@@ -155,10 +155,15 @@ $(BUILD_DIR)/%.s.obj: %.s
 # Include dependency files
 -include $(COBJS:.obj=.obj.d) $(AOBJS:.obj=.obj.d) $(SOBJS:.obj=.obj.d)
 
+buildCD:
+	cp build/$(TARGET_PSEXE) CDROM
+	mkpsxiso -y CDROM/mkpsxiso.xml
+
 
 # Clean rule to remove generated files
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -f CDROM/$(TARGET_PSEXE)
 
 .PHONY: all clean convertImages build
 
