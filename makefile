@@ -157,13 +157,16 @@ $(BUILD_DIR)/%.s.obj: %.s
 
 buildCD:
 	cp build/$(TARGET_PSEXE) CDROM
+	mv CDROM/$(TARGET_PSEXE) CDROM/GAME.EXE
 	mkpsxiso -y CDROM/mkpsxiso.xml
-
+	mv GAME.bin CDROM/GAME.bin
+	mv GAME.cue CDROM/GAME.cue
 
 # Clean rule to remove generated files
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f CDROM/$(TARGET_PSEXE)
+	rm -f CDROM/GAME.cue CDROM/GAME.bin CDROM/GAME.EXE
 
 .PHONY: all clean convertImages build
 
