@@ -66,29 +66,55 @@ void init(void){
       fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
 }
 
+uint8_t isoHeader[2048];
+
+char secondTextBuffer[2048];
+
+void hexdump(const uint8_t *ptr, size_t length) {
+    while (length) {
+        size_t lineLength = (length < 16) ? length : 16;
+        length -= lineLength;
+
+        for (; lineLength; lineLength--)
+            printf(" %02x", *(ptr++));
+
+        putchar('\n');
+    }
+}
 
 int main(void){   
-
    // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
    __atomic_signal_fence(__ATOMIC_ACQUIRE);
 
    // Initialise important things for later
    init();
 
-   // Play track 2 on the CD
-   if(cdromInterruptReady){
-      uint8_t args[2];
-      args[0] = (0b00000001);
-      issueCDROMCommand(0x0E, args, 1);
-      while(!cdromInterruptReady){
-         // wait
-      }
-      args[0] = 2;
-      issueCDROMCommand(0x03, args, 1);
-      while(!cdromInterruptReady){
-         // wait
-      }
-   }
+   printf("\n\n==== PROGRAM START ====\n\n");
+
+   startCDROMRead(
+      16,
+      isoHeader,
+      sizeof(isoHeader) / 2048,
+      2048,
+      true
+   );
+
+   hexdump(isoHeader, 2048);
+
+   //for(int i=0; i<2048; i++){
+   //   // Newline every 80 characters
+   //   if(!(i % 80)){
+   //      printf("\n");
+   //   }
+   //   if(isoHeader[i] <= 32 || isoHeader[i] > 0x80){
+   //      printf(".");
+   //   } else {
+   //      printf("%c", isoHeader[i]);
+   //   }
+   //}
+   //printf("\n");
+
+   sprintf(textBuffer, secondTextBuffer);
 
    // Main loop. Runs every frame, forever
    for(;;){
@@ -99,28 +125,9 @@ int main(void){
       // Reset the ordering table to a blank state.
       clearOrderingTable((chain->orderingTable), ORDERING_TABLE_SIZE);
       chain->nextPacket = chain->data;
-      
-      if(cdromInterruptReady){
-         issueCDROMCommand(CDROM_NOP, NULL, 0); // Send "Status" request
-      }
 
-      sprintf(textBuffer, "Last known status:\n", textBuffer);
-      sprintf(textBuffer, "%sSpindle Motor:\t%s\n", textBuffer, (cdromStatus & (1<<1))? "On"   : "Off");
-      sprintf(textBuffer, "%sCD Shell Lid:\t%s\n", textBuffer, (cdromStatus & (1<<4))? "Open" : "Closed");
+      printString(chain, &font, 50, 10, textBuffer);
       
-      if(cdromStatus & (1<<7)){
-         sprintf(textBuffer, "%s\nPlay\n", textBuffer);
-      }
-      if(cdromStatus & (1<<6)){
-         sprintf(textBuffer, "%s\nSeek...\n", textBuffer);
-      }
-      if(cdromStatus & (1<<5)){
-         sprintf(textBuffer, "%s\nRead\n", textBuffer);
-      }
-      
-      printString(chain, &font, 0, 0, textBuffer);
-
-
       // Place the framebuffer offset and screen clearing commands last.
       // This means they will be executed first and be at the back of the screen.
       ptr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);

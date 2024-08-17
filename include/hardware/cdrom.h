@@ -3,8 +3,6 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-extern bool cdromInterruptReady;
-
 extern void  *cdromReadDataPtr;
 extern size_t cdromReadDataSectorSize;
 extern size_t cdromReadDataNumSectors;
@@ -81,6 +79,8 @@ typedef struct {
 
 #define toBCD(i) (((i) / 10 * 16) | ((i) % 10))
 #define CDROM_COMMAND_ADDRESS 0x1F801801
+
+#define CDROM_BUSY (CDROM_HSTS & CDROM_HSTS_BUSYSTS)
 
 
 void initCDROM(void);

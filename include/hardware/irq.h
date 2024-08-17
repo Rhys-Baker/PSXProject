@@ -8,5 +8,3 @@ void initIRQ();
 void interruptHandlerFunction(void *arg);
 
 void handleCDROMIRQ(void);
-
-

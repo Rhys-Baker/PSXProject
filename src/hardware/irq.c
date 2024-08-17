@@ -16,6 +16,10 @@ void initIRQ(){
    enableInterrupts();
 }
 
+void handleVSyncIRQ(void){
+   vblank = true;
+}
+
 void interruptHandlerFunction(void *arg) {
    if(acknowledgeInterrupt(IRQ_VSYNC)){
       handleVSyncIRQ();
@@ -25,9 +29,6 @@ void interruptHandlerFunction(void *arg) {
    }
 }
 
-void handleVSyncIRQ(void){
-   vblank = true;
-}
 
 void handleCDROMIRQ(void) {
     CDROM_ADDRESS = 1;
@@ -74,4 +75,3 @@ void handleCDROMIRQ(void) {
             break;
     }
 }
-

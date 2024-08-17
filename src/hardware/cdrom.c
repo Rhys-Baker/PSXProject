@@ -3,7 +3,7 @@
 #include "registers.h"
 #include "system.h"
 
-bool cdromInterruptReady = false;
+bool waitingForInt3;
 
 void  *cdromReadDataPtr;
 size_t cdromReadDataSectorSize;
@@ -12,6 +12,8 @@ size_t cdromReadDataNumSectors;
 uint8_t cdromResponse[16];
 uint8_t cdromRespLength;
 uint8_t cdromStatus;
+
+#define toBCD(i) (((i) / 10 * 16) | ((i) % 10))
 
 void initCDROM(void) {
     BIU_DEV5_CTRL = 0x00020943; // Configure bus
@@ -38,27 +40,57 @@ void initCDROM(void) {
     CDROM_ATV2 = 128; // Send right audio channel to SPU right channel
     CDROM_ATV3 = 0;
     CDROM_ADPCTL = CDROM_ADPCTL_CHNGATV;
-
-    cdromInterruptReady = true;
 }
 
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
-    cdromInterruptReady = false;
-    while (CDROM_HSTS & CDROM_HSTS_BUSYSTS)
-        __asm__ volatile("");
+    waitingForInt3 = true;
+    int returnValueLength;
 
+	switch(cmd){
+		// Interrupt 3 in response but it isn't just the stat
+		case CDROM_GETPARAM:
+			returnValueLength = 5;
+			break;
+		case CDROM_GETLOCL:
+			returnValueLength = 8;
+			break;
+		case CDROM_GETLOCP:
+			returnValueLength = 8;
+			break;
+		case CDROM_GETTN:
+			returnValueLength = 3;
+			break;
+		case CDROM_GETTD:
+			returnValueLength = 3;
+			break;
+        // Most commands expect an interrupt 3 to only return the status.
+		default:
+			returnValueLength = 1;
+            break;
+	}
+
+    while (CDROM_BUSY)
+        __asm__ volatile("");
+    
     CDROM_ADDRESS = 1;
     CDROM_HCLRCTL = CDROM_HCLRCTL_CLRPRM; // Clear parameter buffer
     delayMicroseconds(3);
 
-    while (CDROM_HSTS & CDROM_HSTS_BUSYSTS)
+    while (CDROM_BUSY)
         __asm__ volatile("");
 
     CDROM_ADDRESS = 0;
     for (; argLength > 0; argLength--)
         CDROM_PARAMETER = *(arg++);
-
+    
     CDROM_COMMAND = cmd;
+    
+}
+
+void waitForINT3(){
+    while(waitingForInt3){
+        __asm__ volatile("");
+    }
 }
 
 void convertLBAToMSF(MSF *msf, uint32_t lba) {
@@ -68,6 +100,31 @@ void convertLBAToMSF(MSF *msf, uint32_t lba) {
     msf->second = toBCD((lba / 75) % 60);
     msf->frame  = toBCD(lba % 75);
 }
+
+void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed) {
+    cdromReadDataPtr        = ptr;
+    cdromReadDataNumSectors = numSectors;
+    cdromReadDataSectorSize = sectorSize;
+
+    uint8_t mode = 0;
+    MSF     msf;
+
+    if (sectorSize == 2340)
+        mode |= MODE_SECTOR_SIZE_2340;
+    if (doubleSpeed)
+        mode |= MODE_2X_SPEED;
+
+    convertLBAToMSF(&msf, lba);
+
+    issueCDROMCommand(CDROM_SETMODE, &mode, sizeof(mode));
+    waitForINT3();
+    issueCDROMCommand(CDROM_SETLOC, &msf, sizeof(msf));
+    waitForINT3();
+    issueCDROMCommand(CDROM_READN, NULL, 0);
+    waitForINT3();
+}
+
+
 
 void cdromINT1(void){
     // Do something to handle this interrupt.
@@ -89,7 +146,7 @@ void cdromINT2(void){
 void cdromINT3(void){
     // Do something to handle this interrupt.
     cdromStatus = cdromResponse[0];
-    cdromInterruptReady=true;
+    waitingForInt3 = false;
     return;
 }
 void cdromINT4(void){

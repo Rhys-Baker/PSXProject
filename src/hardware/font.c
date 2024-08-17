@@ -122,7 +122,7 @@ void printString(
 	int currentX = x, currentY = y;
 
 	uint32_t *ptr;
-
+	
 	// Iterate over every character in the string.
 	for (; *str; str++) {
 		char ch = *str;
@@ -168,6 +168,11 @@ void printString(
 
 		// Move onto the next character.
 		currentX += sprite->width;
+		
+		if(currentX > 300){
+			currentX = x;
+			currentY += FONT_LINE_HEIGHT;
+		}
 	}
 
 	// Start by sending a texpage command to tell the GPU to use the font's
