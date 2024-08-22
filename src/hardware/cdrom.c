@@ -3,6 +3,7 @@
 #include "registers.h"
 #include "system.h"
 
+bool waitingForInt1;
 bool waitingForInt3;
 
 void  *cdromReadDataPtr;
@@ -43,6 +44,7 @@ void initCDROM(void) {
 }
 
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
+    waitingForInt1 = true;
     waitingForInt3 = true;
     int returnValueLength;
 
@@ -85,6 +87,12 @@ void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     
     CDROM_COMMAND = cmd;
     
+}
+
+void waitForINT1(){
+    while(waitingForInt1){
+        __asm__ volatile("");
+    }
 }
 
 void waitForINT3(){
@@ -137,6 +145,7 @@ void cdromINT1(void){
     );
     if (!(--cdromReadDataNumSectors))
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+    waitingForInt1 = false;
     return;
 }
 void cdromINT2(void){

@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "cdrom.h"
+#include "controller.h"
 #include "font.h"
 #include "gpu.h"
 #include "irq.h"
@@ -29,9 +30,6 @@ uint32_t *ptr;
 DMAChain dmaChains[2];
 bool usingSecondFrame = false;
 
-char textBuffer[1024];
-
-
 void waitForVblank(){
    while(!vblank){
       // Do nothing
@@ -46,6 +44,7 @@ void init(void){
    initSPU();
    initCDROM();
    initIRQ();
+   initControllerBus();
 
    // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
    if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
@@ -68,8 +67,6 @@ void init(void){
 
 uint8_t isoHeader[2048];
 
-char secondTextBuffer[2048];
-
 void hexdump(const uint8_t *ptr, size_t length) {
     while (length) {
         size_t lineLength = (length < 16) ? length : 16;
@@ -81,6 +78,40 @@ void hexdump(const uint8_t *ptr, size_t length) {
         putchar('\n');
     }
 }
+void shexdump(char* string, const uint8_t *ptr, size_t length) {
+    while (length) {
+        size_t lineLength = (length < 16) ? length : 16;
+        length -= lineLength;
+
+        for (; lineLength; lineLength--)
+            sprintf(string, " %02x", *(ptr++));
+
+        sprintf(string,'\n');
+    }
+}
+
+ControllerInfo controllerInfo;
+bool squarePressed = false;
+bool r1Pressed     = false;
+bool l1Pressed     = false;
+bool upPressed     = false;
+bool downPressed   = false;
+
+int ReadSector = 16;
+int DisplayingPage = 0;
+char* UIBuffer[32];
+char* DataBuffer[2048];
+char* LoadingString = "Loading...";
+
+void formatDataOutput(char* string){
+   for(int i = 0; i<256; i++){
+      if(!(i%40)){
+         sprintf(DataBuffer, "%s\n", DataBuffer);
+      }
+      sprintf(DataBuffer, "%s%c", DataBuffer, string[i + (256 * DisplayingPage)]);
+   }
+}
+
 
 int main(void){   
    // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
@@ -90,31 +121,6 @@ int main(void){
    init();
 
    printf("\n\n==== PROGRAM START ====\n\n");
-
-   startCDROMRead(
-      16,
-      isoHeader,
-      sizeof(isoHeader) / 2048,
-      2048,
-      true
-   );
-
-   hexdump(isoHeader, 2048);
-
-   //for(int i=0; i<2048; i++){
-   //   // Newline every 80 characters
-   //   if(!(i % 80)){
-   //      printf("\n");
-   //   }
-   //   if(isoHeader[i] <= 32 || isoHeader[i] > 0x80){
-   //      printf(".");
-   //   } else {
-   //      printf("%c", isoHeader[i]);
-   //   }
-   //}
-   //printf("\n");
-
-   sprintf(textBuffer, secondTextBuffer);
 
    // Main loop. Runs every frame, forever
    for(;;){
@@ -126,7 +132,11 @@ int main(void){
       clearOrderingTable((chain->orderingTable), ORDERING_TABLE_SIZE);
       chain->nextPacket = chain->data;
 
-      printString(chain, &font, 50, 10, textBuffer);
+
+      sprintf(UIBuffer, "Read Sector: \t%d \tPage: %d/8", ReadSector, DisplayingPage+1);
+
+      printString(chain, &font, 10, 10, UIBuffer);
+      printString(chain, &font, 10, 20, DataBuffer);
       
       // Place the framebuffer offset and screen clearing commands last.
       // This means they will be executed first and be at the back of the screen.
@@ -141,6 +151,73 @@ int main(void){
       ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
       ptr[3] = gp0_fbOrigin(bufferX, bufferY);
       
+      
+      getControllerInfo(0, &controllerInfo);
+      // Square
+      if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
+         if(!squarePressed){
+            printf("\n\n==== READ CDROM DATA ====\n\n");
+            printString(chain, &font, 200, 10, LoadingString);
+            issueCDROMCommand(CDROM_NOP, NULL, 0);            
+            waitForINT3();
+            startCDROMRead(
+               ReadSector,
+               isoHeader,
+               sizeof(isoHeader) / 2048,
+               2048,
+               true
+            );
+            waitForINT1();
+            hexdump(isoHeader, 2048);
+            sprintf(DataBuffer, "");
+            formatDataOutput(isoHeader);
+            squarePressed = true;
+         }
+      } else {
+         squarePressed = false;
+      }
+
+      // R1
+      if(controllerInfo.buttons & BUTTON_MASK_R1){
+         if(!r1Pressed){
+            if(DisplayingPage++ >= 7) DisplayingPage = 0;
+            r1Pressed = true;
+         }
+      } else {
+         r1Pressed = false;
+      }
+
+      // L1
+      if(controllerInfo.buttons & BUTTON_MASK_L1){
+         if(!l1Pressed){
+            if(DisplayingPage-- <= 0) DisplayingPage = 7;
+            l1Pressed = true;
+         }
+      } else {
+         l1Pressed = false;
+      }
+
+      // Up
+      if(controllerInfo.buttons & BUTTON_MASK_UP){
+         if(!upPressed){
+            // Max number of sectors
+            if(ReadSector++ >= 214349) ReadSector = 0;
+            upPressed = true;
+         }
+      } else {
+         upPressed = false;
+      }
+
+      // Down
+      if(controllerInfo.buttons & BUTTON_MASK_DOWN){
+         if(!downPressed){
+            if(ReadSector-- <= 0) ReadSector = 214349;
+            downPressed = true;
+         }
+      } else {
+         downPressed = false;
+      }
+
       waitForGP0Ready();
       waitForVblank();
 
