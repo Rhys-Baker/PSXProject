@@ -141,7 +141,7 @@ int main(void){
       // Place the framebuffer offset and screen clearing commands last.
       // This means they will be executed first and be at the back of the screen.
       ptr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);
-      ptr[0] = gp0_rgb(255, 0, 255) | gp0_vramFill();
+      ptr[0] = gp0_rgb(60, 130, 250) | gp0_vramFill();
       ptr[1] = gp0_xy(bufferX, bufferY);
       ptr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
 
