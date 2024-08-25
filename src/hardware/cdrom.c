@@ -46,30 +46,6 @@ void initCDROM(void) {
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     waitingForInt1 = true;
     waitingForInt3 = true;
-    int returnValueLength;
-
-	switch(cmd){
-		// Interrupt 3 in response but it isn't just the stat
-		case CDROM_GETPARAM:
-			returnValueLength = 5;
-			break;
-		case CDROM_GETLOCL:
-			returnValueLength = 8;
-			break;
-		case CDROM_GETLOCP:
-			returnValueLength = 8;
-			break;
-		case CDROM_GETTN:
-			returnValueLength = 3;
-			break;
-		case CDROM_GETTD:
-			returnValueLength = 3;
-			break;
-        // Most commands expect an interrupt 3 to only return the status.
-		default:
-			returnValueLength = 1;
-            break;
-	}
 
     while (CDROM_BUSY)
         __asm__ volatile("");
