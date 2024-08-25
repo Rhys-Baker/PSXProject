@@ -1,3 +1,4 @@
+#include "stdatomic.h"
 #include "cdrom.h"
 
 #include "registers.h"
@@ -108,39 +109,43 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
     waitForINT3();
 }
 
-
-
+// Data is ready to be read from the CDROM via DMA.
+// This will read the data into cdromReadDataPtr.
+// It will also pause the CDROM drive.
 void cdromINT1(void){
-    // Do something to handle this interrupt.
     DMA_MADR(DMA_CDROM) = (uint32_t) cdromReadDataPtr;
     DMA_BCR(DMA_CDROM)  = cdromReadDataSectorSize / 4;
     DMA_CHCR(DMA_CDROM) = DMA_CHCR_ENABLE | DMA_CHCR_TRIGGER;
 
+    atomic_signal_fence(memory_order_acquire);
     cdromReadDataPtr = (void *) (
         (uintptr_t) cdromReadDataPtr + cdromReadDataSectorSize
     );
     if (!(--cdromReadDataNumSectors))
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+    atomic_signal_fence(memory_order_release);
     waitingForInt1 = false;
     return;
 }
+
 void cdromINT2(void){
     // Do something to handle this interrupt.
     return;
 }
+
+// This is usually just reading the status. It may be more than one parameter, however I don't handle that.
 void cdromINT3(void){
-    // Do something to handle this interrupt.
     cdromStatus = cdromResponse[0];
     waitingForInt3 = false;
     return;
 }
+
 void cdromINT4(void){
     // Do something to handle this interrupt.
-    uint8_t args[] = {2};
-    issueCDROMCommand(0x03, args, 1); // Go back to the start
     return;
 }
+
+// This is the "Error" interrupt.
 void cdromINT5(void){
-    // Do something to handle this interrupt.
     return;
 }
