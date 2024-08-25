@@ -54,6 +54,9 @@
 			<!-- For this element, the source attribute can be omitted -->
 			<!-- provided the name attribute is defined. -->
 			<file name="GAME.EXE" type="data"/>
+			<dir name="txtFiles">
+				<file name="MYTEXT.TXT" type="data"/>
+			</dir>
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
 			<!-- end of the disc image. It must be a pretty large one to -->
