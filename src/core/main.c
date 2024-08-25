@@ -156,10 +156,9 @@ int main(void){
       // Square
       if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
          if(!squarePressed){
+            squarePressed = true;
             printf("\n\n==== READ CDROM DATA ====\n\n");
             printString(chain, &font, 200, 10, LoadingString);
-            issueCDROMCommand(CDROM_NOP, NULL, 0);            
-            waitForINT3();
             startCDROMRead(
                ReadSector,
                isoHeader,
@@ -171,7 +170,6 @@ int main(void){
             hexdump(isoHeader, 2048);
             sprintf(DataBuffer, "");
             formatDataOutput(isoHeader);
-            squarePressed = true;
          }
       } else {
          squarePressed = false;
