@@ -78,17 +78,6 @@ void hexdump(const uint8_t *ptr, size_t length) {
         putchar('\n');
     }
 }
-void shexdump(char* string, const uint8_t *ptr, size_t length) {
-    while (length) {
-        size_t lineLength = (length < 16) ? length : 16;
-        length -= lineLength;
-
-        for (; lineLength; lineLength--)
-            sprintf(string, " %02x", *(ptr++));
-
-        sprintf(string,'\n');
-    }
-}
 
 ControllerInfo controllerInfo;
 bool squarePressed = false;
