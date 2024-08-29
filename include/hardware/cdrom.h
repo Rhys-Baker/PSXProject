@@ -87,6 +87,7 @@ void initCDROM(void);
 
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength);
 
+void waitForINT1();
 void waitForINT3();
 
 void convertLBAToMSF(MSF *msf, uint32_t lba);
@@ -100,3 +101,6 @@ void cdromINT2(void);
 void cdromINT3(void);
 void cdromINT4(void);
 void cdromINT5(void);
+
+
+int parsePVD(char* pvdSector, uint32_t *pathTableSize, uint16_t *pathTableLBA);

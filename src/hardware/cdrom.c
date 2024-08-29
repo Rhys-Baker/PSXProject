@@ -1,5 +1,9 @@
+#include <stdio.h>
+
 #include "stdatomic.h"
 #include "cdrom.h"
+
+#include "string.h"
 
 #include "registers.h"
 #include "system.h"
@@ -149,3 +153,43 @@ void cdromINT4(void){
 void cdromINT5(void){
     return;
 }
+
+// Returns 0 if the pvd is sucessfully parsed.
+// Returns error code otherwise.
+int parsePVD(char* pvdSector, uint32_t *pathTableSize, uint16_t *pathTableLBA){
+    // Read through the sector and find the relevant numbers, etc
+
+    // If the first byte is 1, its the PVD
+    int typeCode = pvdSector[0];
+    if(typeCode != 1){
+        return 1; // Invalid Type code
+    }
+
+    // The next 5 bytes should be "CD001"
+    if (memcmp(&pvdSector[1], "CD001", 5) != 0) {
+        return 2;
+    }
+
+    // Check that the version is version 1
+    if(pvdSector[6] != 1){
+        return 3; // Invalid Version
+    }
+
+    // 132 Path Table Size
+    uint32_t _pathTableSize = 0;
+    _pathTableSize=  (uint32_t)pvdSector[132]       |
+                    ((uint32_t)pvdSector[133] << 8) |
+                    ((uint32_t)pvdSector[134] << 16)|
+                    ((uint32_t)pvdSector[135] << 32);
+    *pathTableSize = _pathTableSize;
+
+    // 140 Path Table location
+    uint16_t _pathTable;
+    _pathTable = (uint32_t)pvdSector[140]      |
+                ((uint32_t)pvdSector[141] << 8);
+    
+    *pathTableLBA = _pathTable;
+
+    return 0;    
+}
+

@@ -66,6 +66,7 @@ void init(void){
 }
 
 uint8_t isoHeader[2048];
+uint8_t pvdData[2048];
 
 void hexdump(const uint8_t *ptr, size_t length) {
     while (length) {
@@ -81,6 +82,7 @@ void hexdump(const uint8_t *ptr, size_t length) {
 
 ControllerInfo controllerInfo;
 bool squarePressed = false;
+bool circlePressed = false;
 bool r1Pressed     = false;
 bool l1Pressed     = false;
 bool upPressed     = false;
@@ -163,12 +165,40 @@ int main(void){
       } else {
          squarePressed = false;
       }
+      
+      // Circle
+      if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
+         if(!circlePressed){
+            circlePressed = true;
+            printf("\n\n==== READ PVD DATA ====\n\n");
+            printString(chain, &font, 200, 10, LoadingString);
+            startCDROMRead(
+               16,
+               pvdData,
+               sizeof(pvdData) / 2048,
+               2048,
+               true
+            );
+            waitForINT1();
+            hexdump(pvdData, 2048);
+            uint32_t pathTableSize;
+            uint16_t pathTableLBA;
+            int result = parsePVD(pvdData, &pathTableSize, &pathTableLBA);
+            printf("\n\nPVD Parse Result:\t%d\n", result);
+            printf("Path Table Size:\t%d\n", pathTableSize);
+            printf("Path Table LBA:\t%d\n", pathTableLBA);
+         }
+      } else {
+         circlePressed = false;
+      }
 
       // R1
       if(controllerInfo.buttons & BUTTON_MASK_R1){
          if(!r1Pressed){
-            if(DisplayingPage++ >= 7) DisplayingPage = 0;
             r1Pressed = true;
+            if(DisplayingPage++ >= 7) DisplayingPage = 0;
+            sprintf(DataBuffer, "");
+            formatDataOutput(isoHeader);
          }
       } else {
          r1Pressed = false;
@@ -177,8 +207,10 @@ int main(void){
       // L1
       if(controllerInfo.buttons & BUTTON_MASK_L1){
          if(!l1Pressed){
-            if(DisplayingPage-- <= 0) DisplayingPage = 7;
             l1Pressed = true;
+            if(DisplayingPage-- <= 0) DisplayingPage = 7;
+            sprintf(DataBuffer, "");
+            formatDataOutput(isoHeader);
          }
       } else {
          l1Pressed = false;
