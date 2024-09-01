@@ -182,3 +182,50 @@ void printString(
 	ptr    = allocatePacket(chain, 0, 1);
 	ptr[0] = gp0_texpage(font->page, false, false);
 }
+
+void printDataString(
+	DMAChain *chain, const TextureInfo *font, int x, int y, const char *str
+) {
+	int currentX = x, currentY = y;
+
+	uint32_t *ptr;
+	
+	// Iterate over every character in the string.
+	for (; *str; str++) {
+		char ch = *str;
+
+		if(ch < FONT_FIRST_TABLE_CHAR || ch > FONT_FIRST_TABLE_CHAR + 94){
+			ch = '\x7f';
+		}
+
+
+		// If the character was not a tab, newline or space, fetch its
+		// respective entry from the sprite coordinate table.
+		const SpriteInfo *sprite = &fontSprites[ch - FONT_FIRST_TABLE_CHAR];
+
+		// Draw the character, summing the UV coordinates of the spritesheet in
+		// VRAM to those of the sprite itself within the sheet. Enable blending
+		// to make sure any semitransparent pixels in the font get rendered
+		// correctly.
+		ptr    = allocatePacket(chain, 0, 4);
+		ptr[0] = gp0_rectangle(true, true, true);
+		ptr[1] = gp0_xy(currentX, currentY);
+		ptr[2] = gp0_uv(font->u + sprite->x, font->v + sprite->y, font->clut);
+		ptr[3] = gp0_xy(sprite->width, sprite->height);
+
+		// Move onto the next character.
+		currentX += sprite->width;
+		
+		if(currentX > 300){
+			currentX = x;
+			currentY += FONT_LINE_HEIGHT;
+		}
+	}
+
+	// Start by sending a texpage command to tell the GPU to use the font's
+	// spritesheet. Note that the texpage command before a drawing command can
+	// be omitted when reusing the same texture, so sending it here just once is
+	// enough.
+	ptr    = allocatePacket(chain, 0, 1);
+	ptr[0] = gp0_texpage(font->page, false, false);
+}
