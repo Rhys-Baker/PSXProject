@@ -1,0 +1,2 @@
+This is the first text file.
+It contains some words.

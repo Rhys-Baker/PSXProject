@@ -1,3 +1,0 @@
-This is a file that contains a bunch of text as a test of my ability to read and understand the ISO9660 file system!
-
-Wish me luck :3

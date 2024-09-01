@@ -54,9 +54,18 @@
 			<!-- For this element, the source attribute can be omitted -->
 			<!-- provided the name attribute is defined. -->
 			<file name="GAME.EXE" type="data"/>
-			<dir name="txtFiles">
-				<file name="MYTEXT.TXT" type="data"/>
-			</dir>
+			
+			<!-- <dir name="ASSETS">
+				<dir name="TEXT">
+					<file name="TEXT1.TXT" type="data" source="TEXT1.TXT"/>
+					<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"/>
+				</dir>
+			</dir> -->
+			<dir name="DIR" />
+			<dir name="DIRECTORY" />
+			<dir name="FOLDER" />
+			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT" />
+			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT" />
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
 			<!-- end of the disc image. It must be a pretty large one to -->
