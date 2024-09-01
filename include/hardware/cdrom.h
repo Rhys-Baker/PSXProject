@@ -101,6 +101,3 @@ void cdromINT2(void);
 void cdromINT3(void);
 void cdromINT4(void);
 void cdromINT5(void);
-
-
-int parsePVD(char* pvdSector, uint32_t *pathTableSize, uint16_t *pathTableLBA);
