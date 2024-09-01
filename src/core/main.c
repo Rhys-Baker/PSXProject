@@ -4,6 +4,7 @@
 
 #include "cdrom.h"
 #include "controller.h"
+#include "filesystem.h"
 #include "font.h"
 #include "gpu.h"
 #include "irq.h"
@@ -95,14 +96,17 @@ char* DataBuffer[2048];
 char* LoadingString = "Loading...";
 
 void formatDataOutput(char* string){
-   for(int i = 0; i<256; i++){
+   for(int i = 0; i<1024; i++){
       if(!(i%40)){
          sprintf(DataBuffer, "%s\n", DataBuffer);
       }
-      sprintf(DataBuffer, "%s%c", DataBuffer, string[i + (256 * DisplayingPage)]);
+      sprintf(DataBuffer, "%s%c", DataBuffer, string[i + (1024 * DisplayingPage)]);
    }
 }
 
+uint8_t rootDirEntry[34];
+uint32_t rootDirLBA;
+uint8_t rootDirData[2048];
 
 int main(void){   
    // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
@@ -124,10 +128,10 @@ int main(void){
       chain->nextPacket = chain->data;
 
 
-      sprintf(UIBuffer, "Read Sector: \t%d \tPage: %d/8", ReadSector, DisplayingPage+1);
+      sprintf(UIBuffer, "Read Sector: \t%d \tPage: %d/4", ReadSector, DisplayingPage+1);
 
       printString(chain, &font, 10, 10, UIBuffer);
-      printString(chain, &font, 10, 20, DataBuffer);
+      printDataString(chain, &font, 10, 20, DataBuffer);
       
       // Place the framebuffer offset and screen clearing commands last.
       // This means they will be executed first and be at the back of the screen.
@@ -170,8 +174,6 @@ int main(void){
       if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
          if(!circlePressed){
             circlePressed = true;
-            printf("\n\n==== READ PVD DATA ====\n\n");
-            printString(chain, &font, 200, 10, LoadingString);
             startCDROMRead(
                16,
                pvdData,
@@ -180,13 +182,33 @@ int main(void){
                true
             );
             waitForINT1();
-            hexdump(pvdData, 2048);
             uint32_t pathTableSize;
             uint16_t pathTableLBA;
-            int result = parsePVD(pvdData, &pathTableSize, &pathTableLBA);
-            printf("\n\nPVD Parse Result:\t%d\n", result);
-            printf("Path Table Size:\t%d\n", pathTableSize);
-            printf("Path Table LBA:\t%d\n", pathTableLBA);
+            int result;           
+            int rootDirSize = getRootDirLBA(pvdData, &rootDirLBA);
+            startCDROMRead(
+               rootDirLBA,
+               rootDirData,
+               sizeof(rootDirData) / 2048,
+               2048,
+               true
+            );
+            waitForINT1();
+            uint8_t  recLen;
+            uint32_t len;
+            uint32_t lba;
+            char *name[255];
+            int offset = 0;
+            
+            printf("\n\n==== Directory Contents ====\n\n");
+            for(int i=0; i<10; i++){
+               result = parseDirRecord(&rootDirData[offset], &name, &recLen, &len, &lba);
+               if(result){
+                  break;
+               }
+               offset += recLen;
+               printf("%d: \"%s\"\n", i, name);
+            }
          }
       } else {
          circlePressed = false;
@@ -196,7 +218,7 @@ int main(void){
       if(controllerInfo.buttons & BUTTON_MASK_R1){
          if(!r1Pressed){
             r1Pressed = true;
-            if(DisplayingPage++ >= 7) DisplayingPage = 0;
+            if(DisplayingPage++ >= 3) DisplayingPage = 0;
             sprintf(DataBuffer, "");
             formatDataOutput(isoHeader);
          }
@@ -208,7 +230,7 @@ int main(void){
       if(controllerInfo.buttons & BUTTON_MASK_L1){
          if(!l1Pressed){
             l1Pressed = true;
-            if(DisplayingPage-- <= 0) DisplayingPage = 7;
+            if(DisplayingPage-- <= 0) DisplayingPage = 3;
             sprintf(DataBuffer, "");
             formatDataOutput(isoHeader);
          }
