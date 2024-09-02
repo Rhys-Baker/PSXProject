@@ -2,3 +2,6 @@ Compiler Command
 build
 .vscode/
 CDROM/comport.txt
+CDROM/GAME.bin
+CDROM/GAME.cue
+CDROM/GAME.EXE
