@@ -11,4 +11,4 @@
 
 uint32_t getRootDirLBA(uint8_t *pvdSector, uint32_t *LBA);
 int parseDirRecord(uint8_t *dataSector, char *name, uint8_t *recordLength, uint32_t *dataLength, uint32_t *LBA);
-
+void getRootDirData(uint8_t *rootDirData);

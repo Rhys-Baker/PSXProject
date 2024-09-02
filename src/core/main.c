@@ -108,6 +108,10 @@ uint8_t rootDirEntry[34];
 uint32_t rootDirLBA;
 uint8_t rootDirData[2048];
 
+
+
+
+
 int main(void){   
    // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
    __atomic_signal_fence(__ATOMIC_ACQUIRE);
@@ -174,32 +178,17 @@ int main(void){
       if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
          if(!circlePressed){
             circlePressed = true;
-            startCDROMRead(
-               16,
-               pvdData,
-               sizeof(pvdData) / 2048,
-               2048,
-               true
-            );
-            waitForINT1();
-            uint32_t pathTableSize;
-            uint16_t pathTableLBA;
-            int result;           
-            int rootDirSize = getRootDirLBA(pvdData, &rootDirLBA);
-            startCDROMRead(
-               rootDirLBA,
-               rootDirData,
-               sizeof(rootDirData) / 2048,
-               2048,
-               true
-            );
-            waitForINT1();
+            
+            getRootDirData(&rootDirData);
+
+            
+
             uint8_t  recLen;
             uint32_t len;
             uint32_t lba;
             char *name[255];
             int offset = 0;
-            
+            int result;
             printf("\n\n==== Directory Contents ====\n\n");
             for(int i=0; i<10; i++){
                result = parseDirRecord(&rootDirData[offset], &name, &recLen, &len, &lba);

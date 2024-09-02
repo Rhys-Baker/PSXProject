@@ -35,3 +35,26 @@ int parseDirRecord(uint8_t *dataSector, char *name, uint8_t *recordLength, uint3
     name[dataSector[32]] = '\0';
     return 0;
 }
+
+// Gets the 2048 bytes that make up the root directory
+void getRootDirData(uint8_t *rootDirData){
+   uint8_t *buffer[2048];
+   uint32_t rootDirLBA;
+   startCDROMRead(
+      16,
+      buffer,
+      sizeof(buffer) / 2048,
+      2048,
+      true
+   );
+   waitForINT1();
+   int rootDirSize = getRootDirLBA(buffer, &rootDirLBA);
+   startCDROMRead(
+      rootDirLBA,
+      rootDirData,
+      sizeof(rootDirData) / 2048,
+      2048,
+      true
+   );
+   waitForINT1();   
+}
