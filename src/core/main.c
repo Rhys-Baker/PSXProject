@@ -182,11 +182,9 @@ int main(void){
             uint32_t lba;
             char *name[255];
             int offset = 0;
-            int result;
             printf("\n\n==== Directory Contents ====\n\n");
             for(int i=0; i<10; i++){
-               result = parseDirRecord(&rootDirData[offset], &name, &recLen, &len, &lba);
-               if(result){
+               if(parseDirRecord(&rootDirData[offset], &name, &recLen, &len, &lba)){
                   break;
                }
                offset += recLen;
