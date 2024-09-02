@@ -40,6 +40,8 @@ int parseDirRecord(uint8_t *dataSector, char *name, uint8_t *recordLength, uint3
 void getRootDirData(uint8_t *rootDirData){
    uint8_t *buffer[2048];
    uint32_t rootDirLBA;
+   
+   // Read the PVD sector into ram
    startCDROMRead(
       16,
       buffer,
@@ -48,7 +50,11 @@ void getRootDirData(uint8_t *rootDirData){
       true
    );
    waitForINT1();
+
+   // Get the LBA for the root directory.
    int rootDirSize = getRootDirLBA(buffer, &rootDirLBA);
+
+   // Read the contents of the root directory.
    startCDROMRead(
       rootDirLBA,
       rootDirData,
@@ -56,5 +62,8 @@ void getRootDirData(uint8_t *rootDirData){
       2048,
       true
    );
-   waitForINT1();   
+   waitForINT1();
+   // Pause the CDROM.
+   issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+   waitForINT3();
 }
