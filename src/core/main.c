@@ -118,7 +118,7 @@ int main(void){
    printf("\n\n==== PROGRAM START ====\n\n");
 
    // Main loop. Runs every frame, forever
-   for(;;){
+    for(;;){
       // Point to the relevant DMA chain for this frame, then swap the active frame.
       DMAChain *chain = &dmaChains[usingSecondFrame];
       usingSecondFrame = !usingSecondFrame;
@@ -170,39 +170,47 @@ int main(void){
          squarePressed = false;
       }
       
-      // Circle
-      if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
-         if(!circlePressed){
-            circlePressed = true;
-            
-            getRootDirData(&rootDirData);
+        // Circle
+        if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
+            if(!circlePressed){
+                circlePressed = true;
+                
+                getRootDirData(&rootDirData);
+                uint8_t directoryListingLength = 0;
+                DirectoryEntry *directoryListing[10];
 
-            uint8_t  recLen;
-            uint32_t len;
-            uint32_t lba;
-            char *name[255];
-            int offset = 0;
-            printf("\n\n==== Directory Contents ====\n\n");
-            for(int i=0; i<10; i++){
-               if(parseDirRecord(&rootDirData[offset], &name, &recLen, &len, &lba)){
-                  break;
-               }
-               offset += recLen;
-               printf("%d: \"%s\"\n", i, name);
+                DirectoryEntry directoryEntry;
+
+                uint8_t  recLen;
+                uint32_t len;
+                uint32_t lba;
+                char *name[255];
+                int offset = 0;
+                printf("\n\n==== Directory Contents ====\n\n");
+                for(int i=0; i<10; i++){
+                    if(parseDirRecord(
+                        &rootDirData[offset],
+                        &recLen,
+                        directoryListing[i]
+                    )){
+                       break;
+                    }
+                    offset += recLen;
+                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
+                }
             }
-         }
       } else {
          circlePressed = false;
       }
 
       // R1
-      if(controllerInfo.buttons & BUTTON_MASK_R1){
-         if(!r1Pressed){
-            r1Pressed = true;
-            if(DisplayingPage++ >= 3) DisplayingPage = 0;
-            sprintf(DataBuffer, "");
-            formatDataOutput(isoHeader);
-         }
+        if(controllerInfo.buttons & BUTTON_MASK_R1){
+            if(!r1Pressed){
+                r1Pressed = true;
+                if(DisplayingPage++ >= 3) DisplayingPage = 0;
+                sprintf(DataBuffer, "");
+                formatDataOutput(isoHeader);
+            }
       } else {
          r1Pressed = false;
       }
