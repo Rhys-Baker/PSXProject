@@ -1,5 +1,6 @@
 #include "irq.h"
 
+#include <stdio.h>
 #include <stddef.h>
 
 #include "cdrom.h"

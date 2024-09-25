@@ -69,17 +69,17 @@ void init(void){
 uint8_t isoHeader[2048];
 uint8_t pvdData[2048];
 
-void hexdump(const uint8_t *ptr, size_t length) {
-    while (length) {
-        size_t lineLength = (length < 16) ? length : 16;
-        length -= lineLength;
-
-        for (; lineLength; lineLength--)
-            printf(" %02x", *(ptr++));
-
-        putchar('\n');
-    }
-}
+//void hexdump(const uint8_t *ptr, size_t length) {
+//    while (length) {
+//        size_t lineLength = (length < 16) ? length : 16;
+//        length -= lineLength;
+//
+//        for (; lineLength; lineLength--)
+//            printf(" %02x", *(ptr++));
+//
+//        putchar('\n');
+//    }
+//}
 
 ControllerInfo controllerInfo;
 bool squarePressed = false;
@@ -115,7 +115,7 @@ int main(void){
    // Initialise important things for later
    init();
 
-   printf("\n\n==== PROGRAM START ====\n\n");
+   //printf("\n\n==== PROGRAM START ====\n\n");
 
    // Main loop. Runs every frame, forever
     for(;;){
@@ -152,7 +152,7 @@ int main(void){
       if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
          if(!squarePressed){
             squarePressed = true;
-            printf("\n\n==== READ CDROM DATA ====\n\n");
+            //printf("\n\n==== READ CDROM DATA ====\n\n");
             printString(chain, &font, 200, 10, LoadingString);
             startCDROMRead(
                ReadSector,
@@ -162,7 +162,7 @@ int main(void){
                true
             );
             waitForINT1();
-            hexdump(isoHeader, 2048);
+            //hexdump(isoHeader, 2048);
             sprintf(DataBuffer, "");
             formatDataOutput(isoHeader);
          }
@@ -186,7 +186,7 @@ int main(void){
                 uint32_t lba;
                 char *name[255];
                 int offset = 0;
-                printf("\n\n==== Directory Contents ====\n\n");
+                //printf("\n\n==== Directory Contents ====\n\n");
                 for(int i=0; i<10; i++){
                     if(parseDirRecord(
                         &rootDirData[offset],
@@ -196,7 +196,7 @@ int main(void){
                        break;
                     }
                     offset += recLen;
-                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
+                    //printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
                 }
             }
       } else {

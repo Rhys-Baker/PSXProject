@@ -10,6 +10,7 @@
 
 bool waitingForInt1;
 bool waitingForInt3;
+bool waitingForInt5;
 
 void  *cdromReadDataPtr;
 size_t cdromReadDataSectorSize;
@@ -51,6 +52,7 @@ void initCDROM(void) {
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     waitingForInt1 = true;
     waitingForInt3 = true;
+    waitingForInt5 = true;
 
     while (CDROM_BUSY)
         __asm__ volatile("");
@@ -58,7 +60,6 @@ void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     CDROM_ADDRESS = 1;
     CDROM_HCLRCTL = CDROM_HCLRCTL_CLRPRM; // Clear parameter buffer
     delayMicroseconds(3);
-
     while (CDROM_BUSY)
         __asm__ volatile("");
 
@@ -67,17 +68,16 @@ void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
         CDROM_PARAMETER = *(arg++);
     
     CDROM_COMMAND = cmd;
-    
 }
 
 void waitForINT1(){
-    while(waitingForInt1){
+    while(waitingForInt1 && waitingForInt5){
         __asm__ volatile("");
     }
 }
 
 void waitForINT3(){
-    while(waitingForInt3){
+     while(waitingForInt3 && waitingForInt5){
         __asm__ volatile("");
     }
 }
@@ -151,6 +151,7 @@ void cdromINT4(void){
 
 // This is the "Error" interrupt.
 void cdromINT5(void){
+    waitingForInt5 = false;
     return;
 }
 
