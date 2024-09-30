@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include "registers.h"
@@ -101,6 +102,8 @@ typedef struct Sound {
     uint16_t sampleRate, length;
 } Sound;
 
+void sound_create(Sound *sound);
+
 bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset);
 Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel ch);
 
@@ -122,7 +125,7 @@ typedef struct Stream{
 inline uint32_t stream_getChunkOffset(Stream *stream, size_t chunk) {
     return stream->offset + stream_getChunkLnegth(stream) * chunk;
 }
-void stream_configureIRQ(Stream stream);
+void stream_configureIRQ(Stream *stream);
 
 // Destructor here if needed
 
@@ -148,7 +151,7 @@ inline size_t stream_getChunkLength(Stream *stream) {
     return stream->numChunks - (stream->_bufferedChunks + playingChunk);
 }
 
-Stream *stream_create(void);
+void stream_create(Stream *stream);
 bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks);
 ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask);
 void stream_stop(Stream *stream);

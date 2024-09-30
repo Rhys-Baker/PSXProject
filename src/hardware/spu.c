@@ -196,13 +196,10 @@ size_t download(uint32_t offset, void * data, size_t length, bool wait){
 }
 
 /* Sound Class */
-Sound *sound_create(void){
-    Sound sound = {
-        .offset     = 0,
-        .sampleRate = 0,
-        .length     = 0
-    };
-    return &sound;
+void sound_create(Sound *sound){
+    sound->offset     = 0;
+    sound->sampleRate = 0;
+    sound->length     = 0;
 }
 
 bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset){
@@ -293,21 +290,18 @@ void stream_configureIRQ(Stream *stream){
     }
 }
 
-Stream *stream_create(void){
-    Stream stream = {
-        ._channelMask = 0,
-        .offset       = 0,
-        .interleave   = 0,
-        .numChunks    = 0,
-        .sampleRate   = 0,
-        .channels     = 0
-    };
+void stream_create(Stream *stream){
+    stream->_channelMask = 0;
+    stream->offset       = 0;
+    stream->interleave   = 0;
+    stream->numChunks    = 0;
+    stream->sampleRate   = 0;
+    stream->channels     = 0;
 
     stream_resetBuffer(&stream);
-    return &stream;
 }
 
-bool stream_initFromVAGHeader(Stream *stream, VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks){
+bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks){
     if(stream_isPlaying(stream)){
         return false;
     }
