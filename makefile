@@ -30,16 +30,15 @@ OBJS := $(COBJS) $(AOBJS)
 TARGET_ELF = GAME.elf
 TARGET_PSEXE = GAME.psexe
 
-
 ##########################################
 # Convert all textures into binary files #
 ##########################################
 
 # Define source directories
-ASSETS_DIR := assets/textures
-BPP_4_DIR := $(ASSETS_DIR)/4bpp
-BPP_8_DIR := $(ASSETS_DIR)/8bpp
-BPP_16_DIR := $(ASSETS_DIR)/16bpp
+TEXTURES_DIR := assets/textures
+BPP_4_DIR := $(TEXTURES_DIR)/4bpp
+BPP_8_DIR := $(TEXTURES_DIR)/8bpp
+BPP_16_DIR := $(TEXTURES_DIR)/16bpp
 
 # Define output directories
 TEXTURE_BUILD_DIR := build/assets/textures
@@ -65,15 +64,52 @@ S_FILES_16BPP := $(DAT_FILES_16BPP:.dat=.s)
 # Combine all .s files
 S_FILES := $(S_FILES_4BPP) $(S_FILES_8BPP) $(S_FILES_16BPP)
 
+##########################################
+# Include .vag audio files in the binary #
+##########################################
+
+AUDIO_DIR := assets/audio
+AUDIO_BUILD_DIR := build/assets/audio
+
+# Find all .vag files
+VAG_FILES := $(wildcard $(AUDIO_DIR)/*.vag)
+
+# Define output .dat and .s files for .vag
+DAT_FILES_VAG := $(VAG_FILES:$(AUDIO_DIR)/%.vag=$(AUDIO_BUILD_DIR)/%Audio.dat)
+S_FILES_VAG := $(DAT_FILES_VAG:.dat=.s)
+
+# Add audio .s files to the list of all .s files
+S_FILES := $(S_FILES) $(S_FILES_VAG)
+
+# Rule to copy .vag files to .dat in the build directory
+$(AUDIO_BUILD_DIR)/%Audio.dat: $(AUDIO_DIR)/%.vag
+	@mkdir -p $(dir $@)  # Ensure directory exists
+	cp $< $@  # Copy .vag file to .dat file
+
+# Rule to generate .s files from .dat files for audio
+$(AUDIO_BUILD_DIR)/%Audio.s: $(AUDIO_BUILD_DIR)/%Audio.dat
+	@echo '.section .data.$(basename $(notdir $<)), "aw"' > $@
+	@echo '.balign 8' >> $@
+	@echo '' >> $@
+	@echo '.global $(basename $(notdir $<))' >> $@
+	@echo '.type $(basename $(notdir $<)), @object' >> $@
+	@echo '.size $(basename $(notdir $<)), ($(basename $(notdir $<))_end - $(basename $(notdir $<)))' >> $@
+	@echo '' >> $@
+	@echo '$(basename $(notdir $<)):' >> $@
+	@echo '	.incbin "$(dir $@)$(basename $(notdir $<)).dat"' >> $@
+	@echo '$(basename $(notdir $<))_end:' >> $@
+
 # Rules for all .dat and .s files
-all: convertImages build buildCD
+all: convertImages convertAudio build buildCD
 
 convertImages: $(DAT_FILES) $(S_FILES)
+
+convertAudio: $(DAT_FILES_VAG) $(S_FILES_VAG)
 
 build: $(TARGET_PSEXE)
 
 # General rule for .dat and .palette.dat generation
-$(TEXTURE_BUILD_DIR)/%Data.dat $(TEXTURE_BUILD_DIR)/%Palette.dat: $(ASSETS_DIR)/%.png | $(dir $@)
+$(TEXTURE_BUILD_DIR)/%Data.dat $(TEXTURE_BUILD_DIR)/%Palette.dat: $(TEXTURES_DIR)/%.png | $(dir $@)
 	mkdir -p $(dir $@)
 	@case "$*" in \
 		*4bpp*) BPP=4 ;; \
