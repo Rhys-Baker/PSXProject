@@ -95,7 +95,7 @@ inline uint16_t vagHeader_getSPUSampleRate(const VAGHeader *vagHeader){
 
 
 inline uint16_t vagHeader_getSPULength(VAGHeader *vagHeader){
-    return bswap32(vagHeader->length) /8;
+    return bswap32(vagHeader->length);
 }
 
 inline int vagHeader_getNumChannels(VAGHeader *vagHeader){
