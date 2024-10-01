@@ -86,7 +86,7 @@ inline bool vagHeader_validateMagic(const VAGHeader *vagHeader){
 }
 
 inline bool vagHeader_validateInterleavedMagic(VAGHeader *vagHeader){
-    return (vagHeader->magic == concat4('V', 'A', 'G', 'i')) && vagHeader->interleave;
+    return (vagHeader->magic == concat4_8('V', 'A', 'G', 'i')) && vagHeader->interleave;
 }
 
 inline uint16_t vagHeader_getSPUSampleRate(const VAGHeader *vagHeader){
