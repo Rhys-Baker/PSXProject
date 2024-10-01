@@ -29,8 +29,12 @@ static const ChannelMask ALL_CHANNELS = (1 << NUM_CHANNELS) - 1;
 
 /* Utilities */
 
-static inline uint32_t concat4(uint8_t a, uint8_t b, uint8_t c, uint8_t d){
+static inline uint32_t concat4_8(uint8_t a, uint8_t b, uint8_t c, uint8_t d){
     return (a | (b << 8) | (c << 16) | (d << 24));
+}
+
+static inline uint32_t concat4_16(uint16_t a, uint16_t b){
+    return (a | (b << 16));
 }
 
 static inline int min(int a, int b){
@@ -78,7 +82,7 @@ typedef struct VAGHeader{
 } VAGHeader;
 
 inline bool vagHeader_validateMagic(const VAGHeader *vagHeader){
-    return (vagHeader->magic == concat4('V', 'A', 'G', 'p')) && (vagHeader->channels <= 1);
+    return (vagHeader->magic == concat4_8('V', 'A', 'G', 'p')) && (vagHeader->channels <= 1);
 }
 
 inline bool vagHeader_validateInterleavedMagic(VAGHeader *vagHeader){
