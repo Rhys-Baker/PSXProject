@@ -37,6 +37,13 @@ static inline int min(int a, int b){
     return (a<b) ? a : b;
 }
 
+static inline const uint32_t bswap32(uint32_t num){
+    return ((num >> 24) & 0xFF) |
+           ((num >> 8)  & 0xFF00) |
+           ((num << 8)  & 0xFF0000) |
+           ((num << 24) & 0xFF000000);
+}
+
 /* Basic SPU API */
 
 void initSPU(void);
@@ -78,8 +85,8 @@ inline bool vagHeader_validateInterleavedMagic(VAGHeader *vagHeader){
     return (vagHeader->magic == concat4('V', 'A', 'G', 'i')) && vagHeader->interleave;
 }
 
-inline uint16_t vagHeader_getSPUSampleRate(VAGHeader *vagHeader){
-    return(__builtin_bswap32(vagHeader->sampleRate) << 12) / 44100;
+inline uint16_t vagHeader_getSPUSampleRate(const VAGHeader *vagHeader){
+    return (bswap32(vagHeader->sampleRate) << 12) / 44100;;
 }
 
 
