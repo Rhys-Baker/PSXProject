@@ -409,5 +409,5 @@ size_t stream_feed(Stream *stream, const void *data, size_t length){
 void stream_resetBuffer(Stream *stream){
     stream->_head            = 0;
     stream->_tail            = 0;
-    stream ->_bufferedChunks = 0;
+    stream->_bufferedChunks  = 0;
 }
