@@ -70,7 +70,7 @@ void initSPU(void){
 }
 
 Channel getFreeChannel(void) {
-    disableInterrupts();
+    bool reenableInterrupts = disableInterrupts();
 
     for(Channel ch = 0; ch < NUM_CHANNELS; ch++){
         if(!SPU_CH_ADSR_VOL(ch)){
