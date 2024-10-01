@@ -153,12 +153,12 @@ size_t upload(uint32_t offset, const void *data, size_t length, bool wait){
     _waitForStatus(SPU_CTRL_XFER_BITMASK, SPU_CTRL_XFER_DMA_WRITE);
 
     DMA_MADR(DMA_SPU) = (uint32_t)(data);
-    DMA_BCR (DMA_SPU) = concat4(_DMA_CHUNK_SIZE, length, 0, 0);
+    DMA_BCR (DMA_SPU) = concat4_16(_DMA_CHUNK_SIZE, length);
     DMA_CHCR(DMA_SPU) = 0
         | DMA_CHCR_WRITE
         | DMA_CHCR_MODE_SLICE
         | DMA_CHCR_ENABLE;
-    
+
     if(wait){
         waitForDMATransfer(DMA_SPU, _DMA_TIMEOUT);
     }
@@ -188,7 +188,7 @@ size_t download(uint32_t offset, void * data, size_t length, bool wait){
     _waitForStatus(SPU_CTRL_XFER_BITMASK, SPU_CTRL_XFER_DMA_READ);
 
     DMA_MADR(DMA_SPU) = (uint32_t)(data);
-    DMA_BCR (DMA_SPU) = concat4(_DMA_CHUNK_SIZE, length, 0, 0);
+    DMA_BCR (DMA_SPU) = concat4_16(_DMA_CHUNK_SIZE, length);
     DMA_CHCR(DMA_SPU) = 0
         | DMA_CHCR_READ
         | DMA_CHCR_MODE_SLICE
@@ -224,14 +224,13 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
     if(!sound->offset){
         return -1;
     }
-
     SPU_CH_VOL_L(ch) = left;
 	SPU_CH_VOL_R(ch) = right;
 	SPU_CH_FREQ (ch) = sound->sampleRate;
 	SPU_CH_ADDR (ch) = sound->offset / 8;
 	SPU_CH_ADSR1(ch) = 0x00ff;
 	SPU_CH_ADSR2(ch) = 0x0000;
-
+    
     if(ch < 16){
         SPU_FLAG_ON1 = 1 << ch;
     } else {
