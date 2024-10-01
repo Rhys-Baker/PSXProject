@@ -74,6 +74,7 @@ Channel getFreeChannel(void) {
 
     for(Channel ch = 0; ch < NUM_CHANNELS; ch++){
         if(!SPU_CH_ADSR_VOL(ch)){
+            if(reenableInterrupts){
             enableInterrupts();
             }
             return ch;
