@@ -83,7 +83,7 @@ Channel getFreeChannel(void) {
 }
 
 ChannelMask getFreeChannels(int count){
-    disableInterrupts();
+    bool reenableInterrupts = disableInterrupts();
 
     ChannelMask mask = 0;
 
@@ -96,12 +96,14 @@ ChannelMask getFreeChannels(int count){
         count--;
 
         if(!count){
-            enableInterrupts();
-            return mask;
+            break;
         }
     }
-    enableInterrupts();
-    return 0;
+
+    if(reenableInterrupts){
+        enableInterrupts();
+    }
+    return mask;
 }
 
 void stopChannels(ChannelMask mask){
