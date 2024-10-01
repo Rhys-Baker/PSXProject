@@ -380,7 +380,7 @@ void stream_stop(Stream *stream){
 }
 
 size_t stream_feed(Stream *stream, const void *data, size_t length){
-    disableInterrupts();
+    bool reenableInterrupts = disableInterrupts();
 
     uintptr_t ptr = (uintptr_t)(data);
     size_t chunkLength = stream_getChunkLength(stream);
@@ -403,6 +403,9 @@ size_t stream_feed(Stream *stream, const void *data, size_t length){
     }
 
     flushWriteQueue();
+    if(reenableInterrupts){
+        enableInterrupts();
+    }
     return length;
 }
 
