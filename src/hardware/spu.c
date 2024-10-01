@@ -75,10 +75,13 @@ Channel getFreeChannel(void) {
     for(Channel ch = 0; ch < NUM_CHANNELS; ch++){
         if(!SPU_CH_ADSR_VOL(ch)){
             enableInterrupts();
+            }
             return ch;
         }
     }
+    if(reenableInterrupts){
     enableInterrupts();
+    }
     return -1;
 }
 
