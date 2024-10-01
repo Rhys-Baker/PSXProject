@@ -70,7 +70,7 @@ typedef struct VAGHeader{
     char     name[16];
 } VAGHeader;
 
-inline bool vagHeader_validateMagic(VAGHeader *vagHeader){
+inline bool vagHeader_validateMagic(const VAGHeader *vagHeader){
     return (vagHeader->magic == concat4('V', 'A', 'G', 'p')) && (vagHeader->channels <= 1);
 }
 
@@ -82,15 +82,16 @@ inline uint16_t vagHeader_getSPUSampleRate(VAGHeader *vagHeader){
     return(__builtin_bswap32(vagHeader->sampleRate) << 12) / 44100;
 }
 
-inline uint16_t vagHeader_getSPUSampleRate(VAGHeader *vagHeader){
-    return __builtin_bswap32(vagHeader->length) /8;
+
+inline uint16_t vagHeader_getSPULength(VAGHeader *vagHeader){
+    return bswap32(vagHeader->length) /8;
 }
 
-inline int getNumChannels(VAGHeader *vagHeader){
+inline int vagHeader_getNumChannels(VAGHeader *vagHeader){
     return vagHeader->channels ? vagHeader->channels : 2;
 }
 
-inline const void *getData(VAGHeader *vagHeader){
+inline const void *vagHeader_getData(VAGHeader *vagHeader){
     return vagHeader + 1;
 }
 
@@ -104,7 +105,7 @@ typedef struct Sound {
 
 void sound_create(Sound *sound);
 
-bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset);
+bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset);
 Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel ch);
 
 inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){
@@ -128,7 +129,7 @@ inline uint32_t stream_getChunkOffset(Stream *stream, size_t chunk) {
 void stream_configureIRQ(Stream *stream);
 
 // Destructor here if needed
-
+ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask);
 inline ChannelMask stream_start(Stream *stream, uint16_t left, uint16_t right){
     return stream_startWithChannelMask(stream, left, right, getFreeChannels(NUM_CHANNELS));
 }
@@ -153,7 +154,7 @@ inline size_t stream_getChunkLength(Stream *stream) {
 
 void stream_create(Stream *stream);
 bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks);
-ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask);
+
 void stream_stop(Stream *stream);
 void stream_handleInterrupt(Stream *stream);
 
