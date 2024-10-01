@@ -75,13 +75,13 @@ Channel getFreeChannel(void) {
     for(Channel ch = 0; ch < NUM_CHANNELS; ch++){
         if(!SPU_CH_ADSR_VOL(ch)){
             if(reenableInterrupts){
-            enableInterrupts();
+                enableInterrupts();
             }
             return ch;
         }
     }
     if(reenableInterrupts){
-    enableInterrupts();
+        enableInterrupts();
     }
     return -1;
 }
@@ -207,8 +207,7 @@ void sound_create(Sound *sound){
     sound->sampleRate = 0;
     sound->length     = 0;
 }
-
-bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset){
+bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset){
     if(!vagHeader_validateMagic(vagHeader)){
         return false;
     }
