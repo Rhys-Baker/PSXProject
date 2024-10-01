@@ -57,6 +57,17 @@ static inline bool disableInterrupts(void) {
 }
 
 /**
+ * @brief Forces all pending memory writes to complete and stalls until the
+ * write queue is empty. Calling this function is not necessary when accessing
+ * memory or hardware registers through KSEG1 as the write queue is only enabled
+ * when using KUSEG or KSEG0.
+ */
+__attribute__((always_inline)) static inline void flushWriteQueue(void) {
+	__atomic_signal_fence(__ATOMIC_RELEASE);
+	*((volatile uint8_t *) 0xbfc00000);
+}
+
+/**
  * @brief Initializes a thread structure with the provided entry point
  * (function) and stacktop. The function *must not* return. The stack should be
  * aligned to 8 bytes as required by the MIPS ABI.

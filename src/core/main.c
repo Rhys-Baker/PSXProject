@@ -22,6 +22,7 @@ extern const uint8_t fontPalette[];
 TextureInfo font;
 
 extern const uint8_t computer_keyboard_spacebarAudio[];
+extern const uint8_t groovy_gravyAudio[];
 
 // the X and Y of the buffer we are currently using.
 int bufferX = 0;
@@ -88,12 +89,12 @@ size_t uploadAudioSample(uint32_t ramOffset, const void *data, size_t length, bo
 
 
 // Gets called once at the start of main.
-void init(void){
+void init(Stream *stream){
     // Initialise the serial port for printing
     initSerialIO(115200);
     //initSPU();
     initCDROM();
-    initIRQ();
+    initIRQ(stream);
     initControllerBus();
 
     // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
@@ -153,14 +154,19 @@ void hexdump(const uint8_t *ptr, size_t length) {
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
+    // Initialise stream
+    Stream myStream;
+
 
     // Initialise important things for later
-    init();
-
+    init(&myStream);
+    
+    
+    // Load and play a click sound.
+    // TODO: Move these out of here and make it all a bit neater.
     initSPU();
     stopChannels(ALL_CHANNELS);
     setMasterVolume(MAX_VOLUME, 0);
-
     Sound mySound;
     sound_create(&mySound);
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
@@ -168,6 +174,23 @@ int main(void){
     size_t result = upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
     sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
+
+    
+    stream_create(&myStream);
+    
+    // Create pointer to header
+    const VAGHeader *groovy_gravyVagHeader = (const VAGHeader*) groovy_gravyAudio;
+
+    // Init from header
+    stream_initFromVAGHeader(&myStream, groovy_gravyVagHeader, 0x2000, 20);
+
+    // Fill up the buffer with data from the file
+    int musicOffset = stream_feed(&myStream, (((uintptr_t)groovy_gravyVagHeader) + 0x800), groovy_gravyVagHeader->length);
+
+    // Kick off playback of the stream
+    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 2);
+
+
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -193,6 +216,21 @@ int main(void){
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
       
       
+        // Check audio playback and top-up buffer
+        if(stream_getFreeChunkCount(&myStream) > 0){
+            printf("Chunk Free\n");
+            musicOffset = stream_feed(&myStream, ((uintptr_t)groovy_gravyVagHeader) + 0x800 + musicOffset, groovy_gravyVagHeader->length - musicOffset);
+            if(musicOffset >= groovy_gravyVagHeader->length){
+                musicOffset = 0;
+            }
+        } else {
+            printf("No free chunks\n");
+        }
+
+
+
+
+
         getControllerInfo(0, &controllerInfo);
         // Square
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){

@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "cdrom.h"
+#include "spu.h"
 
 #include "registers.h"
 #include "system.h"
@@ -64,21 +65,25 @@ void handleCDROMIRQ(void) {
 
 // This is the first step to handling the IRQ.
 // It will acknowledge the interrupt on the COP0 side, and call the relevant handler for the device.
-void interruptHandlerFunction(void *arg) {
+void interruptHandlerFunction(void *arg){
     if(acknowledgeInterrupt(IRQ_VSYNC)){
         handleVSyncIRQ();
     }
     if(acknowledgeInterrupt(IRQ_CDROM)){
         handleCDROMIRQ();
     }
+    if(acknowledgeInterrupt(IRQ_SPU)){
+        printf("IRQ_SPU fired!\n");
+        stream_handleInterrupt((Stream*)arg);
+    }
 }
 
-void initIRQ(){
+void initIRQ(Stream *stream){
     installExceptionHandler();
     // This is the function that is called when an interrupt is raised.
     // You can also pass an argument to this handler.
-    setInterruptHandler(interruptHandlerFunction, NULL);
+    setInterruptHandler(interruptHandlerFunction, stream);
     // The IRQ mask specifies which interrupt sources are actually allowed to raise an interrupt.
-    IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM);
+    IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM) | (1 << IRQ_SPU);
     enableInterrupts();
 }

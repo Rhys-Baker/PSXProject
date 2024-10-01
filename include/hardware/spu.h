@@ -48,6 +48,10 @@ static inline const uint32_t bswap32(uint32_t num){
            ((num << 24) & 0xFF000000);
 }
 
+static inline size_t roundup(size_t a, size_t b) {
+    return ((a + b - 1) / b) * b;
+}
+
 /* Basic SPU API */
 
 void initSPU(void);
@@ -134,10 +138,24 @@ typedef struct Stream{
     uint16_t interleave, numChunks, sampleRate, channels;
 } Stream;
 
+inline size_t stream_getChunkLength(Stream *stream) {
+    return (size_t)(stream->interleave) * (size_t)(stream->channels);
+}
+inline size_t stream_getFreeChunkCount(Stream *stream){
+    __atomic_signal_fence(__ATOMIC_ACQUIRE);
+
+    // The currently playing chunk cannot be overwritten.
+    size_t playingChunk = stream->_channelMask ? 1 : 0;
+    return stream->numChunks - (stream->_bufferedChunks + playingChunk);
+
+}
+
 inline uint32_t stream_getChunkOffset(Stream *stream, size_t chunk) {
-    return stream->offset + stream_getChunkLnegth(stream) * chunk;
+    return stream->offset + stream_getChunkLength(stream) * chunk;
 }
 void stream_configureIRQ(Stream *stream);
+
+
 
 // Destructor here if needed
 ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask);
@@ -155,13 +173,7 @@ inline bool stream_isUnderrun(Stream *stream){
     return !stream->_bufferedChunks;
 }
 
-inline size_t stream_getChunkLength(Stream *stream) {
-    __atomic_signal_fence(__ATOMIC_ACQUIRE);
 
-    // The currently playing chunk cannot be overwritten.
-    size_t playingChunk = stream->_channelMask ? 1 : 0;
-    return stream->numChunks - (stream->_bufferedChunks + playingChunk);
-}
 
 void stream_create(Stream *stream);
 bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks);
