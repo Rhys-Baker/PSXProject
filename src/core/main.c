@@ -92,7 +92,7 @@ void init(void){
     // Initialise the serial port for printing
     initSerialIO(115200);
     //initSPU();
-    //initCDROM();
+    initCDROM();
     initIRQ();
     initControllerBus();
 
@@ -110,52 +110,6 @@ void init(void){
     // Enable the SPU's DMA channel
     DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_SPU * 4);
 
-
-    BIU_DEV4_CTRL = 0
-    | ( 1 << 0) // Write delay
-    | (14 << 4) // Read delay
-    | BIU_CTRL_RECOVERY
-    | BIU_CTRL_WIDTH_16
-    | BIU_CTRL_AUTO_INCR
-    | (9 << 16) // Number of address lines
-    | (0 << 24) // DMA read/write delay
-    | BIU_CTRL_DMA_DELAY;
-
-    // Disable SPU
-    SPU_CTRL = 0;
-
-    // Set Master Volume and Reverb volume
-    // 15-bit signed value with leading 0
-    SPU_MASTER_VOL_L = 0b0011111111111111;
-    SPU_MASTER_VOL_R = 0b0011111111111111;
-    // Turn off reverb
-    SPU_REVERB_VOL_L = 0;
-    SPU_REVERB_VOL_R = 0;
-
-    SPU_FLAG_REVERB1 = 0;
-    SPU_FLAG_REVERB2 = 0;
-
-    // Not using reverb so set it to this.
-    SPU_REVERB_ADDR = 0xfffe;
-
-    // Reset every voice channel
-    for(int i=0; i<24; i++){
-        SPU_CH_VOL_L(i) = 0;
-        SPU_CH_VOL_R(i) = 0;
-        SPU_CH_ADSR1(i) = 0x00ff;
-        SPU_CH_ADSR2(i) = 0x0000;
-    }
-    // Enable the SPU
-    SPU_CTRL = 0
-    | ( 1 << 15) // Enable
-    | ( 1 << 14) // Mute
-    ;
-    
-    // Release all channels by setting every KeyOff flag
-    SPU_FLAG_OFF1 = 0xFF;
-    SPU_FLAG_OFF2 = 0x0F;
-
-
     GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
     GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
 
@@ -164,19 +118,21 @@ void init(void){
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
 
-    if(!uploadAudioSample(0x01000, computer_keyboard_spacebarAudio+0x30, 0xB70, true)){
-        screenColor = 0x0000FF;
-    }
+    //if(!uploadAudioSample(0x01000, computer_keyboard_spacebarAudio+0x30, 0xB70, true)){
+    //    screenColor = 0x0000FF;
+    //}
+    
 }
 
 
 ControllerInfo controllerInfo;
-bool squarePressed = false;
-bool circlePressed = false;
-bool r1Pressed     = false;
-bool l1Pressed     = false;
-bool upPressed     = false;
-bool downPressed   = false;
+bool squarePressed   = false;
+bool circlePressed   = false;
+bool trianglePressed = false;
+bool r1Pressed       = false;
+bool l1Pressed       = false;
+bool upPressed       = false;
+bool downPressed     = false;
 
 
 void hexdump(const uint8_t *ptr, size_t length) {
@@ -201,11 +157,17 @@ int main(void){
     // Initialise important things for later
     init();
 
-    // Load song
+    initSPU();
+    stopChannels(ALL_CHANNELS);
+    setMasterVolume(MAX_VOLUME, 0);
+
+    Sound mySound;
+    sound_create(&mySound);
+    const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
+    sound_initFromVAGHeader(&mySound, vagHeader, 0x1010);
+    size_t result = upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
+    sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
-    // Play song on loop on chanel 3
-
-
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -236,14 +198,6 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
-                SPU_CH_VOL_L(0) = 0b0011111111111111;
-                SPU_CH_VOL_R(0) = 0b0011111111111111;
-                SPU_CH_FREQ (0) = 1<<12;
-                SPU_CH_ADDR (0) = 0x1000 / 8;
-                SPU_CH_ADSR1(0) = 0x00ff;
-                SPU_CH_ADSR2(0) = 0x0000;
-
-                SPU_FLAG_ON1 = 1<<0;
             }
         } else {
             squarePressed = false;
@@ -253,10 +207,20 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
             if(!circlePressed){
                 circlePressed = true;
-
+                sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
             }
         } else {
             circlePressed = false;
+        }
+
+        // Triangle
+        if(controllerInfo.buttons & BUTTON_MASK_TRIANGLE){
+            if(!trianglePressed){
+                trianglePressed = true;
+                stopChannels(ALL_CHANNELS);
+            }
+        } else {
+            trianglePressed = false;
         }
 
         // R1
