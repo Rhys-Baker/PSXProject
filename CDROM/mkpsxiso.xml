@@ -36,10 +36,7 @@
 		<!-- MKPSXISO expects the raw .DAT files found in the PsyQ -->
 		<!-- SDK directory in PS\CDGEN\LCNSFILE. This is optional if you -->
 		<!-- intend to run this sample in emulators. -->
-		<!--
-		<license file="licensea.dat"/>
-		-->
-		
+		<license file="license.dat"/>
 		<!-- This element defines the contents and directory structure -->
 		<!-- of the disc image. For this tutorial no directories will be -->
 		<!-- defined and only a .CNF file and the program executable are -->
