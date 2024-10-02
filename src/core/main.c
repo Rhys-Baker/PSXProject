@@ -161,6 +161,7 @@ int main(void){
     // Initialise important things for later
     init(&myStream);
     
+    uint32_t spuAllocPtr = 0x1010;
     
     // Load and play a click sound.
     // TODO: Move these out of here and make it all a bit neater.
@@ -170,8 +171,8 @@ int main(void){
     Sound mySound;
     sound_create(&mySound);
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
-    sound_initFromVAGHeader(&mySound, vagHeader, 0x1010);
-    size_t result = upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
+    sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
+    spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
     sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
 
@@ -179,16 +180,20 @@ int main(void){
     stream_create(&myStream);
     
     // Create pointer to header
-    const VAGHeader *groovy_gravyVagHeader = (const VAGHeader*) groovy_gravyAudio;
+    vagHeader = (const VAGHeader *) groovy_gravyAudio;
+    size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
+    size_t streamOffset = 0;
+    const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
 
     // Init from header
-    stream_initFromVAGHeader(&myStream, groovy_gravyVagHeader, 0x2000, 20);
+    stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 8);
+    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
 
     // Fill up the buffer with data from the file
-    int musicOffset = stream_feed(&myStream, (((uintptr_t)groovy_gravyVagHeader) + 0x800), groovy_gravyVagHeader->length);
+    streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
 
     // Kick off playback of the stream
-    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 2);
+    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
 
 
 
@@ -218,17 +223,11 @@ int main(void){
       
         // Check audio playback and top-up buffer
         if(stream_getFreeChunkCount(&myStream) > 0){
-            printf("Chunk Free\n");
-            musicOffset = stream_feed(&myStream, ((uintptr_t)groovy_gravyVagHeader) + 0x800 + musicOffset, groovy_gravyVagHeader->length - musicOffset);
-            if(musicOffset >= groovy_gravyVagHeader->length){
-                musicOffset = 0;
+            streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
+            if(streamOffset >= streamLength){
+                streamOffset -= streamLength;
             }
-        } else {
-            printf("No free chunks\n");
         }
-
-
-
 
 
         getControllerInfo(0, &controllerInfo);
