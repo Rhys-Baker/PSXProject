@@ -92,7 +92,7 @@ size_t uploadAudioSample(uint32_t ramOffset, const void *data, size_t length, bo
 void init(Stream *stream){
     // Initialise the serial port for printing
     initSerialIO(115200);
-    //initSPU();
+    initSPU();
     initCDROM();
     initIRQ(stream);
     initControllerBus();
@@ -163,9 +163,8 @@ int main(void){
     
     uint32_t spuAllocPtr = 0x1010;
     
-    // Load and play a click sound.
+    // Load a click sound.
     // TODO: Move these out of here and make it all a bit neater.
-    initSPU();
     stopChannels(ALL_CHANNELS);
     setMasterVolume(MAX_VOLUME, 0);
     Sound mySound;
@@ -173,7 +172,7 @@ int main(void){
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-    sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
+    //sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
 
     
@@ -222,7 +221,7 @@ int main(void){
       
       
         // Check audio playback and top-up buffer
-        if(stream_getFreeChunkCount(&myStream) > 0){
+        if(stream_getFreeChunkCount(&myStream) >= 4){
             streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
             if(streamOffset >= streamLength){
                 streamOffset -= streamLength;
@@ -235,6 +234,30 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
+                uint8_t rootDirData[2048];
+                getRootDirData(&rootDirData);
+                uint8_t directoryListingLength = 0;
+                DirectoryEntry *directoryListing[10];
+
+                DirectoryEntry directoryEntry;
+
+                uint8_t  recLen;
+                uint32_t len;
+                uint32_t lba;
+                char *name[255];
+                int offset = 0;
+                printf("\n\n==== Directory Contents ====\n\n");
+                for(int i=0; i<10; i++){
+                    if(parseDirRecord(
+                        &rootDirData[offset],
+                        &recLen,
+                        directoryListing[i]
+                    )){
+                       break;
+                    }
+                    offset += recLen;
+                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
+                }
             }
         } else {
             squarePressed = false;
