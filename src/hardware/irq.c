@@ -73,7 +73,6 @@ void interruptHandlerFunction(void *arg){
         handleCDROMIRQ();
     }
     if(acknowledgeInterrupt(IRQ_SPU)){
-        printf("IRQ_SPU fired!\n");
         stream_handleInterrupt((Stream*)arg);
     }
 }
