@@ -69,7 +69,6 @@ void init(Stream *stream){
     GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
     GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
 
-
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
@@ -80,8 +79,8 @@ void init(Stream *stream){
     
 }
 
-
 ControllerInfo controllerInfo;
+// TODO: Consider changing these into a single variable and just using bits instead
 bool squarePressed   = false;
 bool circlePressed   = false;
 bool trianglePressed = false;
@@ -105,7 +104,7 @@ void hexdump(const uint8_t *ptr, size_t length) {
 
 
 // Start of main
-
+__attribute__((noreturn))
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
@@ -127,10 +126,8 @@ int main(void){
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-    //sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
 
-    
     stream_create(&myStream);
     
     // Create pointer to header
@@ -288,7 +285,5 @@ int main(void){
         sendLinkedList(&(chain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
    }
 
-
-   // Stops intellisense from yelling at me.
-   return 0; // 100% totally necessary.
+    __builtin_unreachable();
 }
