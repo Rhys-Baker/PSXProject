@@ -77,12 +77,16 @@ void interruptHandlerFunction(void *arg){
     }
 }
 
-void initIRQ(Stream *stream){
+void initIRQ(void *stream){
     installExceptionHandler();
     // This is the function that is called when an interrupt is raised.
     // You can also pass an argument to this handler.
-    setInterruptHandler(interruptHandlerFunction, stream);
+    setInterruptHandler(interruptHandlerFunction, (Stream *)stream);
     // The IRQ mask specifies which interrupt sources are actually allowed to raise an interrupt.
-    IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM) | (1 << IRQ_SPU);
+    IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM);
+    // If a null pointer is passed in for the stream, don't bother checking for the SPU interrupt.
+    if (stream != 0){
+        IRQ_MASK |= (1 << IRQ_SPU);
+    }
     enableInterrupts();
 }
