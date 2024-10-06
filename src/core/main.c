@@ -43,51 +43,6 @@ void waitForVblank(){
     vblank = false;
 }
 
-
-#define DMA_CHUNK_SIZE 4
-#define DMA_TIMEOUT 100000
-#define STATUS_TIMEOUT 10000
-
-
-static bool waitForStatus(uint16_t mask, uint16_t value) {
-	for (int timeout = STATUS_TIMEOUT; timeout > 0; timeout -= 10) {
-		if ((SPU_STAT & mask) == value)
-			return true;
-
-		delayMicroseconds(10);
-	}
-
-	return false;
-}
-
-size_t uploadAudioSample(uint32_t ramOffset, const void *data, size_t length, bool wait) {
-    length /= 4;
-    length = (length + DMA_CHUNK_SIZE - 1) / DMA_CHUNK_SIZE;
-
-    if (!waitForDMATransfer(DMA_SPU, DMA_TIMEOUT))
-        return 0;
-    
-    uint16_t ctrlReg = SPU_CTRL & ~SPU_CTRL_XFER_BITMASK;
-
-    SPU_CTRL = ctrlReg;
-    waitForStatus(SPU_CTRL_XFER_BITMASK, 0);
-
-    SPU_DMA_CTRL = 4;
-    SPU_ADDR = ramOffset / 8;
-    SPU_CTRL = ctrlReg | SPU_CTRL_XFER_DMA_WRITE;
-    waitForStatus(SPU_CTRL_XFER_BITMASK, SPU_CTRL_XFER_DMA_WRITE);
-
-    DMA_MADR(DMA_SPU) = (uint32_t)data;
-    DMA_BCR (DMA_SPU) = DMA_CHUNK_SIZE | (length << 16);
-    DMA_CHCR(DMA_SPU) = DMA_CHCR_WRITE | DMA_CHCR_MODE_SLICE | DMA_CHCR_ENABLE;
-
-    if (wait)
-        waitForDMATransfer(DMA_SPU, DMA_TIMEOUT);
-    
-    return length * DMA_CHUNK_SIZE * 4;
-}
-
-
 // Gets called once at the start of main.
 void init(Stream *stream){
     // Initialise the serial port for printing
