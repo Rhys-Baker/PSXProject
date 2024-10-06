@@ -264,13 +264,11 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
  */
 #include <stdio.h>
 void stream_configureIRQ(Stream *stream){
-    printf("stream_configureIRQ entered. Stream buffered chunks: %d\n", stream->_bufferedChunks);
     uint16_t ctrlReg = SPU_CTRL;
 
     // Disable the IRQ if an underrun occurs.
     // TODO: handle this in a slightly better way
     if(!stream->_bufferedChunks){
-        printf("Underrun detected. Exiting!\n");
         SPU_CTRL = ctrlReg & ~SPU_CTRL_IRQ_ENABLE;
         return;
     }
@@ -278,7 +276,6 @@ void stream_configureIRQ(Stream *stream){
     // Exit if the IRQ has been set up before and not yet acknowledged by
     // handleInterrupt().
     if(ctrlReg & SPU_CTRL_IRQ_ENABLE){
-        printf("IRQ not yet acknowledged. Exiting!\n");
         return;
     }
 
@@ -388,12 +385,9 @@ void stream_stop(Stream *stream){
 }
 
 void stream_handleInterrupt(Stream *stream){
-    printf("stream_handleInterrupt entered.\n");
     if(!stream_isPlaying(stream)){
-        printf("Stream is playing. Exiting!\n");
         return;
     }
-    printf("Stream not playing. Continuing...\n");
     // Disabling the IRQ is always required in order to acknowledge it.
     SPU_CTRL &= ~SPU_CTRL_IRQ_ENABLE;
 
@@ -403,7 +397,6 @@ void stream_handleInterrupt(Stream *stream){
 }
 
 size_t stream_feed(Stream *stream, const void *data, size_t length){
-    printf("stream_feed\n");
     bool reenableInterrupts = disableInterrupts();
 
     uintptr_t ptr = (uintptr_t)(data);
@@ -412,7 +405,6 @@ size_t stream_feed(Stream *stream, const void *data, size_t length){
     length = min(length, stream_getFreeChunkCount(stream) * chunkLength);
 
     for(int i = length; i >= (int)(chunkLength); i -= chunkLength){
-        printf("upload()\n");
         upload(
             stream_getChunkOffset(stream, stream->_tail), (const void *)(ptr),
             chunkLength, true
@@ -422,7 +414,6 @@ size_t stream_feed(Stream *stream, const void *data, size_t length){
         stream->_tail = (stream->_tail + 1) % stream->numChunks;
         stream->_bufferedChunks++;
 
-        printf("Buffered Chunks: %d\n", stream->_bufferedChunks);
     }
 
     if(stream_isPlaying(stream)){
