@@ -89,7 +89,7 @@ static inline bool vagHeader_validateMagic(const VAGHeader *vagHeader){
     return (vagHeader->magic == concat4_8('V', 'A', 'G', 'p')) && (vagHeader->channels <= 1);
 }
 
-static inline bool vagHeader_validateInterleavedMagic(VAGHeader *vagHeader){
+static inline bool vagHeader_validateInterleavedMagic(const VAGHeader *vagHeader){
     return (vagHeader->magic == concat4_8('V', 'A', 'G', 'i')) && vagHeader->interleave;
 }
 
@@ -98,15 +98,15 @@ static inline uint16_t vagHeader_getSPUSampleRate(const VAGHeader *vagHeader){
 }
 
 
-static inline size_t vagHeader_getSPULength(VAGHeader *vagHeader){
+static inline size_t vagHeader_getSPULength(const VAGHeader *vagHeader){
     return bswap32(vagHeader->length);
 }
 
-static inline int vagHeader_getNumChannels(VAGHeader *vagHeader){
+static inline int vagHeader_getNumChannels(const VAGHeader *vagHeader){
     return vagHeader->channels ? vagHeader->channels : 2;
 }
 
-static inline const void *vagHeader_getData(VAGHeader *vagHeader){
+static inline const void *vagHeader_getData(const VAGHeader *vagHeader){
     return vagHeader + 1;
 }
 
@@ -120,7 +120,7 @@ typedef struct Sound {
 
 void sound_create(Sound *sound);
 
-bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset);
+bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset);
 Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel ch);
 
 static inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){

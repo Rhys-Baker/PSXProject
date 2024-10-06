@@ -30,14 +30,14 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
         directoryEntry->name[2] = '\0';
         return 0; // Parent Dir
     }
-    memcpy(&directoryEntry->name, &dataSector[33], dataSector[32]);
+    __builtin_memcpy(&directoryEntry->name, &dataSector[33], dataSector[32]);
     directoryEntry->name[dataSector[32]] = '\0';
     return 0;
 }
 
 // Gets the 2048 bytes that make up the root directory
 void getRootDirData(uint8_t *rootDirData){
-   uint8_t *buffer[2048];
+   uint8_t buffer[2048];
    uint32_t rootDirLBA;
    
    // Read the PVD sector into ram
@@ -51,7 +51,7 @@ void getRootDirData(uint8_t *rootDirData){
    waitForINT1();
 
    // Get the LBA for the root directory.
-   int rootDirSize = getRootDirLBA(buffer, &rootDirLBA);
+   getRootDirLBA(buffer, &rootDirLBA);
 
    // Read the contents of the root directory.
    startCDROMRead(

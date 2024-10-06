@@ -107,7 +107,7 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
 
     issueCDROMCommand(CDROM_SETMODE, &mode, sizeof(mode));
     waitForINT3();
-    issueCDROMCommand(CDROM_SETLOC, &msf, sizeof(msf));
+    issueCDROMCommand(CDROM_SETLOC, (const uint8_t *)&msf, sizeof(msf));
     waitForINT3();
     issueCDROMCommand(CDROM_READN, NULL, 0);
     waitForINT3();

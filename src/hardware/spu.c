@@ -128,7 +128,7 @@ void stopChannels(ChannelMask mask){
     }
 
     SPU_FLAG_ON1 = mask & 0xffff;
-    SPU_FLAG_ON2 >> 16;
+    SPU_FLAG_ON2 = mask >> 16;
 }
 
 size_t upload(uint32_t offset, const void *data, size_t length, bool wait){
@@ -207,7 +207,7 @@ void sound_create(Sound *sound){
     sound->sampleRate = 0;
     sound->length     = 0;
 }
-bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset){
+bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset){
     if(!vagHeader_validateMagic(vagHeader)){
         return false;
     }
@@ -303,7 +303,7 @@ void stream_create(Stream *stream){
     stream->sampleRate   = 0;
     stream->channels     = 0;
 
-    stream_resetBuffer(&stream);
+    stream_resetBuffer(stream);
 }
 
 bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks){

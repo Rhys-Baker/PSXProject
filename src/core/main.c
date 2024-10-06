@@ -187,16 +187,9 @@ int main(void){
             if(!squarePressed){
                 squarePressed = true;
                 uint8_t rootDirData[2048];
-                getRootDirData(&rootDirData);
-                uint8_t directoryListingLength = 0;
+                getRootDirData(rootDirData);
                 DirectoryEntry *directoryListing[10];
-
-                DirectoryEntry directoryEntry;
-
                 uint8_t  recLen;
-                uint32_t len;
-                uint32_t lba;
-                char *name[255];
                 int offset = 0;
                 printf("\n\n==== Directory Contents ====\n\n");
                 for(int i=0; i<10; i++){
