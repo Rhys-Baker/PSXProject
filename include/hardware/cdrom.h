@@ -92,7 +92,7 @@ void waitForINT3();
 
 void convertLBAToMSF(MSF *msf, uint32_t lba);
 
-void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed);
+void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed, bool wait);
 
 bool readDiscName(char *output);
 

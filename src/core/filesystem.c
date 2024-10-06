@@ -46,9 +46,9 @@ void getRootDirData(uint8_t *rootDirData){
       buffer,
       sizeof(buffer) / 2048,
       2048,
+      true,
       true
    );
-   waitForINT1();
 
    // Get the LBA for the root directory.
    getRootDirLBA(buffer, &rootDirLBA);
@@ -59,10 +59,7 @@ void getRootDirData(uint8_t *rootDirData){
       rootDirData,
       sizeof(rootDirData) / 2048,
       2048,
+      true,
       true
    );
-   waitForINT1();
-   // Pause the CDROM.
-   issueCDROMCommand(CDROM_PAUSE, NULL, 0);
-   waitForINT3();
 }

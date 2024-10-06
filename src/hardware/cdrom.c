@@ -90,7 +90,15 @@ void convertLBAToMSF(MSF *msf, uint32_t lba) {
     msf->frame  = toBCD(lba % 75);
 }
 
-void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed) {
+
+/// @brief 
+/// @param lba LBA of the sector to read
+/// @param ptr Pointer to buffer to store read data
+/// @param numSectors Number of sectors to read
+/// @param sectorSize Size of sector (2048)
+/// @param doubleSpeed Read at double speed
+/// @param wait Block until read completed
+void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed, bool wait) {
     cdromReadDataPtr        = ptr;
     cdromReadDataNumSectors = numSectors;
     cdromReadDataSectorSize = sectorSize;
@@ -104,13 +112,15 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
         mode |= MODE_2X_SPEED;
 
     convertLBAToMSF(&msf, lba);
-
     issueCDROMCommand(CDROM_SETMODE, &mode, sizeof(mode));
     waitForINT3();
     issueCDROMCommand(CDROM_SETLOC, (const uint8_t *)&msf, sizeof(msf));
     waitForINT3();
     issueCDROMCommand(CDROM_READN, NULL, 0);
     waitForINT3();
+    if(wait){
+        waitForINT1();
+    }
 }
 
 // Data is ready to be read from the CDROM via DMA.
