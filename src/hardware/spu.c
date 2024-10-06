@@ -262,7 +262,7 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
  * blocks.
  * - SpicyJpeg
  */
-
+#include <stdio.h>
 void stream_configureIRQ(Stream *stream){
     uint16_t ctrlReg = SPU_CTRL;
 
@@ -376,6 +376,18 @@ void stream_stop(Stream *stream){
         return;
     }
 
+    SPU_CTRL &= ~SPU_CTRL_IRQ_ENABLE;
+
+    stopChannels(stream->_channelMask);
+    stream->_channelMask = 0;
+    flushWriteQueue();
+    
+}
+
+void stream_handleInterrupt(Stream *stream){
+    if(!stream_isPlaying(stream)){
+        return;
+    }
     // Disabling the IRQ is always required in order to acknowledge it.
     SPU_CTRL &= ~SPU_CTRL_IRQ_ENABLE;
 
@@ -401,6 +413,7 @@ size_t stream_feed(Stream *stream, const void *data, size_t length){
         ptr += chunkLength;
         stream->_tail = (stream->_tail + 1) % stream->numChunks;
         stream->_bufferedChunks++;
+
     }
 
     if(stream_isPlaying(stream)){

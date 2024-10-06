@@ -22,6 +22,7 @@ extern const uint8_t fontPalette[];
 TextureInfo font;
 
 extern const uint8_t computer_keyboard_spacebarAudio[];
+extern const uint8_t groovy_gravyAudio[];
 
 // the X and Y of the buffer we are currently using.
 int bufferX = 0;
@@ -88,12 +89,12 @@ size_t uploadAudioSample(uint32_t ramOffset, const void *data, size_t length, bo
 
 
 // Gets called once at the start of main.
-void init(void){
+void init(Stream *stream){
     // Initialise the serial port for printing
     initSerialIO(115200);
-    //initSPU();
+    initSPU();
     initCDROM();
-    initIRQ();
+    initIRQ(stream);
     initControllerBus();
 
     // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
@@ -153,21 +154,47 @@ void hexdump(const uint8_t *ptr, size_t length) {
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
+    // Initialise stream
+    Stream myStream;
+
 
     // Initialise important things for later
-    init();
-
-    initSPU();
+    init(&myStream);
+    
+    uint32_t spuAllocPtr = 0x1010;
+    
+    // Load a click sound.
+    // TODO: Move these out of here and make it all a bit neater.
     stopChannels(ALL_CHANNELS);
     setMasterVolume(MAX_VOLUME, 0);
-
     Sound mySound;
     sound_create(&mySound);
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
-    sound_initFromVAGHeader(&mySound, vagHeader, 0x1010);
-    size_t result = upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-    sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
+    sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
+    spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
+    //sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
     
+
+    
+    stream_create(&myStream);
+    
+    // Create pointer to header
+    vagHeader = (const VAGHeader *) groovy_gravyAudio;
+    size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
+    size_t streamOffset = 0;
+    const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
+
+    // Init from header
+    stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 8);
+    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
+
+    // Fill up the buffer with data from the file
+    streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
+
+    // Kick off playback of the stream
+    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
+
+
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -193,11 +220,44 @@ int main(void){
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
       
       
+        // Check audio playback and top-up buffer
+        if(stream_getFreeChunkCount(&myStream) >= 4){
+            streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
+            if(streamOffset >= streamLength){
+                streamOffset -= streamLength;
+            }
+        }
+
+
         getControllerInfo(0, &controllerInfo);
         // Square
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
+                uint8_t rootDirData[2048];
+                getRootDirData(&rootDirData);
+                uint8_t directoryListingLength = 0;
+                DirectoryEntry *directoryListing[10];
+
+                DirectoryEntry directoryEntry;
+
+                uint8_t  recLen;
+                uint32_t len;
+                uint32_t lba;
+                char *name[255];
+                int offset = 0;
+                printf("\n\n==== Directory Contents ====\n\n");
+                for(int i=0; i<10; i++){
+                    if(parseDirRecord(
+                        &rootDirData[offset],
+                        &recLen,
+                        directoryListing[i]
+                    )){
+                       break;
+                    }
+                    offset += recLen;
+                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
+                }
             }
         } else {
             squarePressed = false;
