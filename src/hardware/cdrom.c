@@ -8,6 +8,8 @@
 #include "registers.h"
 #include "system.h"
 
+#include "spu.h"
+
 bool waitingForInt1;
 bool waitingForInt3;
 bool waitingForInt5;
@@ -19,6 +21,8 @@ size_t cdromReadDataNumSectors;
 uint8_t cdromResponse[16];
 uint8_t cdromRespLength;
 uint8_t cdromStatus;
+
+uint8_t cdromLastReadPurpose;
 
 #define toBCD(i) (((i) / 10 * 16) | ((i) % 10))
 
@@ -137,6 +141,7 @@ void cdromINT1(void){
     );
     if (!(--cdromReadDataNumSectors))
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+        
     atomic_signal_fence(memory_order_release);
     waitingForInt1 = false;
     return;
@@ -149,8 +154,16 @@ void cdromINT2(void){
 
 // This is usually just reading the status. It may be more than one parameter, however I don't handle that.
 void cdromINT3(void){
-    cdromStatus = cdromResponse[0];
-    waitingForInt3 = false;
+    if(waitingForInt3){
+        cdromStatus = cdromResponse[0];
+        waitingForInt3 = false;
+    } else {
+        switch(cdromLastReadPurpose){
+            case CDROM_PURPOSE_STREAM:
+                
+            break;
+        }
+    }
     return;
 }
 

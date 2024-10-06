@@ -3,6 +3,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+extern bool waitingForInt1;
+extern bool waitingForInt3;
+extern bool waitingForInt5;
+
 extern void  *cdromReadDataPtr;
 extern size_t cdromReadDataSectorSize;
 extern size_t cdromReadDataNumSectors;
@@ -10,6 +14,13 @@ extern size_t cdromReadDataNumSectors;
 extern uint8_t cdromResponse[16];
 extern uint8_t cdromRespLength;
 extern uint8_t cdromStatus;
+
+extern uint8_t cdromLastReadPurpose;
+
+typedef enum{
+	CDROM_PURPOSE_NONE   = 0,
+	CDROM_PURPOSE_STREAM = 1
+} CDROMReadPurpose;
 
 typedef enum {
     IRQ_NONE              = 0,

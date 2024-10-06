@@ -16,6 +16,7 @@
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    256
 
+
 // Include texture data files
 extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
@@ -43,8 +44,33 @@ void waitForVblank(){
     vblank = false;
 }
 
+/// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
+/// @param rootDirData Pointer to the root directory data.
+/// @param filename String containing the filename of the requested file.
+/// @return LBA to file or 0 if not found.
+uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
+    DirectoryEntry directoryEntry;
+    uint8_t  recLen;
+    int offset = 0;
+    for(int i=0; i<10; i++){
+        if(parseDirRecord(
+            &rootDirData[offset],
+            &recLen,
+            &directoryEntry
+        )){
+           break;
+        }
+        offset += recLen;
+        
+        if(!__builtin_strcmp(directoryEntry.name, filename)){
+            return directoryEntry.lba;
+        }
+    }
+    return 0;
+}
+
 // Gets called once at the start of main.
-void init(Stream *stream){
+void init(void *stream){
     // Initialise the serial port for printing
     initSerialIO(115200);
     initSPU();
@@ -72,10 +98,6 @@ void init(Stream *stream){
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
-
-    //if(!uploadAudioSample(0x01000, computer_keyboard_spacebarAudio+0x30, 0xB70, true)){
-    //    screenColor = 0x0000FF;
-    //}
     
 }
 
@@ -90,6 +112,9 @@ bool upPressed       = false;
 bool downPressed     = false;
 
 
+Stream myStream;
+size_t freeChunks;
+
 void hexdump(const uint8_t *ptr, size_t length) {
     while (length) {
         size_t lineLength = (length < 16) ? length : 16;
@@ -103,48 +128,105 @@ void hexdump(const uint8_t *ptr, size_t length) {
 }
 
 
+typedef enum{
+	CDROM_SM_IDLE            = 0,
+	CDROM_SM_WAIT_FOR_STREAM = 1
+} CDROMStateMachineState;
+
+CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
+
+VAGHeader mySongVAGHeader;
+
+void updateCDROMStateMachine(void){
+    switch(cdromSMState){
+        case CDROM_SM_IDLE:
+            // Get the number of free chunks that must be read
+            freeChunks = stream_getFreeChunkCount(&myStream);
+            if(freeChunks >= 16){
+                
+            }
+            break;
+
+        case CDROM_SM_WAIT_FOR_STREAM:
+            if(waitingForInt3)
+                break;
+            // Update Stream
+
+            cdromSMState = CDROM_SM_IDLE;
+            break;
+    }
+}
+
+
 // Start of main
 __attribute__((noreturn))
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
     // Initialise stream
-    Stream myStream;
 
 
     // Initialise important things for later
     init(&myStream);
     
+    printf("\n\n=====Program start=====\n");
+
+    uint8_t rootDirData[2048];
+    getRootDirData(&rootDirData);
+    uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
+
+    char songVagHeaderSector[2048];
+    uint8_t streamBuffer[32 * 2048]; // 32 chunk buffer
+    if(songLBA){
+        startCDROMRead(songLBA, songVagHeaderSector, 1, 2048, true, true);
+        startCDROMRead(songLBA+1, streamBuffer, 32, 2048, true, true);
+    }
+
+
+    // TODO: Make this not bad
+    // While this doesn't NOT work, it's terrible and nigh impossible to read
+    // I have to scroll up and down to understand it. Please fix.
+    stream_create(&myStream);
     uint32_t spuAllocPtr = 0x1010;
+    VAGHeader *songVagHeader;
+    __builtin_memcpy(songVagHeader, songVagHeaderSector, sizeof(VAGHeader));
+    
+    size_t streamLength = vagHeader_getSPULength(songVagHeader);
+    size_t streamOffset = 0;
+    stream_initFromVAGHeader(&myStream, songVagHeader, spuAllocPtr, 32);
+    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
+    streamOffset = stream_feed(&myStream, streamBuffer, 16*2048);
+
+    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
+
+
     
     // Load a click sound.
     // TODO: Move these out of here and make it all a bit neater.
-    stopChannels(ALL_CHANNELS);
-    setMasterVolume(MAX_VOLUME, 0);
-    Sound mySound;
-    sound_create(&mySound);
-    const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
-    sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
-    spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
+    //stopChannels(ALL_CHANNELS);
+    //setMasterVolume(MAX_VOLUME, 0);
+    //Sound mySound;
+    //sound_create(&mySound);
+    //const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
+    //sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
+    //spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
     
 
-    stream_create(&myStream);
-    
     // Create pointer to header
-    vagHeader = (const VAGHeader *) groovy_gravyAudio;
-    size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
-    size_t streamOffset = 0;
-    const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
-
-    // Init from header
-    stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 8);
-    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
-
-    // Fill up the buffer with data from the file
-    streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
-
-    // Kick off playback of the stream
-    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
+    //vagHeader = (const VAGHeader *) groovy_gravyAudio;
+    //size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
+    //size_t streamOffset = 0;
+    //const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
+//
+    //// Init from header
+    //stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 32);
+    //spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
+//
+    //// Fill up the buffer with data from the file
+    //streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
+//
+    //// Kick off playback of the stream
+    //stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
 
 
 
@@ -171,14 +253,26 @@ int main(void){
         ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
       
-      
+    
+        // TODO: Rewrite this block to work with the new CDROM State Machine I'm working on.
+        // The purpose of that is to prevent the CDROM read command from blocking the rest of program execution.
+
         // Check audio playback and top-up buffer
-        if(stream_getFreeChunkCount(&myStream) >= 4){
-            streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
-            if(streamOffset >= streamLength){
-                streamOffset -= streamLength;
-            }
-        }
+        //int streamFreeChunks = stream_getFreeChunkCount(&myStream);
+        //printf("Stream free chunks: %d\n", streamFreeChunks);
+        //if(streamFreeChunks >= 8){
+        //    printf(" Stream free chunks > half. Reading more data.\n");
+        //    startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
+        //    printf(" Read completed. Feeding stream from buffer.\n");
+        //    streamOffset += stream_feed(&myStream, streamBuffer, streamLength - streamOffset);
+        //    printf(" Stream feed complete.\n");
+        //    // If we reached the end of the stream, loop back to the start
+        //    if(streamOffset >= streamLength){
+        //        printf("  Stream has reached end. Resetting!\n");
+        //        streamOffset -= streamLength;
+        //    }
+        //}
+
 
 
         getControllerInfo(0, &controllerInfo);
@@ -186,8 +280,8 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
-                uint8_t rootDirData[2048];
-                getRootDirData(rootDirData);
+                //uint8_t rootDirData[2048];
+                //getRootDirData(rootDirData);
                 DirectoryEntry *directoryListing[10];
                 uint8_t  recLen;
                 int offset = 0;
@@ -212,7 +306,7 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
             if(!circlePressed){
                 circlePressed = true;
-                sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
+            //    sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
             }
         } else {
             circlePressed = false;
