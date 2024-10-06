@@ -3,7 +3,7 @@
 
 extern bool vblank;
 
-void initIRQ();
+void initIRQ(void *stream);
 
 void interruptHandlerFunction(void *arg);
 
