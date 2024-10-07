@@ -138,26 +138,6 @@ CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
 
 VAGHeader mySongVAGHeader;
 
-void updateCDROMStateMachine(void){
-    switch(cdromSMState){
-        case CDROM_SM_IDLE:
-            // Get the number of free chunks that must be read
-            freeChunks = stream_getFreeChunkCount(&myStream);
-            if(freeChunks >= 16){
-                
-            }
-            break;
-
-        case CDROM_SM_WAIT_FOR_DATA:
-            if(waitingForInt3)
-                break;
-            // Update Stream
-
-            cdromSMState = CDROM_SM_IDLE;
-            break;
-    }
-}
-
 
 int selectedMusicChannel = 1;
 int feedLength;
