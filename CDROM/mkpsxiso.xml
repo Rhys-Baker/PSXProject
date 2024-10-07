@@ -60,7 +60,7 @@
 			</dir> -->
 			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT" />
 			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT" />
-			<file name="SONG.VAG" type="data" source="SongCompressed.vag" />
+			<file name="SONG.VAG" type="data" source="SongCompiled.vag" />
 			
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
