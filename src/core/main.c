@@ -277,7 +277,9 @@ int main(void){
             printf(" Stream free chunks > half. Reading more data.\n");
             startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
             printf(" Read completed. Feeding stream from buffer.\n");
-            streamOffset += stream_feed(&myStream, streamBuffer, streamLength - streamOffset);
+            // Stream length - stream offset = remaining length
+            // 
+            streamOffset += stream_feed(&myStream, streamBuffer, min(streamLength - streamOffset, streamFreeChunks*2048));
             printf(" Stream feed complete.\n");
             // If we reached the end of the stream, loop back to the start
             if(streamOffset >= streamLength){
