@@ -36,12 +36,10 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
 }
 
 
-#include <stdio.h>
 // Gets the 2048 bytes that make up the root directory
 void getRootDirData(uint8_t *rootDirData){
    uint8_t buffer[2048];
    uint32_t rootDirLBA;
-   printf("Read the PVD sector into ram\n");
    // Read the PVD sector into ram
    startCDROMRead(
       16,
@@ -56,7 +54,6 @@ void getRootDirData(uint8_t *rootDirData){
    getRootDirLBA(buffer, &rootDirLBA);
 
    // Read the contents of the root directory.
-   printf("Read the contents of the root directory:\n");
    startCDROMRead(
       rootDirLBA,
       rootDirData,
@@ -65,5 +62,4 @@ void getRootDirData(uint8_t *rootDirData){
       true,
       true
    );
-   printf("Successfully read root directory contents.\n");
 }

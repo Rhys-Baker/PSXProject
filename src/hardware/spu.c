@@ -262,7 +262,6 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
  * blocks.
  * - SpicyJpeg
  */
-#include <stdio.h>
 void stream_configureIRQ(Stream *stream){
     uint16_t ctrlReg = SPU_CTRL;
 

@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "stdatomic.h"
 #include "cdrom.h"
 
@@ -89,11 +87,9 @@ void waitForINT1(){
 }
 
 void waitForINT2(){
-    printf("WaitingForINT2\n");
     while(waitingForInt2){
         __asm__ volatile("");
     }
-    printf("INT2 done.\n");
 }
 
 void waitForINT3(){
@@ -159,7 +155,6 @@ void cdromINT1(void){
     cdromReadDataPtr = (void *) (
         (uintptr_t) cdromReadDataPtr + cdromReadDataSectorSize
     );
-    printf(" %d\n", cdromReadDataNumSectors);
     if ((--cdromReadDataNumSectors) <= 0)
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
         

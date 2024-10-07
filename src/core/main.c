@@ -52,7 +52,6 @@ uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
-    printf(" For Loop\n");
     for(int i=0; i<10; i++){
         if(parseDirRecord(
             &rootDirData[offset],
@@ -64,11 +63,9 @@ uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
         offset += recLen;
         
         if(!__builtin_strcmp(directoryEntry.name, filename)){
-            printf(" Returning: %d\n", directoryEntry.lba);
             return directoryEntry.lba;
         }
     }
-    printf(" Broke out!\n");
     return 0;
 }
 
@@ -176,26 +173,18 @@ int main(void){
     // Initialise important things for later
     init(&myStream);
     
-    printf("\n\n=====Program start=====\n");
 
     uint8_t rootDirData[2048];
     getRootDirData(&rootDirData);
-    printf("Got root dir data.\n");
 
-    printf("Get LBA to file: \"SONG.VAG;1\"");
     uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
-    printf("Got LBA to song: %d\n", songLBA);
 
     char songVagHeaderSector[2048];
     uint8_t streamBuffer[16 * 2048]; // 32 mono chunks or 16 stereo chunks
 
     if(songLBA){
-        printf("Read VAG header from cdrom\n");
         startCDROMRead(songLBA++, songVagHeaderSector, sizeof(songVagHeaderSector) / 2048, 2048, true, true);
-        printf("Read song data from cdrom\n");
         startCDROMRead(songLBA, streamBuffer, sizeof(streamBuffer) / 2048, 2048, true, true);
-    } else {
-        printf("LBA not found!\n");
     }
 
     // TODO: Make this not bad
@@ -264,43 +253,34 @@ int main(void){
         // Check audio playback and top-up buffer
         int chunkLength = stream_getChunkLength(&myStream);
         int streamFreeChunks = stream_getFreeChunkCount(&myStream);
-        printf("Stream free chunks: %d\n", streamFreeChunks);
 
 
 
         // This state machine can theoretically change states and run the next cycle all within a single frame if the cdrom runs fast enough.
         // Thats why I'm using if's rather than a switch.
         if(cdromSMState == CDROM_SM_IDLE){
-            printf("State is CDROM_SM_IDLE\n");
             if(streamFreeChunks >= 8){
                 feedLength = min(
                     (streamLength) - streamOffset,
                     min(streamFreeChunks * chunkLength, sizeof(streamBuffer))
                 );
-                printf(" Reading %d bytes.\n", feedLength);
 
                 startCDROMRead(songLBA + (streamOffset / 2048), streamBuffer, feedLength / 2048, 2048, true, false);
-                printf("State change to CDROM_SM_WAIT_FOR_DATA\n");
                 cdromSMState = CDROM_SM_WAIT_FOR_DATA;
             }
         }
         if(cdromSMState == CDROM_SM_WAIT_FOR_DATA){
-            printf("State is CDROM_SM_WAIT_FOR_DATA\n");
             if(cdromDataReady){
-                printf("State change to CDROM_SM_DATA_READY\n");
                 cdromSMState = CDROM_SM_DATA_READY;
             }
         }
         if(cdromSMState == CDROM_SM_DATA_READY){
-            printf("State is CDROM_SM_DATA_READY\n");
             // Stream length - stream offset = remaining length
-            printf("Feeding stream.\n");
             streamOffset += stream_feed(&myStream, streamBuffer, feedLength);
             // If we reached the end of the stream, loop back to the start
             if(streamOffset >= streamLength){
                 streamOffset -= streamLength;
             }
-            printf("State change to CDROM_SM_IDLE\n");
             cdromSMState = CDROM_SM_IDLE;
         
         }
