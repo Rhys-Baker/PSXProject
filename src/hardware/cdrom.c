@@ -11,7 +11,9 @@
 #include "spu.h"
 
 bool waitingForInt1;
+bool waitingForInt2;
 bool waitingForInt3;
+bool waitingForInt4;
 bool waitingForInt5;
 
 void  *cdromReadDataPtr;
@@ -55,7 +57,9 @@ void initCDROM(void) {
 
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     waitingForInt1 = true;
+    waitingForInt2 = true;
     waitingForInt3 = true;
+    waitingForInt4 = true;
     waitingForInt5 = true;
 
     while (CDROM_BUSY)
@@ -78,6 +82,14 @@ void waitForINT1(){
     while(waitingForInt1 && waitingForInt5){
         __asm__ volatile("");
     }
+}
+
+void waitForINT2(){
+    printf("WaitingForINT2\n");
+    while(waitingForInt2){
+        __asm__ volatile("");
+    }
+    printf("INT2 done.\n");
 }
 
 void waitForINT3(){
@@ -123,7 +135,11 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
     issueCDROMCommand(CDROM_READN, NULL, 0);
     waitForINT3();
     if(wait){
-        waitForINT1();
+        while(cdromReadDataNumSectors > 0){
+            // Do nothing
+            __asm__ volatile("");
+        }
+        waitForINT2();
     }
 }
 
@@ -139,7 +155,8 @@ void cdromINT1(void){
     cdromReadDataPtr = (void *) (
         (uintptr_t) cdromReadDataPtr + cdromReadDataSectorSize
     );
-    if (!(--cdromReadDataNumSectors))
+    printf(" %d\n", cdromReadDataNumSectors);
+    if ((--cdromReadDataNumSectors) <= 0)
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
         
     atomic_signal_fence(memory_order_release);
@@ -149,26 +166,21 @@ void cdromINT1(void){
 
 void cdromINT2(void){
     // Do something to handle this interrupt.
+    waitingForInt2 = false;
     return;
 }
 
 // This is usually just reading the status. It may be more than one parameter, however I don't handle that.
 void cdromINT3(void){
-    if(waitingForInt3){
-        cdromStatus = cdromResponse[0];
-        waitingForInt3 = false;
-    } else {
-        switch(cdromLastReadPurpose){
-            case CDROM_PURPOSE_STREAM:
-                
-            break;
-        }
-    }
+    cdromStatus = cdromResponse[0];
+    waitingForInt3 = false;
+    
     return;
 }
 
 void cdromINT4(void){
     // Do something to handle this interrupt.
+    waitingForInt4 = false;
     return;
 }
 

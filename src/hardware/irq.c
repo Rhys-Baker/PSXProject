@@ -44,6 +44,7 @@ void handleCDROMIRQ(void) {
     while (CDROM_HSTS & CDROM_HSTS_RSLRRDY)
         cdromResponse[cdromRespLength++] = CDROM_RESULT;
 
+    printf("CDROM IRQ Fired: %d\n", irqType);
     switch (irqType) {
         case IRQ_DATA_READY:
             cdromINT1();

@@ -52,6 +52,7 @@ uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
+    printf(" For Loop\n");
     for(int i=0; i<10; i++){
         if(parseDirRecord(
             &rootDirData[offset],
@@ -63,9 +64,11 @@ uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
         offset += recLen;
         
         if(!__builtin_strcmp(directoryEntry.name, filename)){
+            printf(" Returning: %d\n", directoryEntry.lba);
             return directoryEntry.lba;
         }
     }
+    printf(" Broke out!\n");
     return 0;
 }
 
@@ -173,13 +176,23 @@ int main(void){
 
     uint8_t rootDirData[2048];
     getRootDirData(&rootDirData);
+    printf("Got root dir data.\n");
+
+    hexdump(rootDirData, 2048);
+
+    printf("Get LBA to file: \"SONG.VAG;1\"");
     uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
+    printf("Got LBA to song: %d\n", songLBA);
 
     char songVagHeaderSector[2048];
     uint8_t streamBuffer[32 * 2048]; // 32 chunk buffer
     if(songLBA){
+        printf("Read VAG header from cdrom\n");
         startCDROMRead(songLBA, songVagHeaderSector, 1, 2048, true, true);
-        startCDROMRead(songLBA+1, streamBuffer, 32, 2048, true, true);
+        printf("Read song data from cdrom\n");
+        startCDROMRead(songLBA+1, streamBuffer, 16, 2048, true, true);
+    } else {
+        printf("LBA not found!\n");
     }
 
 
@@ -258,20 +271,20 @@ int main(void){
         // The purpose of that is to prevent the CDROM read command from blocking the rest of program execution.
 
         // Check audio playback and top-up buffer
-        //int streamFreeChunks = stream_getFreeChunkCount(&myStream);
-        //printf("Stream free chunks: %d\n", streamFreeChunks);
-        //if(streamFreeChunks >= 8){
-        //    printf(" Stream free chunks > half. Reading more data.\n");
-        //    startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
-        //    printf(" Read completed. Feeding stream from buffer.\n");
-        //    streamOffset += stream_feed(&myStream, streamBuffer, streamLength - streamOffset);
-        //    printf(" Stream feed complete.\n");
-        //    // If we reached the end of the stream, loop back to the start
-        //    if(streamOffset >= streamLength){
-        //        printf("  Stream has reached end. Resetting!\n");
-        //        streamOffset -= streamLength;
-        //    }
-        //}
+        int streamFreeChunks = stream_getFreeChunkCount(&myStream);
+        printf("Stream free chunks: %d\n", streamFreeChunks);
+        if(streamFreeChunks >= 8){
+            printf(" Stream free chunks > half. Reading more data.\n");
+            startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
+            printf(" Read completed. Feeding stream from buffer.\n");
+            streamOffset += stream_feed(&myStream, streamBuffer, streamLength - streamOffset);
+            printf(" Stream feed complete.\n");
+            // If we reached the end of the stream, loop back to the start
+            if(streamOffset >= streamLength){
+                printf("  Stream has reached end. Resetting!\n");
+                streamOffset -= streamLength;
+            }
+        }
 
 
 
