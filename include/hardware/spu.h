@@ -66,6 +66,11 @@ static inline void setMasterVolume(uint16_t master, uint16_t reverb){
     SPU_REVERB_VOL_R = reverb;
 }
 
+static inline void setChannelVolume(uint8_t channel, uint16_t master){
+    SPU_CH_VOL_L(channel) = master;
+    SPU_CH_VOL_R(channel) = master;
+}
+
 static inline void stopChannel(Channel ch){
     stopChannels(1 << ch);
 }
