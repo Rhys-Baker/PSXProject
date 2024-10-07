@@ -4,8 +4,12 @@
 #include <stdbool.h>
 
 extern bool waitingForInt1;
+extern bool waitingForInt2;
 extern bool waitingForInt3;
+extern bool waitingForInt4;
 extern bool waitingForInt5;
+
+extern bool cdromDataReady;
 
 extern void  *cdromReadDataPtr;
 extern size_t cdromReadDataSectorSize;

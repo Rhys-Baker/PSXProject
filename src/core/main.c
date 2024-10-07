@@ -133,7 +133,8 @@ void hexdump(const uint8_t *ptr, size_t length) {
 
 typedef enum{
 	CDROM_SM_IDLE            = 0,
-	CDROM_SM_WAIT_FOR_STREAM = 1
+	CDROM_SM_WAIT_FOR_DATA = 1,
+    CDROM_SM_DATA_READY      = 2
 } CDROMStateMachineState;
 
 CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
@@ -150,7 +151,7 @@ void updateCDROMStateMachine(void){
             }
             break;
 
-        case CDROM_SM_WAIT_FOR_STREAM:
+        case CDROM_SM_WAIT_FOR_DATA:
             if(waitingForInt3)
                 break;
             // Update Stream
@@ -160,6 +161,9 @@ void updateCDROMStateMachine(void){
     }
 }
 
+
+int selectedMusicChannel = 1;
+int feedLength;
 
 // Start of main
 __attribute__((noreturn))
@@ -262,25 +266,44 @@ int main(void){
         int streamFreeChunks = stream_getFreeChunkCount(&myStream);
         printf("Stream free chunks: %d\n", streamFreeChunks);
 
-        if(streamFreeChunks >= 8){
-            int feedLength = min(
-                (streamLength) - streamOffset,
-                min(streamFreeChunks * chunkLength, sizeof(streamBuffer))
-            );
-            printf(" Reading %d bytes.\n", feedLength);
 
-            startCDROMRead(songLBA + (streamOffset / 2048), streamBuffer, feedLength / 2048, 2048, true, true);
-            printf(" Read completed. Feeding stream from buffer.\n");
-            // Stream length - stream offset = remaining length
-            streamOffset += stream_feed(&myStream, streamBuffer, feedLength);
-            printf(" Stream feed complete.\n");
-            // If we reached the end of the stream, loop back to the start
-            if(streamOffset >= streamLength){
-                printf("  Stream has reached end. Resetting!\n");
-                streamOffset -= streamLength;
+
+        // This state machine can theoretically change states and run the next cycle all within a single frame if the cdrom runs fast enough.
+        // Thats why I'm using if's rather than a switch.
+        if(cdromSMState == CDROM_SM_IDLE){
+            printf("State is CDROM_SM_IDLE\n");
+            if(streamFreeChunks >= 8){
+                feedLength = min(
+                    (streamLength) - streamOffset,
+                    min(streamFreeChunks * chunkLength, sizeof(streamBuffer))
+                );
+                printf(" Reading %d bytes.\n", feedLength);
+
+                startCDROMRead(songLBA + (streamOffset / 2048), streamBuffer, feedLength / 2048, 2048, true, false);
+                printf("State change to CDROM_SM_WAIT_FOR_DATA\n");
+                cdromSMState = CDROM_SM_WAIT_FOR_DATA;
             }
         }
-
+        if(cdromSMState == CDROM_SM_WAIT_FOR_DATA){
+            printf("State is CDROM_SM_WAIT_FOR_DATA\n");
+            if(cdromDataReady){
+                printf("State change to CDROM_SM_DATA_READY\n");
+                cdromSMState = CDROM_SM_DATA_READY;
+            }
+        }
+        if(cdromSMState == CDROM_SM_DATA_READY){
+            printf("State is CDROM_SM_DATA_READY\n");
+            // Stream length - stream offset = remaining length
+            printf("Feeding stream.\n");
+            streamOffset += stream_feed(&myStream, streamBuffer, feedLength);
+            // If we reached the end of the stream, loop back to the start
+            if(streamOffset >= streamLength){
+                streamOffset -= streamLength;
+            }
+            printf("State change to CDROM_SM_IDLE\n");
+            cdromSMState = CDROM_SM_IDLE;
+        
+        }
 
 
         getControllerInfo(0, &controllerInfo);
@@ -288,23 +311,7 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
-                //uint8_t rootDirData[2048];
-                //getRootDirData(rootDirData);
-                DirectoryEntry *directoryListing[10];
-                uint8_t  recLen;
-                int offset = 0;
-                printf("\n\n==== Directory Contents ====\n\n");
-                for(int i=0; i<10; i++){
-                    if(parseDirRecord(
-                        &rootDirData[offset],
-                        &recLen,
-                        directoryListing[i]
-                    )){
-                       break;
-                    }
-                    offset += recLen;
-                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
-                }
+                
             }
         } else {
             squarePressed = false;
@@ -314,7 +321,13 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
             if(!circlePressed){
                 circlePressed = true;
-            //    sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
+                setChannelVolume(selectedMusicChannel+1, MAX_VOLUME);
+                selectedMusicChannel = !selectedMusicChannel;
+                setChannelVolume(selectedMusicChannel+1, 0);
+                
+                // Update screen colour to reflect which music we are playing.
+                screenColor = selectedMusicChannel ? 0x0c34e8 : 0xfa823c;
+                
             }
         } else {
             circlePressed = false;

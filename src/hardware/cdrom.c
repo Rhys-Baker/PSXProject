@@ -16,6 +16,8 @@ bool waitingForInt3;
 bool waitingForInt4;
 bool waitingForInt5;
 
+bool cdromDataReady;
+
 void  *cdromReadDataPtr;
 size_t cdromReadDataSectorSize;
 size_t cdromReadDataNumSectors;
@@ -61,6 +63,8 @@ void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     waitingForInt3 = true;
     waitingForInt4 = true;
     waitingForInt5 = true;
+
+    cdromDataReady = false;
 
     while (CDROM_BUSY)
         __asm__ volatile("");
@@ -167,6 +171,7 @@ void cdromINT1(void){
 void cdromINT2(void){
     // Do something to handle this interrupt.
     waitingForInt2 = false;
+    cdromDataReady = true;
     return;
 }
 
