@@ -183,12 +183,13 @@ int main(void){
     printf("Got LBA to song: %d\n", songLBA);
 
     char songVagHeaderSector[2048];
-    uint8_t streamBuffer[16 * 2048]; // 32 chunk buffer
+    uint8_t streamBuffer[16 * 2048]; // 32 mono chunks or 16 stereo chunks
+
     if(songLBA){
         printf("Read VAG header from cdrom\n");
-        startCDROMRead(songLBA, songVagHeaderSector, 1, 2048, true, true);
+        startCDROMRead(songLBA++, songVagHeaderSector, sizeof(songVagHeaderSector) / 2048, 2048, true, true);
         printf("Read song data from cdrom\n");
-        startCDROMRead(songLBA+1, streamBuffer, 16, 2048, true, true);
+        startCDROMRead(songLBA, streamBuffer, sizeof(streamBuffer) / 2048, 2048, true, true);
     } else {
         printf("LBA not found!\n");
     }
@@ -206,12 +207,8 @@ int main(void){
     stream_initFromVAGHeader(&myStream, songVagHeader, spuAllocPtr, 32);
     spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
 
-    
-
-
     // (myStream.interleave * myStream.channels)
-    streamOffset = stream_feed(&myStream, streamBuffer, 16 * 2048);
-    
+    streamOffset = stream_feed(&myStream, streamBuffer, sizeof(streamBuffer));
     
     setMasterVolume(MAX_VOLUME, 0);
     stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
@@ -219,14 +216,15 @@ int main(void){
     
     // Load a click sound.
     // TODO: Move these out of here and make it all a bit neater.
-    //stopChannels(ALL_CHANNELS);
-    //setMasterVolume(MAX_VOLUME, 0);
-    //Sound mySound;
-    //sound_create(&mySound);
-    //const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
-    //sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
-    //spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-    
+#if 0
+    stopChannels(ALL_CHANNELS);
+    setMasterVolume(MAX_VOLUME, 0);
+    Sound mySound;
+    sound_create(&mySound);
+    const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
+    sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
+    spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
+#endif
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -256,14 +254,21 @@ int main(void){
         // The purpose of that is to prevent the CDROM read command from blocking the rest of program execution.
 
         // Check audio playback and top-up buffer
+        int chunkLength = stream_getChunkLength(&myStream);
         int streamFreeChunks = stream_getFreeChunkCount(&myStream);
         printf("Stream free chunks: %d\n", streamFreeChunks);
+
         if(streamFreeChunks >= 8){
-            printf(" Stream free chunks > half. Reading more data.\n");
-            startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
+            int feedLength = min(
+                (streamLength) - streamOffset,
+                min(streamFreeChunks * chunkLength, sizeof(streamBuffer))
+            );
+            printf(" Reading %d bytes.\n", feedLength);
+
+            startCDROMRead(songLBA + (streamOffset / 2048), streamBuffer, feedLength / 2048, 2048, true, true);
             printf(" Read completed. Feeding stream from buffer.\n");
             // Stream length - stream offset = remaining length
-            streamOffset += stream_feed(&myStream, streamBuffer, min((streamLength) - streamOffset, streamFreeChunks*2048));
+            streamOffset += stream_feed(&myStream, streamBuffer, feedLength);
             printf(" Stream feed complete.\n");
             // If we reached the end of the stream, loop back to the start
             if(streamOffset >= streamLength){
