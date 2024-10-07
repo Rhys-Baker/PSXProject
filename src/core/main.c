@@ -202,16 +202,20 @@ int main(void){
     VAGHeader *songVagHeader;
     __builtin_memcpy(songVagHeader, songVagHeaderSector, sizeof(VAGHeader));
     
-    size_t streamLength = vagHeader_getSPULength(songVagHeader);
-    size_t streamOffset = 0;
     stream_initFromVAGHeader(&myStream, songVagHeader, spuAllocPtr, 32);
     spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
+
+    size_t streamLength = vagHeader_getSPULength(songVagHeader) * myStream.channels;
+    size_t streamOffset = 0;
 
     // (myStream.interleave * myStream.channels)
     streamOffset = stream_feed(&myStream, streamBuffer, sizeof(streamBuffer));
     
     setMasterVolume(MAX_VOLUME, 0);
     stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
+    
+    setChannelVolume(( selectedMusicChannel)+1, MAX_VOLUME);
+    setChannelVolume((!selectedMusicChannel)+1, 0); // Mute the other channel
 
     
     // Load a click sound.
