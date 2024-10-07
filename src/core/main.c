@@ -178,14 +178,12 @@ int main(void){
     getRootDirData(&rootDirData);
     printf("Got root dir data.\n");
 
-    hexdump(rootDirData, 2048);
-
     printf("Get LBA to file: \"SONG.VAG;1\"");
     uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
     printf("Got LBA to song: %d\n", songLBA);
 
     char songVagHeaderSector[2048];
-    uint8_t streamBuffer[32 * 2048]; // 32 chunk buffer
+    uint8_t streamBuffer[16 * 2048]; // 32 chunk buffer
     if(songLBA){
         printf("Read VAG header from cdrom\n");
         startCDROMRead(songLBA, songVagHeaderSector, 1, 2048, true, true);
@@ -194,7 +192,6 @@ int main(void){
     } else {
         printf("LBA not found!\n");
     }
-
 
     // TODO: Make this not bad
     // While this doesn't NOT work, it's terrible and nigh impossible to read
@@ -208,10 +205,16 @@ int main(void){
     size_t streamOffset = 0;
     stream_initFromVAGHeader(&myStream, songVagHeader, spuAllocPtr, 32);
     spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
-    streamOffset = stream_feed(&myStream, streamBuffer, 16*2048);
 
-    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
+    
 
+
+    // (myStream.interleave * myStream.channels)
+    streamOffset = stream_feed(&myStream, streamBuffer, 16 * 2048);
+    
+    
+    setMasterVolume(MAX_VOLUME, 0);
+    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
 
     
     // Load a click sound.
@@ -224,24 +227,6 @@ int main(void){
     //sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     //spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
     
-
-    // Create pointer to header
-    //vagHeader = (const VAGHeader *) groovy_gravyAudio;
-    //size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
-    //size_t streamOffset = 0;
-    //const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
-//
-    //// Init from header
-    //stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 32);
-    //spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
-//
-    //// Fill up the buffer with data from the file
-    //streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
-//
-    //// Kick off playback of the stream
-    //stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
-
-
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -278,8 +263,7 @@ int main(void){
             startCDROMRead(songLBA+1+(streamOffset / 2048), streamBuffer, streamFreeChunks, 2048, true, true);
             printf(" Read completed. Feeding stream from buffer.\n");
             // Stream length - stream offset = remaining length
-            // 
-            streamOffset += stream_feed(&myStream, streamBuffer, min(streamLength - streamOffset, streamFreeChunks*2048));
+            streamOffset += stream_feed(&myStream, streamBuffer, min((streamLength) - streamOffset, streamFreeChunks*2048));
             printf(" Stream feed complete.\n");
             // If we reached the end of the stream, loop back to the start
             if(streamOffset >= streamLength){
