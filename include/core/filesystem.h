@@ -21,3 +21,4 @@ typedef struct{
 uint32_t getRootDirLBA(uint8_t *pvdSector, uint32_t *LBA);
 int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *directoryEntry);
 void getRootDirData(uint8_t *rootDirData);
+uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename);

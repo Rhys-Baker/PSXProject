@@ -41,56 +41,19 @@ void waitForVblank(){
     vblank = false;
 }
 
-/// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
-/// @param rootDirData Pointer to the root directory data.
-/// @param filename String containing the filename of the requested file.
-/// @return LBA to file or 0 if not found.
-uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
-    DirectoryEntry directoryEntry;
-    uint8_t  recLen;
-    int offset = 0;
-    for(int i=0; i<10; i++){
-        if(parseDirRecord(
-            &rootDirData[offset],
-            &recLen,
-            &directoryEntry
-        )){
-           break;
-        }
-        offset += recLen;
-        
-        if(!__builtin_strcmp(directoryEntry.name, filename)){
-            return directoryEntry.lba;
-        }
-    }
-    return 0;
-}
-
 // Gets called once at the start of main.
 void init(void *stream){
+    // Enable display blanking if not already.
+    // Prevents logo from appearing while loading.
+    GPU_GP1 = gp1_dispBlank(true);
+
     // Initialise the serial port for printing
     initSerialIO(115200);
     initSPU();
     initCDROM();
     initIRQ(stream);
     initControllerBus();
-
-    // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
-    if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
-       setupGPU(GP1_MODE_PAL, SCREEN_WIDTH, SCREEN_HEIGHT);
-    } else {
-       setupGPU(GP1_MODE_NTSC, SCREEN_WIDTH, SCREEN_HEIGHT);
-    }
-
-    // Enable the GPU's DMA channel
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_GPU * 4);
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_OTC * 4);
-
-    // Enable the SPU's DMA channel
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_SPU * 4);
-
-    GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
-    GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
+    initGPU(); // Disables screen blanking after setting up screen.
 
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
@@ -99,7 +62,10 @@ void init(void *stream){
 }
 
 ControllerInfo controllerInfo;
-// TODO: Consider changing these into a single variable and just using bits instead
+// TODO: Consider changing these into a single variable and just using bits instead?
+// At least clean this up a bit. Maybe move all these into the controller header.
+// Consider a function that handles each buttonpress and runs the function associated?
+// Set up with a function pointer? Idk, just some ideas for later.
 bool squarePressed   = false;
 bool circlePressed   = false;
 bool trianglePressed = false;
@@ -109,9 +75,12 @@ bool upPressed       = false;
 bool downPressed     = false;
 
 
+// Variables for the music/audio stream. All of this will be cleaned up eventually.
 Stream myStream;
 size_t freeChunks;
 
+// Debugging hexdump function.
+// Considering adding a "utilies" or "debug" library for these kinds of things
 void hexdump(const uint8_t *ptr, size_t length) {
     while (length) {
         size_t lineLength = (length < 16) ? length : 16;
@@ -124,20 +93,28 @@ void hexdump(const uint8_t *ptr, size_t length) {
     }
 }
 
-
+// CDROM State machine states.
+// Don't want these in main either if possible. Perhaps we can put all this into a Stream lib?
 typedef enum{
 	CDROM_SM_IDLE            = 0,
 	CDROM_SM_WAIT_FOR_DATA = 1,
     CDROM_SM_DATA_READY      = 2
 } CDROMStateMachineState;
-
 CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
 
+// Place to store the header data for the song after loading it from. Doesn't really need to exist after initialising the stream.
+// Consider moving this into an init function for the stream?
 VAGHeader mySongVAGHeader;
 
-
+// Used to keep track of which channel is playing.
+// 0 is clean, 1 is combat.
 int selectedMusicChannel = 1;
+
+// Part of the CDROM state machine.
+// Really only needs to be accessible to the state machine.
 int feedLength;
+
+
 
 // Start of main
 __attribute__((noreturn))
@@ -150,23 +127,30 @@ int main(void){
     // Initialise important things for later
     init(&myStream);
     
-
+    // This probably doesn't need to be in main.
+    // We can instead have it be global to the filesystem lib and abstract the entire filesystem loading sequence into a single initFilesystem() function.
+    // Also means we don't need to pass a pointer to this data as much
     uint8_t rootDirData[2048];
     getRootDirData(&rootDirData);
 
+    // Again, only needed when initialising the stream. Can stay as a part of the stream init function.
+    // Just pass the file path to it.
     uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
-
     char songVagHeaderSector[2048];
+
+    // Does need to be accessed by the cdrom/stream state machine but not really anywhere else.
+    // This can be taken out of main and abstracted a bit.
     uint8_t streamBuffer[16 * 2048]; // 32 mono chunks or 16 stereo chunks
 
+    // This can become a part of the stream init function.
     if(songLBA){
         startCDROMRead(songLBA++, songVagHeaderSector, sizeof(songVagHeaderSector) / 2048, 2048, true, true);
         startCDROMRead(songLBA, streamBuffer, sizeof(streamBuffer) / 2048, 2048, true, true);
     }
 
-    // TODO: Make this not bad
-    // While this doesn't NOT work, it's terrible and nigh impossible to read
-    // I have to scroll up and down to understand it. Please fix.
+
+    // This entire section needs to be neatened up a bunch.
+    // This is most of the new init function, so take it all out of main and turn it into a single function.
     stream_create(&myStream);
     uint32_t spuAllocPtr = 0x1010;
     VAGHeader *songVagHeader;
@@ -178,16 +162,20 @@ int main(void){
     size_t streamLength = vagHeader_getSPULength(songVagHeader) * myStream.channels;
     size_t streamOffset = 0;
 
-    // (myStream.interleave * myStream.channels)
     streamOffset = stream_feed(&myStream, streamBuffer, sizeof(streamBuffer));
     
     setMasterVolume(MAX_VOLUME, 0);
     stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
     
+    // This isn't necessarily a part of the stream function.
+    // By default, the stream will play all channels. It is up to the user to handle the volume of which channels they want.
     setChannelVolume(( selectedMusicChannel)+1, MAX_VOLUME);
     setChannelVolume((!selectedMusicChannel)+1, 0); // Mute the other channel
 
     
+
+    // It may also be worth it to create a function for initialising and playing sounds.
+
     // Load a click sound.
     // TODO: Move these out of here and make it all a bit neater.
 #if 0
@@ -199,6 +187,7 @@ int main(void){
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
 #endif
+
 
     // Main loop. Runs every frame, forever
     for(;;){
@@ -222,16 +211,19 @@ int main(void){
         ptr[1] = gp0_fbOffset1(bufferX, bufferY);
         ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
-      
-    
-        // TODO: Rewrite this block to work with the new CDROM State Machine I'm working on.
-        // The purpose of that is to prevent the CDROM read command from blocking the rest of program execution.
 
-        // Check audio playback and top-up buffer
+
+        // Not sure if these need to be updated every single frame.
+        // Might be worth looking into this.
+        // Also they are internal to the state machine so we can take them out of main
         int chunkLength = stream_getChunkLength(&myStream);
         int streamFreeChunks = stream_getFreeChunkCount(&myStream);
 
-
+        
+        // This is the cdrom State Machine.
+        // It should probably be renammed to relay that its specifically handling the music stream.
+        // This allows cdrom reads to take place without blocking. Its a VERY rudimentary form of concurency.
+        // After abstracting this into a lib, consider creating a CDROM command queue. As it is now, only one command can be given at a time.
 
         // This state machine can theoretically change states and run the next cycle all within a single frame if the cdrom runs fast enough.
         // Thats why I'm using if's rather than a switch.
@@ -259,10 +251,16 @@ int main(void){
                 streamOffset -= streamLength;
             }
             cdromSMState = CDROM_SM_IDLE;
-        
         }
 
 
+
+        // Handling controller input
+        
+        // I would also really like to turn this into its own function handleControllerInput or something.
+        // Perhaps have an init for each button you want to check?
+        // Pass a function pointer/null pointer to each init function and it sets it up that way?
+        // Not sure the details, but all of these needs to be taken out of main.
         getControllerInfo(0, &controllerInfo);
         // Square
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
@@ -294,7 +292,6 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_TRIANGLE){
             if(!trianglePressed){
                 trianglePressed = true;
-                stopChannels(ALL_CHANNELS);
             }
         } else {
             trianglePressed = false;
@@ -338,6 +335,9 @@ int main(void){
             downPressed = false;
         }
 
+
+        // This will wait for the GPU to be ready,
+        // It also waits for Vblank.
         waitForGP0Ready();
         waitForVblank();
 

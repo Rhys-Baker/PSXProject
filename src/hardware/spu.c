@@ -67,6 +67,9 @@ void initSPU(void){
 
     SPU_CTRL = SPU_CTRL_UNMUTE | SPU_CTRL_ENABLE;
     stopChannel(ALL_CHANNELS);
+
+    // Enable the SPU's DMA channel
+    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_SPU * 4);
 }
 
 Channel getFreeChannel(void) {

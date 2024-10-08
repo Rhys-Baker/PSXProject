@@ -63,3 +63,28 @@ void getRootDirData(uint8_t *rootDirData){
       true
    );
 }
+
+/// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
+/// @param rootDirData Pointer to the root directory data.
+/// @param filename String containing the filename of the requested file.
+/// @return LBA to file or 0 if not found.
+uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
+    DirectoryEntry directoryEntry;
+    uint8_t  recLen;
+    int offset = 0;
+    for(int i=0; i<10; i++){
+        if(parseDirRecord(
+            &rootDirData[offset],
+            &recLen,
+            &directoryEntry
+        )){
+           break;
+        }
+        offset += recLen;
+        
+        if(!__builtin_strcmp(directoryEntry.name, filename)){
+            return directoryEntry.lba;
+        }
+    }
+    return 0;
+}
