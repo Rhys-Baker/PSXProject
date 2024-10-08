@@ -22,9 +22,6 @@ extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
 
-extern const uint8_t computer_keyboard_spacebarAudio[];
-extern const uint8_t groovy_gravyAudio[];
-
 // the X and Y of the buffer we are currently using.
 int bufferX = 0;
 int bufferY = 0;
