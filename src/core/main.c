@@ -43,7 +43,7 @@ void waitForVblank(){
 }
 
 // Gets called once at the start of main.
-void init(void){
+void initHardware(void){
     // Enable display blanking if not already.
     // Prevents logo from appearing while loading.
     GPU_GP1 = gp1_dispBlank(true);
@@ -79,7 +79,7 @@ void hexdump(const uint8_t *ptr, size_t length) {
 }
 
 // Used to keep track of which channel is playing.
-// 0 is clean, 1 is combat.
+// 1 is clean, 0 is combat.
 int selectedMusicChannel = 1;
 
 
@@ -99,7 +99,7 @@ int main(void){
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
 
     // Initialise important things for later
-    init();
+    initHardware();
     
     stream_init();
     stream_loadSong("SONG.VAG;1");
