@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "stdatomic.h"
 #include "cdrom.h"
 
@@ -8,9 +6,15 @@
 #include "registers.h"
 #include "system.h"
 
+#include "spu.h"
+
 bool waitingForInt1;
+bool waitingForInt2;
 bool waitingForInt3;
+bool waitingForInt4;
 bool waitingForInt5;
+
+bool cdromDataReady;
 
 void  *cdromReadDataPtr;
 size_t cdromReadDataSectorSize;
@@ -19,6 +23,8 @@ size_t cdromReadDataNumSectors;
 uint8_t cdromResponse[16];
 uint8_t cdromRespLength;
 uint8_t cdromStatus;
+
+uint8_t cdromLastReadPurpose;
 
 #define toBCD(i) (((i) / 10 * 16) | ((i) % 10))
 
@@ -51,8 +57,12 @@ void initCDROM(void) {
 
 void issueCDROMCommand(uint8_t cmd, const uint8_t *arg, size_t argLength) {
     waitingForInt1 = true;
+    waitingForInt2 = true;
     waitingForInt3 = true;
+    waitingForInt4 = true;
     waitingForInt5 = true;
+
+    cdromDataReady = false;
 
     while (CDROM_BUSY)
         __asm__ volatile("");
@@ -76,6 +86,12 @@ void waitForINT1(){
     }
 }
 
+void waitForINT2(){
+    while(waitingForInt2){
+        __asm__ volatile("");
+    }
+}
+
 void waitForINT3(){
      while(waitingForInt3 && waitingForInt5){
         __asm__ volatile("");
@@ -90,7 +106,15 @@ void convertLBAToMSF(MSF *msf, uint32_t lba) {
     msf->frame  = toBCD(lba % 75);
 }
 
-void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed) {
+
+/// @brief 
+/// @param lba LBA of the sector to read
+/// @param ptr Pointer to buffer to store read data
+/// @param numSectors Number of sectors to read
+/// @param sectorSize Size of sector (2048)
+/// @param doubleSpeed Read at double speed
+/// @param wait Block until read completed
+void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed, bool wait) {
     cdromReadDataPtr        = ptr;
     cdromReadDataNumSectors = numSectors;
     cdromReadDataSectorSize = sectorSize;
@@ -104,18 +128,26 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
         mode |= MODE_2X_SPEED;
 
     convertLBAToMSF(&msf, lba);
-
     issueCDROMCommand(CDROM_SETMODE, &mode, sizeof(mode));
     waitForINT3();
-    issueCDROMCommand(CDROM_SETLOC, &msf, sizeof(msf));
+    issueCDROMCommand(CDROM_SETLOC, (const uint8_t *)&msf, sizeof(msf));
     waitForINT3();
     issueCDROMCommand(CDROM_READN, NULL, 0);
     waitForINT3();
+    if(wait){
+        while(cdromReadDataNumSectors > 0){
+            // Do nothing
+            __asm__ volatile("");
+        }
+        waitForINT2();
+    }
 }
 
 // Data is ready to be read from the CDROM via DMA.
 // This will read the data into cdromReadDataPtr.
 // It will also pause the CDROM drive.
+
+#include <stdio.h>
 void cdromINT1(void){
     DMA_MADR(DMA_CDROM) = (uint32_t) cdromReadDataPtr;
     DMA_BCR(DMA_CDROM)  = cdromReadDataSectorSize / 4;
@@ -125,8 +157,10 @@ void cdromINT1(void){
     cdromReadDataPtr = (void *) (
         (uintptr_t) cdromReadDataPtr + cdromReadDataSectorSize
     );
-    if (!(--cdromReadDataNumSectors))
+    if ((--cdromReadDataNumSectors) <= 0){
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+    }
+        
     atomic_signal_fence(memory_order_release);
     waitingForInt1 = false;
     return;
@@ -134,6 +168,8 @@ void cdromINT1(void){
 
 void cdromINT2(void){
     // Do something to handle this interrupt.
+    waitingForInt2 = false;
+    cdromDataReady = true;
     return;
 }
 
@@ -141,11 +177,13 @@ void cdromINT2(void){
 void cdromINT3(void){
     cdromStatus = cdromResponse[0];
     waitingForInt3 = false;
+    
     return;
 }
 
 void cdromINT4(void){
     // Do something to handle this interrupt.
+    waitingForInt4 = false;
     return;
 }
 

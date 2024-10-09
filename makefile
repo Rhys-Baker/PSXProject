@@ -1,15 +1,31 @@
 IncludeTags = -Ilib -Ilib/libc -Ilib/ps1 -Ilib/vendor -Iinclude -Iinclude/core -Iinclude/hardware
 
-CC = mipsel-linux-gnu-gcc
+# Detect which toolchain is available
+ifneq ($(shell which mipsel-none-elf-gcc 2>/dev/null),)
+CC_PREFIX = mipsel-none-elf
+else
+ifneq ($(shell which mipsel-linux-gnu-gcc 2>/dev/null),)
+CC_PREFIX = mipsel-linux-gnu
+else
+$(error A mipsel-none-elf or mipsel-linux-gnu GCC toolchain must be installed and added to PATH)
+endif
+endif
+
+ifneq ($(shell which py 2>/dev/null),)
+PYTHON = py -3
+else
+PYTHON = python3
+endif
+
+CC = $(CC_PREFIX)-gcc
 CFLAGS = $(IncludeTags) -g -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -Og -mdivide-breaks
 
-AS = mipsel-linux-gnu-gcc
-AFLAGS = $(IncludeTags) -g -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -Og -mdivide-breaks
+AS = $(CC_PREFIX)-gcc
+AFLAGS = $(CFLAGS)
 
-LD = mipsel-linux-gnu-g++
-LDFLAGS = -g -static -nostdlib -Wl,-gc-sections -T executable.ld
+LD = $(CC_PREFIX)-gcc
+LDFLAGS = -g -static -nostdlib -Wl,-gc-sections -G8 -Texecutable.ld
 
-PYTHON = /usr/bin/python3.10
 CONVERT_SCRIPT = ../tools/convertExecutable.py
 TEXTURE_SCRIPT = tools/convertImage.py
 
@@ -117,9 +133,9 @@ $(TEXTURE_BUILD_DIR)/%Data.dat $(TEXTURE_BUILD_DIR)/%Palette.dat: $(TEXTURES_DIR
 		*16bpp*) BPP=16 ;; \
 	esac; \
 	if [ "$$BPP" = 16 ]; then \
-		python3 $(TEXTURE_SCRIPT) -b $$BPP $< $(TEXTURE_BUILD_DIR)/$*Data.dat; \
+		$(PYTHON) $(TEXTURE_SCRIPT) -b $$BPP $< $(TEXTURE_BUILD_DIR)/$*Data.dat; \
 	else \
-		python3 $(TEXTURE_SCRIPT) -b $$BPP $< $(TEXTURE_BUILD_DIR)/$*Data.dat $(TEXTURE_BUILD_DIR)/$*Palette.dat; \
+		$(PYTHON) $(TEXTURE_SCRIPT) -b $$BPP $< $(TEXTURE_BUILD_DIR)/$*Data.dat $(TEXTURE_BUILD_DIR)/$*Palette.dat; \
 	fi
 
 # Helper variable to extract base file name from path
@@ -169,7 +185,7 @@ $(BUILD_DIR)/%.s.obj: %.s
 
 # Linking step
 $(TARGET_ELF): $(OBJS) $(SOBJS)
-	$(LD) $(LDFLAGS) -o $@ $^ -lgcc -lgcc
+	$(LD) $(LDFLAGS) $^ -o $@ -lgcc
 
 # Convert ELF to PS-EXE
 $(TARGET_PSEXE): $(TARGET_ELF)

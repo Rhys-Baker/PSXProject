@@ -66,6 +66,11 @@ static inline void setMasterVolume(uint16_t master, uint16_t reverb){
     SPU_REVERB_VOL_R = reverb;
 }
 
+static inline void setChannelVolume(uint8_t channel, uint16_t master){
+    SPU_CH_VOL_L(channel) = master;
+    SPU_CH_VOL_R(channel) = master;
+}
+
 static inline void stopChannel(Channel ch){
     stopChannels(1 << ch);
 }
@@ -89,7 +94,7 @@ static inline bool vagHeader_validateMagic(const VAGHeader *vagHeader){
     return (vagHeader->magic == concat4_8('V', 'A', 'G', 'p')) && (vagHeader->channels <= 1);
 }
 
-static inline bool vagHeader_validateInterleavedMagic(VAGHeader *vagHeader){
+static inline bool vagHeader_validateInterleavedMagic(const VAGHeader *vagHeader){
     return (vagHeader->magic == concat4_8('V', 'A', 'G', 'i')) && vagHeader->interleave;
 }
 
@@ -98,15 +103,15 @@ static inline uint16_t vagHeader_getSPUSampleRate(const VAGHeader *vagHeader){
 }
 
 
-static inline size_t vagHeader_getSPULength(VAGHeader *vagHeader){
+static inline size_t vagHeader_getSPULength(const VAGHeader *vagHeader){
     return bswap32(vagHeader->length);
 }
 
-static inline int vagHeader_getNumChannels(VAGHeader *vagHeader){
+static inline int vagHeader_getNumChannels(const VAGHeader *vagHeader){
     return vagHeader->channels ? vagHeader->channels : 2;
 }
 
-static inline const void *vagHeader_getData(VAGHeader *vagHeader){
+static inline const void *vagHeader_getData(const VAGHeader *vagHeader){
     return vagHeader + 1;
 }
 
@@ -120,67 +125,9 @@ typedef struct Sound {
 
 void sound_create(Sound *sound);
 
-bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset);
+bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset);
 Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel ch);
 
 static inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){
     return sound_playOnChannel(sound, left, right, getFreeChannel());
 }
-
-
-/* Stream Class */
-
-typedef struct Stream{
-    uint32_t _channelMask;
-    uint16_t _head, _tail, _bufferedChunks;
-
-    uint32_t offset;
-    uint16_t interleave, numChunks, sampleRate, channels;
-} Stream;
-
-static inline size_t stream_getChunkLength(Stream *stream) {
-    return (size_t)(stream->interleave) * (size_t)(stream->channels);
-}
-static inline size_t stream_getFreeChunkCount(Stream *stream){
-    __atomic_signal_fence(__ATOMIC_ACQUIRE);
-
-    // The currently playing chunk cannot be overwritten.
-    size_t playingChunk = stream->_channelMask ? 1 : 0;
-    return stream->numChunks - (stream->_bufferedChunks + playingChunk);
-
-}
-
-static inline uint32_t stream_getChunkOffset(Stream *stream, size_t chunk) {
-    return stream->offset + stream_getChunkLength(stream) * chunk;
-}
-void stream_configureIRQ(Stream *stream);
-
-
-
-// Destructor here if needed
-ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask);
-
-static inline ChannelMask stream_start(Stream *stream, uint16_t left, uint16_t right){
-    return stream_startWithChannelMask(stream, left, right, getFreeChannels(NUM_CHANNELS));
-}
-static inline bool stream_isPlaying(Stream *stream){
-    __atomic_signal_fence(__ATOMIC_ACQUIRE);
-
-    return (stream->_channelMask != 0);
-}
-static inline bool stream_isUnderrun(Stream *stream){
-    __atomic_signal_fence(__ATOMIC_ACQUIRE);
-
-    return !stream->_bufferedChunks;
-}
-
-
-
-void stream_create(Stream *stream);
-bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks);
-
-void stream_stop(Stream *stream);
-void stream_handleInterrupt(Stream *stream);
-
-size_t stream_feed(Stream *stream, const void *data, size_t length);
-void stream_resetBuffer(Stream *stream);

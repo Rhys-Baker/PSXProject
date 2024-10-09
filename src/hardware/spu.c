@@ -67,6 +67,11 @@ void initSPU(void){
 
     SPU_CTRL = SPU_CTRL_UNMUTE | SPU_CTRL_ENABLE;
     stopChannel(ALL_CHANNELS);
+
+    // Enable the SPU's DMA channel
+    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_SPU * 4);
+
+    setMasterVolume(MAX_VOLUME, 0);
 }
 
 Channel getFreeChannel(void) {
@@ -128,7 +133,7 @@ void stopChannels(ChannelMask mask){
     }
 
     SPU_FLAG_ON1 = mask & 0xffff;
-    SPU_FLAG_ON2 >> 16;
+    SPU_FLAG_ON2 = mask >> 16;
 }
 
 size_t upload(uint32_t offset, const void *data, size_t length, bool wait){
@@ -207,7 +212,7 @@ void sound_create(Sound *sound){
     sound->sampleRate = 0;
     sound->length     = 0;
 }
-bool sound_initFromVAGHeader(Sound *sound, VAGHeader *vagHeader, uint32_t _offset){
+bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t _offset){
     if(!vagHeader_validateMagic(vagHeader)){
         return false;
     }
@@ -241,194 +246,3 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
     return ch;
 }
 
-/* Stream Class */
-
-/*
- * The stream driver lays out a ring buffer of interleaved audio chunks in SPU
- * RAM as follows:
- *
- * +---------------------------------+---------------------------------+-----
- * |              Chunk              |              Chunk              |
- * | +------------+------------+     | +------------+------------+     |
- * | |  Ch0 data  |  Ch1 data  | ... | |  Ch0 data  |  Ch1 data  | ... | ...
- * | +------------+------------+     | +------------+------------+     |
- * +-^------------^------------------+-^------------^------------------+-----
- *   | Ch0 start  | Ch1 start          | Ch0 loop   | Ch1 loop
- *                                     | IRQ address
- *
- * The length of each chunk is given by the interleave size multiplied by the
- * channel count. Each data block must be terminated with the loop end and
- * sustain flags set in order to make the channels "jump" to the next chunk's
- * blocks.
- * - SpicyJpeg
- */
-#include <stdio.h>
-void stream_configureIRQ(Stream *stream){
-    uint16_t ctrlReg = SPU_CTRL;
-
-    // Disable the IRQ if an underrun occurs.
-    // TODO: handle this in a slightly better way
-    if(!stream->_bufferedChunks){
-        SPU_CTRL = ctrlReg & ~SPU_CTRL_IRQ_ENABLE;
-        return;
-    }
-
-    // Exit if the IRQ has been set up before and not yet acknowledged by
-    // handleInterrupt().
-    if(ctrlReg & SPU_CTRL_IRQ_ENABLE){
-        return;
-    }
-
-    ChannelMask tempMask = stream->_channelMask;
-    uint32_t chunkOffset = stream_getChunkOffset(stream, stream->_head);
-
-    SPU_IRQ_ADDR = chunkOffset / 8;
-    SPU_CTRL     = ctrlReg | SPU_CTRL_IRQ_ENABLE;
-
-    for(Channel ch = 0; tempMask; ch++, tempMask >>= 1){
-        if(!(tempMask & 1)){
-            continue;
-        }
-
-        SPU_CH_LOOP_ADDR(ch) = chunkOffset /8;
-        chunkOffset         += stream->interleave;
-    }
-}
-
-void stream_create(Stream *stream){
-    stream->_channelMask = 0;
-    stream->offset       = 0;
-    stream->interleave   = 0;
-    stream->numChunks    = 0;
-    stream->sampleRate   = 0;
-    stream->channels     = 0;
-
-    stream_resetBuffer(&stream);
-}
-
-bool stream_initFromVAGHeader(Stream *stream, const VAGHeader *vagHeader, uint32_t _offset, size_t _numChunks){
-    if(stream_isPlaying(stream)){
-        return false;
-    }
-    if(!vagHeader_validateInterleavedMagic(vagHeader)){
-        return false;
-    }
-
-    stream_resetBuffer(stream);
-
-    stream->offset     = _offset;
-    stream->interleave = vagHeader->interleave;
-    stream->numChunks  = _numChunks;
-    stream->sampleRate = vagHeader_getSPUSampleRate(vagHeader);
-    stream->channels   = vagHeader_getNumChannels(vagHeader);
-    return true;
-}
- 
-ChannelMask stream_startWithChannelMask(Stream *stream, uint16_t left, uint16_t right, ChannelMask mask) {
-    if(stream_isPlaying(stream) || !stream->_bufferedChunks){
-        return 0;
-    }
-
-    mask &= ALL_CHANNELS;
-
-    ChannelMask tempMask = mask;
-    uint32_t chunkOffset = stream_getChunkOffset(stream, stream->_head);
-    int isRightCh        = 0;
-
-    for(Channel ch = 0; tempMask; ch++, tempMask >>= 1){
-        if(!(tempMask & 1)){
-            continue;
-        }
-    
-        // Assume each pair of channels is a stero pair. If the channel count is odd,
-        // assume the last channel is mono.
-
-        if(isRightCh) {
-            SPU_CH_VOL_L(ch) = 0;
-            SPU_CH_VOL_R(ch) = right;
-        } else if(tempMask != 1){
-            SPU_CH_VOL_L(ch) = left;
-            SPU_CH_VOL_R(ch) = 0;
-        } else {
-            SPU_CH_VOL_L(ch) = left;
-            SPU_CH_VOL_R(ch) = right;
-        }
-
-        SPU_CH_FREQ(ch)  = stream->sampleRate;
-        SPU_CH_ADDR(ch)  = chunkOffset / 8;
-        SPU_CH_ADSR1(ch) = 0x00ff;
-        SPU_CH_ADSR2(ch) = 0x0000;
-
-        chunkOffset += stream->interleave;
-        isRightCh   ^= 1;
-    }
-
-    stream->_channelMask = mask;
-    SPU_FLAG_ON1 = mask & 0xffff;
-    SPU_FLAG_ON2 = mask >> 16;
-
-    stream_handleInterrupt(stream);
-    return mask;
-}
-
-void stream_stop(Stream *stream){
-    if(!stream_isPlaying(stream)){
-        return;
-    }
-
-    SPU_CTRL &= ~SPU_CTRL_IRQ_ENABLE;
-
-    stopChannels(stream->_channelMask);
-    stream->_channelMask = 0;
-    flushWriteQueue();
-    
-}
-
-void stream_handleInterrupt(Stream *stream){
-    if(!stream_isPlaying(stream)){
-        return;
-    }
-    // Disabling the IRQ is always required in order to acknowledge it.
-    SPU_CTRL &= ~SPU_CTRL_IRQ_ENABLE;
-
-    stream->_head = (stream->_head + 1) % stream->numChunks;
-    stream->_bufferedChunks--;
-    stream_configureIRQ(stream);
-}
-
-size_t stream_feed(Stream *stream, const void *data, size_t length){
-    bool reenableInterrupts = disableInterrupts();
-
-    uintptr_t ptr = (uintptr_t)(data);
-    size_t chunkLength = stream_getChunkLength(stream);
-
-    length = min(length, stream_getFreeChunkCount(stream) * chunkLength);
-
-    for(int i = length; i >= (int)(chunkLength); i -= chunkLength){
-        upload(
-            stream_getChunkOffset(stream, stream->_tail), (const void *)(ptr),
-            chunkLength, true
-        );
-
-        ptr += chunkLength;
-        stream->_tail = (stream->_tail + 1) % stream->numChunks;
-        stream->_bufferedChunks++;
-
-    }
-
-    if(stream_isPlaying(stream)){
-        stream_configureIRQ(stream);
-    }
-
-    flushWriteQueue();
-    if(reenableInterrupts){
-        enableInterrupts();
-    }
-    return length;
-}
-
-void stream_resetBuffer(Stream *stream){
-    stream->_head            = 0;
-    stream->_tail            = 0;
-    stream->_bufferedChunks  = 0;
-}

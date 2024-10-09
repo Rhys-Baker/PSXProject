@@ -21,6 +21,22 @@
 #include "gpucmd.h"
 #include "registers.h"
 
+void initGPU(void){
+    // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
+    if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
+       setupGPU(GP1_MODE_PAL, SCREEN_WIDTH, SCREEN_HEIGHT);
+    } else {
+       setupGPU(GP1_MODE_NTSC, SCREEN_WIDTH, SCREEN_HEIGHT);
+    }
+
+    // Enable the GPU's DMA channel
+    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_GPU * 4);
+    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_OTC * 4);
+
+    GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
+    GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
+}
+
 void setupGPU(GP1VideoMode mode, int width, int height){
     int x=0x760;
     int y= (mode == GP1_MODE_PAL) ? 0xa3 : 0x88;

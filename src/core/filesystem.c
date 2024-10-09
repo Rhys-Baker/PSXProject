@@ -1,6 +1,14 @@
 #include "filesystem.h"
 #include "cdrom.h"
 
+// Internal global variable for this lib. Hides away the rootDirData for internal use.
+uint8_t rootDirData[2048];
+
+
+void initFilesystem(void){
+    getRootDirData(&rootDirData);
+}
+
 // Reads specifically the LBA that points to the root directory.
 // You must pass it a pointer to the pvdSector data.
 // It sets the LBA and returns the size of the directory.
@@ -30,39 +38,62 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
         directoryEntry->name[2] = '\0';
         return 0; // Parent Dir
     }
-    memcpy(&directoryEntry->name, &dataSector[33], dataSector[32]);
+    __builtin_memcpy(&directoryEntry->name, &dataSector[33], dataSector[32]);
     directoryEntry->name[dataSector[32]] = '\0';
     return 0;
 }
 
+
 // Gets the 2048 bytes that make up the root directory
-void getRootDirData(uint8_t *rootDirData){
-   uint8_t *buffer[2048];
+void getRootDirData(void *rootDirData){
+   uint8_t buffer[2048];
    uint32_t rootDirLBA;
-   
    // Read the PVD sector into ram
    startCDROMRead(
       16,
       buffer,
       sizeof(buffer) / 2048,
       2048,
+      true,
       true
    );
-   waitForINT1();
 
    // Get the LBA for the root directory.
-   int rootDirSize = getRootDirLBA(buffer, &rootDirLBA);
+   getRootDirLBA(buffer, &rootDirLBA);
 
    // Read the contents of the root directory.
    startCDROMRead(
       rootDirLBA,
       rootDirData,
-      sizeof(rootDirData) / 2048,
+      1,
       2048,
+      true,
       true
    );
-   waitForINT1();
-   // Pause the CDROM.
-   issueCDROMCommand(CDROM_PAUSE, NULL, 0);
-   waitForINT3();
+}
+
+/// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
+/// @param rootDirData Pointer to the root directory data.
+/// @param filename String containing the filename of the requested file.
+/// @return LBA to file or 0 if not found.
+uint32_t getLBAToFile(const char *filename){
+    DirectoryEntry directoryEntry;
+    uint8_t  recLen;
+    int offset = 0;
+    for(int i=0; i<10; i++){
+        if(parseDirRecord(
+            &rootDirData[offset],
+            &recLen,
+            &directoryEntry
+        )){
+           break;
+        }
+        offset += recLen;
+        
+        if(!__builtin_strcmp(directoryEntry.name, filename)){
+            return directoryEntry.lba;
+        }
+    }
+    printf("Returning 0\n");
+    return 0;
 }

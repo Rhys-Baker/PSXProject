@@ -9,6 +9,7 @@
 #include "gpu.h"
 #include "irq.h"
 #include "spu.h"
+#include "stream.h"
 
 #include "registers.h"
 #include "system.h"
@@ -16,13 +17,11 @@
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    256
 
+
 // Include texture data files
 extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
-
-extern const uint8_t computer_keyboard_spacebarAudio[];
-extern const uint8_t groovy_gravyAudio[];
 
 // the X and Y of the buffer we are currently using.
 int bufferX = 0;
@@ -43,90 +42,33 @@ void waitForVblank(){
     vblank = false;
 }
 
-
-#define DMA_CHUNK_SIZE 4
-#define DMA_TIMEOUT 100000
-#define STATUS_TIMEOUT 10000
-
-
-static bool waitForStatus(uint16_t mask, uint16_t value) {
-	for (int timeout = STATUS_TIMEOUT; timeout > 0; timeout -= 10) {
-		if ((SPU_STAT & mask) == value)
-			return true;
-
-		delayMicroseconds(10);
-	}
-
-	return false;
-}
-
-size_t uploadAudioSample(uint32_t ramOffset, const void *data, size_t length, bool wait) {
-    length /= 4;
-    length = (length + DMA_CHUNK_SIZE - 1) / DMA_CHUNK_SIZE;
-
-    if (!waitForDMATransfer(DMA_SPU, DMA_TIMEOUT))
-        return 0;
-    
-    uint16_t ctrlReg = SPU_CTRL & ~SPU_CTRL_XFER_BITMASK;
-
-    SPU_CTRL = ctrlReg;
-    waitForStatus(SPU_CTRL_XFER_BITMASK, 0);
-
-    SPU_DMA_CTRL = 4;
-    SPU_ADDR = ramOffset / 8;
-    SPU_CTRL = ctrlReg | SPU_CTRL_XFER_DMA_WRITE;
-    waitForStatus(SPU_CTRL_XFER_BITMASK, SPU_CTRL_XFER_DMA_WRITE);
-
-    DMA_MADR(DMA_SPU) = (uint32_t)data;
-    DMA_BCR (DMA_SPU) = DMA_CHUNK_SIZE | (length << 16);
-    DMA_CHCR(DMA_SPU) = DMA_CHCR_WRITE | DMA_CHCR_MODE_SLICE | DMA_CHCR_ENABLE;
-
-    if (wait)
-        waitForDMATransfer(DMA_SPU, DMA_TIMEOUT);
-    
-    return length * DMA_CHUNK_SIZE * 4;
-}
-
-
 // Gets called once at the start of main.
-void init(Stream *stream){
+void init(void){
+    // Enable display blanking if not already.
+    // Prevents logo from appearing while loading.
+    GPU_GP1 = gp1_dispBlank(true);
+
     // Initialise the serial port for printing
     initSerialIO(115200);
     initSPU();
     initCDROM();
-    initIRQ(stream);
+    initIRQ();
     initControllerBus();
-
-    // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
-    if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
-       setupGPU(GP1_MODE_PAL, SCREEN_WIDTH, SCREEN_HEIGHT);
-    } else {
-       setupGPU(GP1_MODE_NTSC, SCREEN_WIDTH, SCREEN_HEIGHT);
-    }
-
-    // Enable the GPU's DMA channel
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_GPU * 4);
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_OTC * 4);
-
-    // Enable the SPU's DMA channel
-    DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_SPU * 4);
-
-    GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
-    GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
-
+    initFilesystem();
+    // TODO: Fill the screen with black / Add a loading screen here?
+    initGPU(); // Disables screen blanking after setting up screen.
 
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
-
-    //if(!uploadAudioSample(0x01000, computer_keyboard_spacebarAudio+0x30, 0xB70, true)){
-    //    screenColor = 0x0000FF;
-    //}
     
 }
 
-
 ControllerInfo controllerInfo;
+// TODO: Consider changing these into a single variable and just using bits instead?
+// At least clean this up a bit. Maybe move all these into the controller header.
+// Consider a function that handles each buttonpress and runs the function associated?
+// Set up with a function pointer? Idk, just some ideas for later.
 bool squarePressed   = false;
 bool circlePressed   = false;
 bool trianglePressed = false;
@@ -136,6 +78,11 @@ bool upPressed       = false;
 bool downPressed     = false;
 
 
+// Variables for the music/audio stream. All of this will be cleaned up eventually.
+size_t freeChunks;
+
+// Debugging hexdump function.
+// Considering adding a "utilies" or "debug" library for these kinds of things
 void hexdump(const uint8_t *ptr, size_t length) {
     while (length) {
         size_t lineLength = (length < 16) ? length : 16;
@@ -148,23 +95,45 @@ void hexdump(const uint8_t *ptr, size_t length) {
     }
 }
 
+// CDROM State machine states.
+// Don't want these in main either if possible. Perhaps we can put all this into a Stream lib?
+typedef enum{
+	CDROM_SM_IDLE            = 0,
+	CDROM_SM_WAIT_FOR_DATA = 1,
+    CDROM_SM_DATA_READY      = 2
+} CDROMStateMachineState;
+CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
+
+// Used to keep track of which channel is playing.
+// 0 is clean, 1 is combat.
+int selectedMusicChannel = 1;
+
 
 // Start of main
-
+__attribute__((noreturn))
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
-    // Initialise stream
-    Stream myStream;
-
 
     // Initialise important things for later
-    init(&myStream);
+    init();
     
-    uint32_t spuAllocPtr = 0x1010;
+    stream_init();
+    stream_loadSong("SONG.VAG;1");
+
+    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
+
+    // This isn't necessarily a part of the stream function.
+    // By default, the stream will play all channels. It is up to the user to handle the volume of which channels they want.
+    setChannelVolume(( selectedMusicChannel)+1, MAX_VOLUME);
+    setChannelVolume((!selectedMusicChannel)+1, 0); // Mute the other channel
     
+
+    // It may also be worth it to create a function for initialising and playing sounds.
+
     // Load a click sound.
     // TODO: Move these out of here and make it all a bit neater.
+#if 0
     stopChannels(ALL_CHANNELS);
     setMasterVolume(MAX_VOLUME, 0);
     Sound mySound;
@@ -172,30 +141,7 @@ int main(void){
     const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-    //sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
-    
-
-    
-    stream_create(&myStream);
-    
-    // Create pointer to header
-    vagHeader = (const VAGHeader *) groovy_gravyAudio;
-    size_t streamLength = vagHeader_getSPULength(vagHeader) * vagHeader_getNumChannels(vagHeader);
-    size_t streamOffset = 0;
-    const uint8_t *streamData = ((const uint8_t *) vagHeader) + 0x800;
-
-    // Init from header
-    stream_initFromVAGHeader(&myStream, vagHeader, spuAllocPtr, 8);
-    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
-
-    // Fill up the buffer with data from the file
-    streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
-
-    // Kick off playback of the stream
-    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 1 << 1);
-
-
-
+#endif
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
@@ -218,46 +164,27 @@ int main(void){
         ptr[1] = gp0_fbOffset1(bufferX, bufferY);
         ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
-      
-      
-        // Check audio playback and top-up buffer
-        if(stream_getFreeChunkCount(&myStream) >= 4){
-            streamOffset += stream_feed(&myStream, streamData + streamOffset, streamLength - streamOffset);
-            if(streamOffset >= streamLength){
-                streamOffset -= streamLength;
-            }
-        }
 
 
+        // Update the stream state machine.
+        // Feed more data if needed.
+        // Do this every frame, or almost every frame.
+        // It is non-blocking but must be checked constantly.
+        stream_update();
+
+
+        // Handling controller input
+        
+        // I would also really like to turn this into its own function handleControllerInput or something.
+        // Perhaps have an init for each button you want to check?
+        // Pass a function pointer/null pointer to each init function and it sets it up that way?
+        // Not sure the details, but all of these needs to be taken out of main.
         getControllerInfo(0, &controllerInfo);
         // Square
         if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
             if(!squarePressed){
                 squarePressed = true;
-                uint8_t rootDirData[2048];
-                getRootDirData(&rootDirData);
-                uint8_t directoryListingLength = 0;
-                DirectoryEntry *directoryListing[10];
-
-                DirectoryEntry directoryEntry;
-
-                uint8_t  recLen;
-                uint32_t len;
-                uint32_t lba;
-                char *name[255];
-                int offset = 0;
-                printf("\n\n==== Directory Contents ====\n\n");
-                for(int i=0; i<10; i++){
-                    if(parseDirRecord(
-                        &rootDirData[offset],
-                        &recLen,
-                        directoryListing[i]
-                    )){
-                       break;
-                    }
-                    offset += recLen;
-                    printf("%d: \"%s\" | %d\n", i, &directoryListing[i]->name, directoryListing[i]->lba);
-                }
+                
             }
         } else {
             squarePressed = false;
@@ -267,7 +194,13 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
             if(!circlePressed){
                 circlePressed = true;
-                sound_playOnChannel(&mySound, MAX_VOLUME, MAX_VOLUME, 0);
+                setChannelVolume(selectedMusicChannel+1, MAX_VOLUME);
+                selectedMusicChannel = !selectedMusicChannel;
+                setChannelVolume(selectedMusicChannel+1, 0);
+                
+                // Update screen colour to reflect which music we are playing.
+                screenColor = selectedMusicChannel ? 0x0c34e8 : 0xfa823c;
+                
             }
         } else {
             circlePressed = false;
@@ -277,7 +210,6 @@ int main(void){
         if(controllerInfo.buttons & BUTTON_MASK_TRIANGLE){
             if(!trianglePressed){
                 trianglePressed = true;
-                stopChannels(ALL_CHANNELS);
             }
         } else {
             trianglePressed = false;
@@ -321,6 +253,9 @@ int main(void){
             downPressed = false;
         }
 
+
+        // This will wait for the GPU to be ready,
+        // It also waits for Vblank.
         waitForGP0Ready();
         waitForVblank();
 
@@ -333,7 +268,5 @@ int main(void){
         sendLinkedList(&(chain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
    }
 
-
-   // Stops intellisense from yelling at me.
-   return 0; // 100% totally necessary.
+    __builtin_unreachable();
 }

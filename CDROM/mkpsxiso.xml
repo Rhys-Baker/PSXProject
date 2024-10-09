@@ -58,11 +58,10 @@
 					<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"/>
 				</dir>
 			</dir> -->
-			<dir name="DIR" />
-			<dir name="DIRECTORY" />
-			<dir name="FOLDER" />
 			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT" />
 			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT" />
+			<file name="SONG.VAG" type="data" source="SongCompiled.vag" />
+			
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
 			<!-- end of the disc image. It must be a pretty large one to -->
