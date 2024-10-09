@@ -53,6 +53,26 @@ typedef enum {
 	CMD_CARD_WRITE      = 'W'  // Write 128-byte memory card sector
 } DeviceCommand;
 
+// Indices for function pointers
+enum buttonIndex{
+    BUTTON_INDEX_SELECT   =  0,
+    BUTTON_INDEX_L3       =  1,
+    BUTTON_INDEX_R3       =  2,
+    BUTTON_INDEX_START    =  3,
+    BUTTON_INDEX_UP       =  4,
+    BUTTON_INDEX_RIGHT    =  5,
+    BUTTON_INDEX_DOWN     =  6,
+    BUTTON_INDEX_LEFT     =  7,
+    BUTTON_INDEX_L2       =  8,
+    BUTTON_INDEX_R2       =  9,
+    BUTTON_INDEX_L1       = 10,
+    BUTTON_INDEX_R1       = 11,
+    BUTTON_INDEX_TRIANGLE = 12,
+    BUTTON_INDEX_CIRCLE   = 13,
+    BUTTON_INDEX_X        = 14,
+    BUTTON_INDEX_SQUARE   = 15
+};
+
 // Define bit masks for each button
 #define BUTTON_MASK_SELECT   (1<< 0)
 #define BUTTON_MASK_L3       (1<< 1)
@@ -92,3 +112,6 @@ int exchangePacket(
 );
 
 bool getControllerInfo(int port, ControllerInfo *output);
+
+void controller_update(void);
+void controller_attachFunctionToButton(void (*function)(), uint16_t buttonIndex);

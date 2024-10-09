@@ -64,23 +64,6 @@ void init(void){
     
 }
 
-ControllerInfo controllerInfo;
-// TODO: Consider changing these into a single variable and just using bits instead?
-// At least clean this up a bit. Maybe move all these into the controller header.
-// Consider a function that handles each buttonpress and runs the function associated?
-// Set up with a function pointer? Idk, just some ideas for later.
-bool squarePressed   = false;
-bool circlePressed   = false;
-bool trianglePressed = false;
-bool r1Pressed       = false;
-bool l1Pressed       = false;
-bool upPressed       = false;
-bool downPressed     = false;
-
-
-// Variables for the music/audio stream. All of this will be cleaned up eventually.
-size_t freeChunks;
-
 // Debugging hexdump function.
 // Considering adding a "utilies" or "debug" library for these kinds of things
 void hexdump(const uint8_t *ptr, size_t length) {
@@ -107,6 +90,15 @@ CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
 // Used to keep track of which channel is playing.
 // 0 is clean, 1 is combat.
 int selectedMusicChannel = 1;
+
+
+void swapMusic(void){
+    setChannelVolume(selectedMusicChannel+1, MAX_VOLUME);
+    selectedMusicChannel = !selectedMusicChannel;
+    setChannelVolume(selectedMusicChannel+1, 0);
+    // Update screen colour to reflect which music we are playing.
+    screenColor = selectedMusicChannel ? 0x0c34e8 : 0xfa823c;
+}
 
 
 // Start of main
@@ -142,6 +134,10 @@ int main(void){
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
 #endif
+
+    // Attach functions to button presses
+    controller_attachFunctionToButton(&swapMusic, BUTTON_INDEX_CIRCLE);
+
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
@@ -172,86 +168,9 @@ int main(void){
         // It is non-blocking but must be checked constantly.
         stream_update();
 
-
-        // Handling controller input
-        
-        // I would also really like to turn this into its own function handleControllerInput or something.
-        // Perhaps have an init for each button you want to check?
-        // Pass a function pointer/null pointer to each init function and it sets it up that way?
-        // Not sure the details, but all of these needs to be taken out of main.
-        getControllerInfo(0, &controllerInfo);
-        // Square
-        if(controllerInfo.buttons & BUTTON_MASK_SQUARE){
-            if(!squarePressed){
-                squarePressed = true;
-                
-            }
-        } else {
-            squarePressed = false;
-        }
-
-        // Circle
-        if(controllerInfo.buttons & BUTTON_MASK_CIRCLE){
-            if(!circlePressed){
-                circlePressed = true;
-                setChannelVolume(selectedMusicChannel+1, MAX_VOLUME);
-                selectedMusicChannel = !selectedMusicChannel;
-                setChannelVolume(selectedMusicChannel+1, 0);
-                
-                // Update screen colour to reflect which music we are playing.
-                screenColor = selectedMusicChannel ? 0x0c34e8 : 0xfa823c;
-                
-            }
-        } else {
-            circlePressed = false;
-        }
-
-        // Triangle
-        if(controllerInfo.buttons & BUTTON_MASK_TRIANGLE){
-            if(!trianglePressed){
-                trianglePressed = true;
-            }
-        } else {
-            trianglePressed = false;
-        }
-
-        // R1
-        if(controllerInfo.buttons & BUTTON_MASK_R1){
-            if(!r1Pressed){
-                r1Pressed = true;
-
-            }
-        } else {
-            r1Pressed = false;
-        }
-
-        // L1
-        if(controllerInfo.buttons & BUTTON_MASK_L1){
-            if(!l1Pressed){
-                l1Pressed = true;
-              
-            }
-        } else {
-            l1Pressed = false;
-        }
-
-        // Up
-        if(controllerInfo.buttons & BUTTON_MASK_UP){
-            if(!upPressed){
-                upPressed = true;
-            }
-        } else {
-            upPressed = false;
-        }
-
-        // Down
-        if(controllerInfo.buttons & BUTTON_MASK_DOWN){
-            if(!downPressed){
-                downPressed = true;
-            }
-        } else {
-            downPressed = false;
-        }
+        // Update the controller every frame.
+        // Will run the function associated with each button if the button is pressed.
+        controller_update();
 
 
         // This will wait for the GPU to be ready,
