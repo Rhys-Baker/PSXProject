@@ -78,15 +78,6 @@ void hexdump(const uint8_t *ptr, size_t length) {
     }
 }
 
-// CDROM State machine states.
-// Don't want these in main either if possible. Perhaps we can put all this into a Stream lib?
-typedef enum{
-	CDROM_SM_IDLE            = 0,
-	CDROM_SM_WAIT_FOR_DATA = 1,
-    CDROM_SM_DATA_READY      = 2
-} CDROMStateMachineState;
-CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
-
 // Used to keep track of which channel is playing.
 // 0 is clean, 1 is combat.
 int selectedMusicChannel = 1;

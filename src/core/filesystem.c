@@ -94,6 +94,5 @@ uint32_t getLBAToFile(const char *filename){
             return directoryEntry.lba;
         }
     }
-    printf("Returning 0\n");
     return 0;
 }

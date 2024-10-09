@@ -161,7 +161,6 @@ int exchangePacket(
 bool getControllerInfo(int port, ControllerInfo *output) {
     // Build the request packet.
     uint8_t request[4], response[8];
-    //char *ptr = output;
 
     request[0] = CMD_POLL;  // Command
     request[1] = 0x00;      // Multitap address
@@ -175,11 +174,8 @@ bool getControllerInfo(int port, ControllerInfo *output) {
         ADDR_CONTROLLER, request, response, sizeof(request), sizeof(response)
     );
 
-    //ptr += sprintf(ptr, "Port %d:\n", port + 1);
-
     if(respLength < 4){
         // All controllers reply with at least 4 bytes of data.
-        //ptr += sprintf(ptr, " No controller connected!");
         return false;
     }
 
