@@ -28,7 +28,7 @@ int bufferX = 0;
 int bufferY = 0;
 // The pointer to the DMA packet.
 // We allocate space for each packet before we use it.
-uint32_t *ptr;
+uint32_t *dmaPtr;
 
 DMAChain dmaChains[2];
 bool usingSecondFrame = false;
@@ -138,16 +138,16 @@ int main(void){
       
         // Place the framebuffer offset and screen clearing commands last.
         // This means they will be executed first and be at the back of the screen.
-        ptr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);
-        ptr[0] = screenColor | gp0_vramFill();
-        ptr[1] = gp0_xy(bufferX, bufferY);
-        ptr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
+        dmaPtr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);
+        dmaPtr[0] = screenColor | gp0_vramFill();
+        dmaPtr[1] = gp0_xy(bufferX, bufferY);
+        dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        ptr = allocatePacket(chain, ORDERING_TABLE_SIZE - 1, 4);
-        ptr[0] = gp0_texpage(0, true, false);
-        ptr[1] = gp0_fbOffset1(bufferX, bufferY);
-        ptr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
-        ptr[3] = gp0_fbOrigin(bufferX, bufferY);
+        dmaPtr = allocatePacket(chain, ORDERING_TABLE_SIZE - 1, 4);
+        dmaPtr[0] = gp0_texpage(0, true, false);
+        dmaPtr[1] = gp0_fbOffset1(bufferX, bufferY);
+        dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
+        dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
 
 
         // Update the stream state machine.
