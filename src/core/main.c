@@ -9,6 +9,7 @@
 #include "gpu.h"
 #include "irq.h"
 #include "spu.h"
+#include "stream.h"
 
 #include "registers.h"
 #include "system.h"
@@ -42,7 +43,7 @@ void waitForVblank(){
 }
 
 // Gets called once at the start of main.
-void init(void *stream){
+void init(void){
     // Enable display blanking if not already.
     // Prevents logo from appearing while loading.
     GPU_GP1 = gp1_dispBlank(true);
@@ -51,8 +52,10 @@ void init(void *stream){
     initSerialIO(115200);
     initSPU();
     initCDROM();
-    initIRQ(stream);
+    initIRQ();
     initControllerBus();
+    initFilesystem();
+    // TODO: Fill the screen with black / Add a loading screen here?
     initGPU(); // Disables screen blanking after setting up screen.
 
     // Upload textures
@@ -76,7 +79,6 @@ bool downPressed     = false;
 
 
 // Variables for the music/audio stream. All of this will be cleaned up eventually.
-Stream myStream;
 size_t freeChunks;
 
 // Debugging hexdump function.
@@ -102,18 +104,9 @@ typedef enum{
 } CDROMStateMachineState;
 CDROMStateMachineState cdromSMState = CDROM_SM_IDLE;
 
-// Place to store the header data for the song after loading it from. Doesn't really need to exist after initialising the stream.
-// Consider moving this into an init function for the stream?
-VAGHeader mySongVAGHeader;
-
 // Used to keep track of which channel is playing.
 // 0 is clean, 1 is combat.
 int selectedMusicChannel = 1;
-
-// Part of the CDROM state machine.
-// Really only needs to be accessible to the state machine.
-int feedLength;
-
 
 
 // Start of main
@@ -121,57 +114,21 @@ __attribute__((noreturn))
 int main(void){   
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
-    // Initialise stream
-
 
     // Initialise important things for later
-    init(&myStream);
+    init();
     
-    // This probably doesn't need to be in main.
-    // We can instead have it be global to the filesystem lib and abstract the entire filesystem loading sequence into a single initFilesystem() function.
-    // Also means we don't need to pass a pointer to this data as much
-    uint8_t rootDirData[2048];
-    getRootDirData(&rootDirData);
+    printf("\n\n\n\nSTART ==============\n");
+    stream_init();
+    printf("Load song.\n");
+    stream_loadSong("SONG.VAG;1");
 
-    // Again, only needed when initialising the stream. Can stay as a part of the stream init function.
-    // Just pass the file path to it.
-    uint32_t songLBA = getLBAToFile(&rootDirData, "SONG.VAG;1");
-    char songVagHeaderSector[2048];
+    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
 
-    // Does need to be accessed by the cdrom/stream state machine but not really anywhere else.
-    // This can be taken out of main and abstracted a bit.
-    uint8_t streamBuffer[16 * 2048]; // 32 mono chunks or 16 stereo chunks
-
-    // This can become a part of the stream init function.
-    if(songLBA){
-        startCDROMRead(songLBA++, songVagHeaderSector, sizeof(songVagHeaderSector) / 2048, 2048, true, true);
-        startCDROMRead(songLBA, streamBuffer, sizeof(streamBuffer) / 2048, 2048, true, true);
-    }
-
-
-    // This entire section needs to be neatened up a bunch.
-    // This is most of the new init function, so take it all out of main and turn it into a single function.
-    stream_create(&myStream);
-    uint32_t spuAllocPtr = 0x1010;
-    VAGHeader *songVagHeader;
-    __builtin_memcpy(songVagHeader, songVagHeaderSector, sizeof(VAGHeader));
-    
-    stream_initFromVAGHeader(&myStream, songVagHeader, spuAllocPtr, 32);
-    spuAllocPtr += stream_getChunkLength(&myStream) * myStream.numChunks;
-
-    size_t streamLength = vagHeader_getSPULength(songVagHeader) * myStream.channels;
-    size_t streamOffset = 0;
-
-    streamOffset = stream_feed(&myStream, streamBuffer, sizeof(streamBuffer));
-    
-    setMasterVolume(MAX_VOLUME, 0);
-    stream_startWithChannelMask(&myStream, MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
-    
     // This isn't necessarily a part of the stream function.
     // By default, the stream will play all channels. It is up to the user to handle the volume of which channels they want.
     setChannelVolume(( selectedMusicChannel)+1, MAX_VOLUME);
     setChannelVolume((!selectedMusicChannel)+1, 0); // Mute the other channel
-
     
 
     // It may also be worth it to create a function for initialising and playing sounds.
@@ -187,8 +144,6 @@ int main(void){
     sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
     spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
 #endif
-
-
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
@@ -213,46 +168,11 @@ int main(void){
         ptr[3] = gp0_fbOrigin(bufferX, bufferY);
 
 
-        // Not sure if these need to be updated every single frame.
-        // Might be worth looking into this.
-        // Also they are internal to the state machine so we can take them out of main
-        int chunkLength = stream_getChunkLength(&myStream);
-        int streamFreeChunks = stream_getFreeChunkCount(&myStream);
-
-        
-        // This is the cdrom State Machine.
-        // It should probably be renammed to relay that its specifically handling the music stream.
-        // This allows cdrom reads to take place without blocking. Its a VERY rudimentary form of concurency.
-        // After abstracting this into a lib, consider creating a CDROM command queue. As it is now, only one command can be given at a time.
-
-        // This state machine can theoretically change states and run the next cycle all within a single frame if the cdrom runs fast enough.
-        // Thats why I'm using if's rather than a switch.
-        if(cdromSMState == CDROM_SM_IDLE){
-            if(streamFreeChunks >= 8){
-                feedLength = min(
-                    (streamLength) - streamOffset,
-                    min(streamFreeChunks * chunkLength, sizeof(streamBuffer))
-                );
-
-                startCDROMRead(songLBA + (streamOffset / 2048), streamBuffer, feedLength / 2048, 2048, true, false);
-                cdromSMState = CDROM_SM_WAIT_FOR_DATA;
-            }
-        }
-        if(cdromSMState == CDROM_SM_WAIT_FOR_DATA){
-            if(cdromDataReady){
-                cdromSMState = CDROM_SM_DATA_READY;
-            }
-        }
-        if(cdromSMState == CDROM_SM_DATA_READY){
-            // Stream length - stream offset = remaining length
-            streamOffset += stream_feed(&myStream, streamBuffer, feedLength);
-            // If we reached the end of the stream, loop back to the start
-            if(streamOffset >= streamLength){
-                streamOffset -= streamLength;
-            }
-            cdromSMState = CDROM_SM_IDLE;
-        }
-
+        // Update the stream state machine.
+        // Feed more data if needed.
+        // Do this every frame, or almost every frame.
+        // It is non-blocking but must be checked constantly.
+        stream_update();
 
 
         // Handling controller input

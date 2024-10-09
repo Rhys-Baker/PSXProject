@@ -1,6 +1,14 @@
 #include "filesystem.h"
 #include "cdrom.h"
 
+// Internal global variable for this lib. Hides away the rootDirData for internal use.
+uint8_t rootDirData[2048];
+
+
+void initFilesystem(void){
+    getRootDirData(&rootDirData);
+}
+
 // Reads specifically the LBA that points to the root directory.
 // You must pass it a pointer to the pvdSector data.
 // It sets the LBA and returns the size of the directory.
@@ -37,7 +45,7 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
 
 
 // Gets the 2048 bytes that make up the root directory
-void getRootDirData(uint8_t *rootDirData){
+void getRootDirData(void *rootDirData){
    uint8_t buffer[2048];
    uint32_t rootDirLBA;
    // Read the PVD sector into ram
@@ -63,12 +71,13 @@ void getRootDirData(uint8_t *rootDirData){
       true
    );
 }
-
+#include <stdio.h>
 /// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
 /// @param rootDirData Pointer to the root directory data.
 /// @param filename String containing the filename of the requested file.
 /// @return LBA to file or 0 if not found.
-uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
+uint32_t getLBAToFile(const char *filename){
+    printf("getLBAToFile\n");
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
@@ -86,5 +95,6 @@ uint32_t getLBAToFile(uint8_t *rootDirData, const char *filename){
             return directoryEntry.lba;
         }
     }
+    printf("Returning 0\n");
     return 0;
 }

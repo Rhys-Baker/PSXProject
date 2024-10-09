@@ -146,6 +146,8 @@ void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSiz
 // Data is ready to be read from the CDROM via DMA.
 // This will read the data into cdromReadDataPtr.
 // It will also pause the CDROM drive.
+
+#include <stdio.h>
 void cdromINT1(void){
     DMA_MADR(DMA_CDROM) = (uint32_t) cdromReadDataPtr;
     DMA_BCR(DMA_CDROM)  = cdromReadDataSectorSize / 4;
@@ -155,8 +157,9 @@ void cdromINT1(void){
     cdromReadDataPtr = (void *) (
         (uintptr_t) cdromReadDataPtr + cdromReadDataSectorSize
     );
-    if ((--cdromReadDataNumSectors) <= 0)
+    if ((--cdromReadDataNumSectors) <= 0){
         issueCDROMCommand(CDROM_PAUSE, NULL, 0);
+    }
         
     atomic_signal_fence(memory_order_release);
     waitingForInt1 = false;
