@@ -27,6 +27,8 @@ static const uint16_t MAX_VOLUME   = 0x3fff;
 
 static const ChannelMask ALL_CHANNELS = (1 << NUM_CHANNELS) - 1;
 
+extern uint32_t spuAllocPtr;
+
 /* Utilities */
 
 static inline uint32_t concat4_8(uint8_t a, uint8_t b, uint8_t c, uint8_t d){

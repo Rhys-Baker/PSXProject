@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
+#include "cdrom.h"
+#include "filesystem.h"
 #include "spu.h"
 #include "registers.h"
 #include "system.h"
@@ -9,6 +11,8 @@
 static const int _DMA_CHUNK_SIZE = 4;
 static const int _DMA_TIMEOUT    = 100000;
 static const int _STATUS_TIMEOUT = 10000;
+
+uint32_t spuAllocPtr = 0x1010; // Pointer to the next free space in SPU ram
 
 static bool _waitForStatus(uint16_t mask, uint16_t value){
     for(int timeout = _STATUS_TIMEOUT; timeout > 0; timeout -= 10) {
