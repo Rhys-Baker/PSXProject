@@ -210,7 +210,7 @@ void controller_update(void){
     for(int i=0; i<16; i++){
         int _buttonMask = (1 << i);
 
-        if((controllerInfo.buttons & _buttonMask)){
+        if(!(controllerInfo.buttons & _buttonMask)){
             // Set the button's bit to zero
             heldButtons &= ~_buttonMask;
             continue;
