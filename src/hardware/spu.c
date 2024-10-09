@@ -250,3 +250,66 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
     return ch;
 }
 
+#include <stdio.h>
+int sound_loadSound(const char *name, Sound *sound){
+    int remainingLength;
+    int uploadedData;
+    uint32_t _vagLba;
+    uint8_t _sectorBuffer[2048];
+    
+    
+    // Find the file on the filesystem
+    _vagLba = getLbaToFile(name);
+    if(!_vagLba){
+        // File not found
+        return 1;
+    }
+    // Load the data into the sector
+    startCDROMRead(_vagLba, &_sectorBuffer, 1, 2048, true, true);
+    // Set the header data
+    const VAGHeader *_vagHeader = (const VAGHeader*) _sectorBuffer;
+    
+    // Initialise the sound
+    sound_create(sound);
+    if(!sound_initFromVAGHeader(sound, _vagHeader, spuAllocPtr)){
+        // Failed to validate magic header
+        return 2;
+    }
+
+    remainingLength = sound->length;
+
+    // Upload first sector of audio data.
+    // Whether the data goes on further than this, we need to exclude the header data.
+    uploadedData = upload(
+        spuAllocPtr,
+        vagHeader_getData(_vagHeader),
+        min(remainingLength, (2048 - sizeof(VAGHeader))),
+        true
+    );
+    spuAllocPtr += uploadedData;
+    remainingLength -= uploadedData;
+
+    while(remainingLength){
+        // If not all the data is uploaded, load the next sector of data
+        startCDROMRead(
+            ++_vagLba,
+            &_sectorBuffer,
+            1,
+            2048,
+            true,
+            true
+        );
+
+        uploadedData = upload(
+            spuAllocPtr,
+            _sectorBuffer,
+            min(remainingLength, 2048),
+            true
+        );
+        spuAllocPtr += uploadedData;
+        remainingLength -= uploadedData;
+
+    }
+
+    return 0;
+}

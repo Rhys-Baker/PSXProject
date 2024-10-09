@@ -133,3 +133,9 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
 static inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){
     return sound_playOnChannel(sound, left, right, getFreeChannel());
 }
+
+/// @brief Load a sound from disk.
+/// @param name Filename of the VAGp file to load.
+/// @param sound Pointer to the sound struct to save the sound data in.
+/// @return Error code
+int sound_loadSound(const char *name, Sound *sound);
