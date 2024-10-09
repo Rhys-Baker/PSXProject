@@ -216,9 +216,6 @@ int streamFreeChunks;
 int feedLength;
 
 
-// TODO: Move spu alloc pointer to SPU.h/c instead of  here.
-// More than just streaming will rely on it.
-uint32_t spuAllocPtr = 0x1010; // Pointer to the next free space in SPU ram
 StreamStateMachineState streamSMState = STREAM_SM_IDLE;
 
 // TODO:
@@ -231,7 +228,7 @@ size_t stream_loadSong(const char *name){
     char _songVagHeaderSector[2048];
     VAGHeader _songVagHeader;
     
-    songLba = getLBAToFile(name);
+    songLba = getLbaToFile(name);
     if(!songLba){
         // File not found error.
         return 1;

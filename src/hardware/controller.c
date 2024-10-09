@@ -1,18 +1,4 @@
-/*
- * (C) 2024 Rhys Baker, spicyjpeg
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
- * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
+#include <stddef.h>
 
 #include "controller.h"
 #include "registers.h"
@@ -56,6 +42,16 @@ const char *const controllerTypes[] = {
 	"Jogcon",             // ID 0xe
 	"Configuration mode"  // ID 0xf
 };
+
+
+ControllerInfo controllerInfo;
+uint16_t heldButtons;
+
+// Array of function pointers.
+// Assuming the pointer isn't null, the corresponding function will be run
+// when its button is pressed
+void (*controllerFunctions[16])();
+
 
 void initControllerBus(void){
     // Set up the serial interface with the settings used by
@@ -165,7 +161,6 @@ int exchangePacket(
 bool getControllerInfo(int port, ControllerInfo *output) {
     // Build the request packet.
     uint8_t request[4], response[8];
-    //char *ptr = output;
 
     request[0] = CMD_POLL;  // Command
     request[1] = 0x00;      // Multitap address
@@ -179,11 +174,8 @@ bool getControllerInfo(int port, ControllerInfo *output) {
         ADDR_CONTROLLER, request, response, sizeof(request), sizeof(response)
     );
 
-    //ptr += sprintf(ptr, "Port %d:\n", port + 1);
-
     if(respLength < 4){
         // All controllers reply with at least 4 bytes of data.
-        //ptr += sprintf(ptr, " No controller connected!");
         return false;
     }
 
@@ -199,4 +191,42 @@ bool getControllerInfo(int port, ControllerInfo *output) {
     output->lx = (response[6]);
     output->ly = (response[7]);
     return true;
+}
+
+/// @brief Attach a function to a given controller button.
+/// @param function Function pointer to the function that will run when the button is pressed.
+/// @param buttonIndex The index of the button to trigger this function.
+void controller_attachFunctionToButton(void (*function)(), uint16_t buttonIndex){
+    controllerFunctions[buttonIndex] = function;
+}
+
+void controller_update(void){
+    getControllerInfo(0, &controllerInfo);
+
+    // OnKeyDown style of button press.
+    // Might add OnKeyUp and OnKeyHeld events too, but for now this will do.
+
+    // Run the function
+    for(int i=0; i<16; i++){
+        int _buttonMask = (1 << i);
+
+        if(!(controllerInfo.buttons & _buttonMask)){
+            // Set the button's bit to zero
+            heldButtons &= ~_buttonMask;
+            continue;
+        }
+
+        if(heldButtons & _buttonMask){
+            continue;
+        }
+
+        heldButtons |= _buttonMask;
+
+        if(controllerFunctions[i] == NULL){
+            continue;
+        }
+        
+        (*controllerFunctions[i])();
+    }
+
 }

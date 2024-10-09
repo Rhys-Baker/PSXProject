@@ -27,6 +27,8 @@ static const uint16_t MAX_VOLUME   = 0x3fff;
 
 static const ChannelMask ALL_CHANNELS = (1 << NUM_CHANNELS) - 1;
 
+extern uint32_t spuAllocPtr;
+
 /* Utilities */
 
 static inline uint32_t concat4_8(uint8_t a, uint8_t b, uint8_t c, uint8_t d){
@@ -131,3 +133,9 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
 static inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){
     return sound_playOnChannel(sound, left, right, getFreeChannel());
 }
+
+/// @brief Load a sound from disk.
+/// @param name Filename of the VAGp file to load.
+/// @param sound Pointer to the sound struct to save the sound data in.
+/// @return Error code
+int sound_loadSound(const char *name, Sound *sound);

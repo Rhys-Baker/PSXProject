@@ -58,9 +58,10 @@
 					<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"/>
 				</dir>
 			</dir> -->
-			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT" />
-			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT" />
-			<file name="SONG.VAG" type="data" source="SongCompiled.vag" />
+			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT"        />
+			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"        />
+			<file name="SONG.VAG"  type="data" source="SongCompiled.vag" />
+			<file name="LASER.VAG" type="data" source="laser.vag"        />
 			
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->

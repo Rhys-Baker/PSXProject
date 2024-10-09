@@ -12,7 +12,7 @@ void initFilesystem(void){
 // Reads specifically the LBA that points to the root directory.
 // You must pass it a pointer to the pvdSector data.
 // It sets the LBA and returns the size of the directory.
-uint32_t getRootDirLBA(uint8_t *pvdSector, uint32_t *LBA){
+uint32_t getRootDirLba(uint8_t *pvdSector, uint32_t *LBA){
     *LBA = int32_LM(pvdSector, 158);
     uint32_t size = int32_LM(pvdSector, 166);
     return size;
@@ -59,7 +59,7 @@ void getRootDirData(void *rootDirData){
    );
 
    // Get the LBA for the root directory.
-   getRootDirLBA(buffer, &rootDirLBA);
+   getRootDirLba(buffer, &rootDirLBA);
 
    // Read the contents of the root directory.
    startCDROMRead(
@@ -76,7 +76,7 @@ void getRootDirData(void *rootDirData){
 /// @param rootDirData Pointer to the root directory data.
 /// @param filename String containing the filename of the requested file.
 /// @return LBA to file or 0 if not found.
-uint32_t getLBAToFile(const char *filename){
+uint32_t getLbaToFile(const char *filename){
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
@@ -94,6 +94,5 @@ uint32_t getLBAToFile(const char *filename){
             return directoryEntry.lba;
         }
     }
-    printf("Returning 0\n");
     return 0;
 }
