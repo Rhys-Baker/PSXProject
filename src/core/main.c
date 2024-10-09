@@ -35,6 +35,12 @@ bool usingSecondFrame = false;
 
 int screenColor = 0xfa823c;
 
+// Used to keep track of which channel is playing.
+// 0 is combat, 1 is clean.
+int selectedMusicChannel = 1;
+Sound laser;
+
+
 void waitForVblank(){
     while(!vblank){
         // Do nothing
@@ -78,17 +84,18 @@ void hexdump(const uint8_t *ptr, size_t length) {
     }
 }
 
-// Used to keep track of which channel is playing.
-// 1 is clean, 0 is combat.
-int selectedMusicChannel = 1;
 
 
 void swapMusic(void){
-    setChannelVolume(selectedMusicChannel+1, MAX_VOLUME);
+    setChannelVolume(selectedMusicChannel, 0);
     selectedMusicChannel = !selectedMusicChannel;
-    setChannelVolume(selectedMusicChannel+1, 0);
+    setChannelVolume(selectedMusicChannel, MAX_VOLUME);
     // Update screen colour to reflect which music we are playing.
-    screenColor = selectedMusicChannel ? 0x0c34e8 : 0xfa823c;
+    screenColor = selectedMusicChannel ? 0xfa823c : 0x0c34e8;
+}
+
+void playSfx(void){
+    sound_play(&laser, MAX_VOLUME, MAX_VOLUME);
 }
 
 
@@ -100,35 +107,25 @@ int main(void){
 
     // Initialise important things for later
     initHardware();
-    
     stream_init();
+    
+    sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
+    
 
-    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);
-
+    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
     // This isn't necessarily a part of the stream function.
     // By default, the stream will play all channels. It is up to the user to handle the volume of which channels they want.
-    setChannelVolume(( selectedMusicChannel)+1, MAX_VOLUME);
-    setChannelVolume((!selectedMusicChannel)+1, 0); // Mute the other channel
-    
+    setChannelVolume(( selectedMusicChannel), MAX_VOLUME);
+    setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
-    // It may also be worth it to create a function for initialising and playing sounds.
-
-    // Load a click sound.
-    // TODO: Move these out of here and make it all a bit neater.
-#if 0
-    stopChannels(ALL_CHANNELS);
-    setMasterVolume(MAX_VOLUME, 0);
-    Sound mySound;
-    sound_create(&mySound);
-    const VAGHeader *vagHeader = (const VAGHeader*) computer_keyboard_spacebarAudio;
-    sound_initFromVAGHeader(&mySound, vagHeader, spuAllocPtr);
-    spuAllocPtr += upload(mySound.offset, vagHeader_getData(vagHeader), mySound.length, true);
-#endif
 
     // Attach functions to button presses
     controller_attachFunctionToButton(&swapMusic, BUTTON_INDEX_CIRCLE);
+    controller_attachFunctionToButton(&playSfx,   BUTTON_INDEX_SQUARE);
 
+
+    
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
