@@ -118,9 +118,7 @@ int main(void){
     // Initialise important things for later
     init();
     
-    printf("\n\n\n\nSTART ==============\n");
     stream_init();
-    printf("Load song.\n");
     stream_loadSong("SONG.VAG;1");
 
     stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000110);

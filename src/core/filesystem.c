@@ -71,13 +71,12 @@ void getRootDirData(void *rootDirData){
       true
    );
 }
-#include <stdio.h>
+
 /// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
 /// @param rootDirData Pointer to the root directory data.
 /// @param filename String containing the filename of the requested file.
 /// @return LBA to file or 0 if not found.
 uint32_t getLBAToFile(const char *filename){
-    printf("getLBAToFile\n");
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
