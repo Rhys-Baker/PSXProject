@@ -22,7 +22,7 @@ typedef struct{
 // Functions
 
 void initFilesystem(void);
-uint32_t getRootDirLBA(uint8_t *pvdSector, uint32_t *LBA);
+uint32_t getRootDirLba(uint8_t *pvdSector, uint32_t *LBA);
 int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *directoryEntry);
 void getRootDirData(void *rootDirData);
-uint32_t getLBAToFile(const char *filename);
+uint32_t getLbaToFile(const char *filename);
