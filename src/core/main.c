@@ -7,6 +7,7 @@
 #include "filesystem.h"
 #include "font.h"
 #include "gpu.h"
+#include "gte.h"
 #include "irq.h"
 #include "spu.h"
 #include "stream.h"
@@ -29,11 +30,20 @@ int bufferY = 0;
 // The pointer to the DMA packet.
 // We allocate space for each packet before we use it.
 uint32_t *dmaPtr;
-
 DMAChain dmaChains[2];
+DMAChain *activeChain;
 bool usingSecondFrame = false;
 
 int screenColor = 0xfa823c;
+int colours[6] = {
+    0xFF0000,
+    0x00FF00,
+    0x0000FF,
+    0xFF00FF,
+    0xFFFF00,
+    0x00FFFF
+};
+
 
 // Used to keep track of which channel is playing.
 // 0 is combat, 1 is clean.
@@ -63,6 +73,9 @@ void initHardware(void){
     initFilesystem();
     // TODO: Fill the screen with black / Add a loading screen here?
     initGPU(); // Disables screen blanking after setting up screen.
+    
+    setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
@@ -99,6 +112,70 @@ void playSfx(void){
 }
 
 
+
+typedef struct Vert{
+    int16_t x, y, z;
+    int16_t _;
+} Vert;
+typedef struct Tri{
+    uint16_t a, b, c;
+    uint16_t _;
+
+} Tri;
+typedef struct Model{
+    uint8_t  numVerts;
+    uint16_t numTris;
+    Vert    *verts;
+    Tri     *tris;
+} Model;
+
+Model myModel;
+
+void model_render(Model *model){
+    printf("\n\nBegin model render.\n");
+
+    for(int i = 0; i<model->numTris; i++){
+        GTEVector16 a, b, c;
+        a.x = (model->verts[model->tris[i].a].x);
+        a.y = (model->verts[model->tris[i].a].y);
+        a.z = (model->verts[model->tris[i].a].z);
+
+        b.x = (model->verts[model->tris[i].b].x);
+        b.y = (model->verts[model->tris[i].b].y);
+        b.z = (model->verts[model->tris[i].b].z);
+
+        c.x = (model->verts[model->tris[i].c].x);
+        c.y = (model->verts[model->tris[i].c].y);
+        c.z = (model->verts[model->tris[i].c].z);
+
+        gte_loadV0(&a);
+        gte_loadV1(&b);
+        gte_loadV2(&c);
+        printf("a: %d{%d, %d, %d}\n", model->tris[i].a, a.x, a.y, a.z);
+        printf("b: %d{%d, %d, %d}\n", model->tris[i].b, b.x, b.y, b.z);
+        printf("c: %d{%d, %d, %d}\n", model->tris[i].c, c.x, c.y, c.z);
+
+        gte_command(GTE_CMD_RTPT | GTE_SF);
+        gte_command(GTE_CMD_NCLIP);
+
+        gte_command(GTE_CMD_AVSZ3 | GTE_SF);
+        int zIndex = gte_getOTZ();
+
+        //if(zIndex <= 0){
+        //    printf(" Triangle is behind camera, continuing.\n");
+        //    continue;
+        //}
+
+        dmaPtr = allocatePacket(activeChain, zIndex, 4);
+        dmaPtr[0] = colours[i]| gp0_shadedTriangle(false, false, false);
+        dmaPtr[1] = gte_getSXY0();
+        dmaPtr[2] = gte_getSXY1();
+        dmaPtr[3] = gte_getSXY2();
+    }
+};
+
+
+
 // Start of main
 __attribute__((noreturn))
 int main(void){   
@@ -129,21 +206,32 @@ int main(void){
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
-        DMAChain *chain = &dmaChains[usingSecondFrame];
+        activeChain = &dmaChains[usingSecondFrame];
         usingSecondFrame = !usingSecondFrame;
 
         // Reset the ordering table to a blank state.
-        clearOrderingTable((chain->orderingTable), ORDERING_TABLE_SIZE);
-        chain->nextPacket = chain->data;
+        clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
+        activeChain->nextPacket = activeChain->data;
       
+        gte_setRotationMatrix(
+            ONE, 0, 0,
+            0, ONE, 0,
+            0, 0, ONE
+        );
+        rotateCurrentMatrix(0,0,0);
+        updateTranslationMatrix(0, 0, 0);
+
+        model_render(&myModel);
+
+
         // Place the framebuffer offset and screen clearing commands last.
         // This means they will be executed first and be at the back of the screen.
-        dmaPtr = allocatePacket(chain, ORDERING_TABLE_SIZE -1 , 3);
+        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
         dmaPtr[0] = screenColor | gp0_vramFill();
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        dmaPtr = allocatePacket(chain, ORDERING_TABLE_SIZE - 1, 4);
+        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
         dmaPtr[0] = gp0_texpage(0, true, false);
         dmaPtr[1] = gp0_fbOffset1(bufferX, bufferY);
         dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
@@ -168,11 +256,11 @@ int main(void){
 
         // Swap the frame buffers.
         bufferY = usingSecondFrame ? SCREEN_HEIGHT : 0;
-        GPU_GP1 = gp1_fbOffset(bufferX, bufferY); 
+        GPU_GP1 = gp1_fbOffset(bufferX, bufferY);
 
         // Give DMA a pointer to the last item in the ordering table.
         // We don't need to add a terminator, as it is already done for us by the OTC.
-        sendLinkedList(&(chain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
+        sendLinkedList(&(activeChain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
    }
 
     __builtin_unreachable();
