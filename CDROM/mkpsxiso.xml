@@ -62,7 +62,7 @@
 			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"        />
 			<file name="SONG.VAG"  type="data" source="SongCompiled.vag" />
 			<file name="LASER.VAG" type="data" source="laser.vag"        />
-			
+			<file name="MODEL.MDL"  type="data" source="model.mdl"       />
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
 			<!-- end of the disc image. It must be a pretty large one to -->
