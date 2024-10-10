@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "cdrom.h"
 #include "controller.h"
@@ -175,10 +176,155 @@ void model_render(Model *model){
 };
 
 
+/// @brief Load a model from a file on disc. The .verts and .tris properties will be set. It is important to free these as they are allocated on the heap. Use model_destroy() to do this.
+/// @param name Filename for the model.
+/// @param model Pointer to a model struct to store the data.
+/// @return 
+size_t model_load(const char *name, Model *model){
+    uint32_t modelLba;
+    uint16_t sectorBuffer[1024];
+    
+    modelLba = getLbaToFile(name);
+    if(!modelLba){
+        // File not found
+        return 1;
+    }
+
+    printf(" LBA to file \"%s\": %d\n", name, modelLba);
+    printf(" Start CDROM Read...\n");
+    startCDROMRead(
+        modelLba,
+        sectorBuffer,
+        1,
+        2048,
+        true,
+        true
+    );
+    printf(" Read complete!\n");
+
+    size_t sectorOffset = 0;
+
+    uint16_t _numVerts = sectorBuffer[sectorOffset++];
+    printf(" Num verts: %d\n", _numVerts);
+
+    printf(" Allocating %d bytes of memory for vert array\n", (sizeof(Vert) * _numVerts));
+    Vert *_verts = malloc(sizeof(Vert) * _numVerts);
+    printf(" Allocated at 0x%x\n", _verts);
+    
+
+    printf(" Verts...\n");
+    // For each vert
+    for(int i = 0; i<_numVerts; i++){
+
+        printf("  Write to struct at index: %d\n", i);
+        // For each axis
+        for(int j = 0; j < 3; j++){
+            // If we are reaching past the buffer
+            if(sectorOffset >= 1024){
+                // Read the next sector
+                startCDROMRead(
+                    ++modelLba,
+                    sectorBuffer,
+                    1,
+                    2048,
+                    true,
+                    true
+                );
+            }
+            printf("   Write to struct data index: %d\n", j);
+            // Copy the X, Y, then Z data into the struct, then increment the data pointer.
+            ((uint16_t *) &_verts[i])[j] = sectorBuffer[sectorOffset++];
+        }
+        
+    }
+
+    // Also do the check here.
+    if(sectorOffset >= 1024){
+        // Read the next sector
+        startCDROMRead(
+            ++modelLba,
+            sectorBuffer,
+            1,
+            2048,
+            true,
+            true
+        );
+    }
+
+    uint16_t _numTris = sectorBuffer[sectorOffset++];
+    printf(" Num tris: %d\n", _numTris);
+
+    printf(" Allocating %d bytes of memory for tri array\n", (sizeof(Tri) * _numTris));
+    Tri *_tris = malloc(sizeof(Tri) * _numTris);
+    printf(" Allocated at 0x%x\n", _tris);
+
+    printf(" Tris...\n");
+    // For each triangle
+    for(int i = 0; i<_numTris; i++){
+        printf("  Write to struct at index: %d\n", i);
+        // For each vert
+        for(int j = 0; j < 3; j++){
+            // If we are reaching past the buffer
+            if(sectorOffset >= 1024){
+                // Read the next sector
+                startCDROMRead(
+                    ++modelLba,
+                    sectorBuffer,
+                    1,
+                    2048,
+                    true,
+                    true
+                );
+            }
+            printf("   Write to struct data index: %d | %d\n", j, sectorBuffer[sectorOffset]);
+            // Copy the a, b, then c vert pointer into the struct, then increment the data pointer.
+            ((uint16_t *) &_tris[i])[j] = sectorBuffer[sectorOffset++];
+        }
+    }
+
+    model->numVerts = _numVerts;
+    model->numTris = _numTris;
+    model->verts = _verts;
+    model->tris = _tris;
+
+    printf(" Model Load compelete!\n");
+    return 0;
+}
+
+// TODO: Check that this is okay to do with invalid pointers. Will free() break if I pass some other pointer?
+/// @brief Free the allocated pointers and set values to 0.
+/// @param model Pointer to the model to destroy.
+void model_destroy(Model *model){
+    model->numVerts = 0;
+    model->numTris = 0;
+    free(model->verts);
+    free(model->tris);
+    model->verts = NULL;
+    model->tris = NULL;
+
+}
+
+
 
 // Start of main
 __attribute__((noreturn))
 int main(void){   
+
+    //Vert modelVerts[3] = {
+    //    {.x =  10, .y =  10, .z =  0},
+    //    {.x =  10, .y = -10, .z =  0},
+    //    {.x = -10, .y = -10, .z =  0}
+    //    //{.x = -10, .y =  10, .z =  0}
+    //};
+    //Tri modelTris[1] = {
+    //    {.a = 1, .b = 2, .c = 0},
+    //    //{.a = 3, .b = 0, .c = 2}
+    //};
+    //myModel.numVerts = 3;
+    //myModel.verts = &modelVerts;
+    //myModel.numTris = 1;
+    //myModel.tris = &modelTris;
+
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
 
@@ -186,10 +332,18 @@ int main(void){
     initHardware();
     stream_init();
     
+
+    printf("Begin Model Load\n");
+    int result = model_load("MODEL.MDL;1", &myModel);
+    printf("Model load result: %d\n", result);
+
+    printf("HAHAHAH: %d %d %d\n", myModel.tris[0].a,myModel.tris[0].b,myModel.tris[0].c);
+
     sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
-    
 
+    //object_load("CUBE.OBJ;1", &cube);
+    
     stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
     // This isn't necessarily a part of the stream function.
     // By default, the stream will play all channels. It is up to the user to handle the volume of which channels they want.
