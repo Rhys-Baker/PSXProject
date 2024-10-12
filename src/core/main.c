@@ -10,8 +10,10 @@
 #include "gpu.h"
 #include "gte.h"
 #include "irq.h"
+#include "model.h"
 #include "spu.h"
 #include "stream.h"
+#include "trig.h"
 
 #include "registers.h"
 #include "system.h"
@@ -25,15 +27,12 @@ extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
 
-// the X and Y of the buffer we are currently using.
-int bufferX = 0;
-int bufferY = 0;
-// The pointer to the DMA packet.
-// We allocate space for each packet before we use it.
-uint32_t *dmaPtr;
-DMAChain dmaChains[2];
-DMAChain *activeChain;
-bool usingSecondFrame = false;
+extern const uint8_t reference_64Data[];
+extern const uint8_t reference_64Palette[];
+TextureInfo reference_64;
+
+extern const uint8_t myHead_256Data[];
+TextureInfo myHead_256;
 
 int screenColor = 0xfa823c;
 int colours[6] = {
@@ -45,6 +44,8 @@ int colours[6] = {
     0x00FFFF
 };
 
+
+bool showingMenu = true;
 
 // Used to keep track of which channel is playing.
 // 0 is combat, 1 is clean.
@@ -79,8 +80,10 @@ void initHardware(void){
 
 
     // Upload textures
-    uploadIndexedTexture(&font, fontData, SCREEN_WIDTH+16, 0, FONT_WIDTH, FONT_HEIGHT, 
-        fontPalette, SCREEN_WIDTH+16, FONT_HEIGHT, GP0_COLOR_4BPP);
+    uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
+        fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
+    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1, 64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
+    uploadTexture(&myHead_256, myHead_256Data, SCREEN_WIDTH + 256, 0, 256, 256);
     
 }
 
@@ -112,218 +115,57 @@ void playSfx(void){
     sound_play(&laser, MAX_VOLUME, MAX_VOLUME);
 }
 
-
-
-typedef struct Vert{
-    int16_t x, y, z;
-    int16_t _;
-} Vert;
-typedef struct Tri{
-    uint16_t a, b, c;
-    uint16_t _;
-
-} Tri;
-typedef struct Model{
-    uint8_t  numVerts;
-    uint16_t numTris;
-    Vert    *verts;
-    Tri     *tris;
-} Model;
+void toggleMenu(void){
+    showingMenu = !showingMenu;
+}
 
 Model myModel;
 
-void model_render(Model *model){
-    printf("\n\nBegin model render.\n");
+// Used for movement calculations.
+int yawSin;
+int yawCos;
 
-    for(int i = 0; i<model->numTris; i++){
-        GTEVector16 a, b, c;
-        a.x = (model->verts[model->tris[i].a].x);
-        a.y = (model->verts[model->tris[i].a].y);
-        a.z = (model->verts[model->tris[i].a].z);
+int camX     = 0;
+int camY     = 0;
+int camZ     = 0;
+int camYaw   = 0;
+int camRoll  = 0;
+int camPitch = 0;
 
-        b.x = (model->verts[model->tris[i].b].x);
-        b.y = (model->verts[model->tris[i].b].y);
-        b.z = (model->verts[model->tris[i].b].z);
-
-        c.x = (model->verts[model->tris[i].c].x);
-        c.y = (model->verts[model->tris[i].c].y);
-        c.z = (model->verts[model->tris[i].c].z);
-
-        gte_loadV0(&a);
-        gte_loadV1(&b);
-        gte_loadV2(&c);
-        printf("a: %d{%d, %d, %d}\n", model->tris[i].a, a.x, a.y, a.z);
-        printf("b: %d{%d, %d, %d}\n", model->tris[i].b, b.x, b.y, b.z);
-        printf("c: %d{%d, %d, %d}\n", model->tris[i].c, c.x, c.y, c.z);
-
-        gte_command(GTE_CMD_RTPT | GTE_SF);
-        gte_command(GTE_CMD_NCLIP);
-
-        gte_command(GTE_CMD_AVSZ3 | GTE_SF);
-        int zIndex = gte_getOTZ();
-
-        //if(zIndex <= 0){
-        //    printf(" Triangle is behind camera, continuing.\n");
-        //    continue;
-        //}
-
-        dmaPtr = allocatePacket(activeChain, zIndex, 4);
-        dmaPtr[0] = colours[i]| gp0_shadedTriangle(false, false, false);
-        dmaPtr[1] = gte_getSXY0();
-        dmaPtr[2] = gte_getSXY1();
-        dmaPtr[3] = gte_getSXY2();
-    }
-};
-
-
-/// @brief Load a model from a file on disc. The .verts and .tris properties will be set. It is important to free these as they are allocated on the heap. Use model_destroy() to do this.
-/// @param name Filename for the model.
-/// @param model Pointer to a model struct to store the data.
-/// @return 
-size_t model_load(const char *name, Model *model){
-    uint32_t modelLba;
-    uint16_t sectorBuffer[1024];
-    
-    modelLba = getLbaToFile(name);
-    if(!modelLba){
-        // File not found
-        return 1;
-    }
-
-    printf(" LBA to file \"%s\": %d\n", name, modelLba);
-    printf(" Start CDROM Read...\n");
-    startCDROMRead(
-        modelLba,
-        sectorBuffer,
-        1,
-        2048,
-        true,
-        true
-    );
-    printf(" Read complete!\n");
-
-    size_t sectorOffset = 0;
-
-    uint16_t _numVerts = sectorBuffer[sectorOffset++];
-    printf(" Num verts: %d\n", _numVerts);
-
-    printf(" Allocating %d bytes of memory for vert array\n", (sizeof(Vert) * _numVerts));
-    Vert *_verts = malloc(sizeof(Vert) * _numVerts);
-    printf(" Allocated at 0x%x\n", _verts);
-    
-
-    printf(" Verts...\n");
-    // For each vert
-    for(int i = 0; i<_numVerts; i++){
-
-        printf("  Write to struct at index: %d\n", i);
-        // For each axis
-        for(int j = 0; j < 3; j++){
-            // If we are reaching past the buffer
-            if(sectorOffset >= 1024){
-                // Read the next sector
-                startCDROMRead(
-                    ++modelLba,
-                    sectorBuffer,
-                    1,
-                    2048,
-                    true,
-                    true
-                );
-            }
-            printf("   Write to struct data index: %d\n", j);
-            // Copy the X, Y, then Z data into the struct, then increment the data pointer.
-            ((uint16_t *) &_verts[i])[j] = sectorBuffer[sectorOffset++];
-        }
-        
-    }
-
-    // Also do the check here.
-    if(sectorOffset >= 1024){
-        // Read the next sector
-        startCDROMRead(
-            ++modelLba,
-            sectorBuffer,
-            1,
-            2048,
-            true,
-            true
-        );
-    }
-
-    uint16_t _numTris = sectorBuffer[sectorOffset++];
-    printf(" Num tris: %d\n", _numTris);
-
-    printf(" Allocating %d bytes of memory for tri array\n", (sizeof(Tri) * _numTris));
-    Tri *_tris = malloc(sizeof(Tri) * _numTris);
-    printf(" Allocated at 0x%x\n", _tris);
-
-    printf(" Tris...\n");
-    // For each triangle
-    for(int i = 0; i<_numTris; i++){
-        printf("  Write to struct at index: %d\n", i);
-        // For each vert
-        for(int j = 0; j < 3; j++){
-            // If we are reaching past the buffer
-            if(sectorOffset >= 1024){
-                // Read the next sector
-                startCDROMRead(
-                    ++modelLba,
-                    sectorBuffer,
-                    1,
-                    2048,
-                    true,
-                    true
-                );
-            }
-            printf("   Write to struct data index: %d | %d\n", j, sectorBuffer[sectorOffset]);
-            // Copy the a, b, then c vert pointer into the struct, then increment the data pointer.
-            ((uint16_t *) &_tris[i])[j] = sectorBuffer[sectorOffset++];
-        }
-    }
-
-    model->numVerts = _numVerts;
-    model->numTris = _numTris;
-    model->verts = _verts;
-    model->tris = _tris;
-
-    printf(" Model Load compelete!\n");
-    return 0;
+void lookLeft(void){
+    camYaw += 20;
 }
-
-// TODO: Check that this is okay to do with invalid pointers. Will free() break if I pass some other pointer?
-/// @brief Free the allocated pointers and set values to 0.
-/// @param model Pointer to the model to destroy.
-void model_destroy(Model *model){
-    model->numVerts = 0;
-    model->numTris = 0;
-    free(model->verts);
-    free(model->tris);
-    model->verts = NULL;
-    model->tris = NULL;
-
+void lookRight(void){
+    camYaw -= 20;
+}
+void lookUp(void){
+    camPitch -= 20;
+}
+void lookDown(void){
+    camPitch += 20;
 }
 
 
+void moveForward(void){
+    camX -= (yawSin)>>6;
+    camZ += (yawCos)>>6;
+}
+void moveBackward(void){
+    camX += (yawSin)>>6;
+    camZ -= (yawCos)>>6;
+}
+void moveLeft(void){
+    camX -=  ((yawCos)>>6);
+    camZ += -((yawSin)>>6);
+}
+void moveRight(void){
+    camX +=  ((yawCos)>>6);
+    camZ -= -((yawSin)>>6);
+}
 
 // Start of main
 __attribute__((noreturn))
-int main(void){   
-
-    //Vert modelVerts[3] = {
-    //    {.x =  10, .y =  10, .z =  0},
-    //    {.x =  10, .y = -10, .z =  0},
-    //    {.x = -10, .y = -10, .z =  0}
-    //    //{.x = -10, .y =  10, .z =  0}
-    //};
-    //Tri modelTris[1] = {
-    //    {.a = 1, .b = 2, .c = 0},
-    //    //{.a = 3, .b = 0, .c = 2}
-    //};
-    //myModel.numVerts = 3;
-    //myModel.verts = &modelVerts;
-    //myModel.numTris = 1;
-    //myModel.tris = &modelTris;
+int main(void){
 
     // Tell the compiler that variables might be updated randomly (ie, IRQ handlers)
     __atomic_signal_fence(__ATOMIC_ACQUIRE);
@@ -332,17 +174,10 @@ int main(void){
     initHardware();
     stream_init();
     
-
-    printf("Begin Model Load\n");
-    int result = model_load("MODEL.MDL;1", &myModel);
-    printf("Model load result: %d\n", result);
-
-    printf("HAHAHAH: %d %d %d\n", myModel.tris[0].a,myModel.tris[0].b,myModel.tris[0].c);
+    model_load("MODEL.MDL;1", &myModel);
 
     sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
-
-    //object_load("CUBE.OBJ;1", &cube);
     
     stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
     // This isn't necessarily a part of the stream function.
@@ -352,8 +187,22 @@ int main(void){
 
 
     // Attach functions to button presses
-    controller_attachFunctionToButton(&swapMusic, BUTTON_INDEX_CIRCLE);
-    controller_attachFunctionToButton(&playSfx,   BUTTON_INDEX_SQUARE);
+    controller_subscribeOnKeyHold(&lookLeft,     BUTTON_INDEX_SQUARE  );
+    controller_subscribeOnKeyHold(&lookRight,    BUTTON_INDEX_CIRCLE  );
+    controller_subscribeOnKeyHold(&lookUp,       BUTTON_INDEX_TRIANGLE);
+    controller_subscribeOnKeyHold(&lookDown,     BUTTON_INDEX_X       );
+
+    controller_subscribeOnKeyHold(&moveForward,  BUTTON_INDEX_UP      );
+    controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
+    controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
+    controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
+
+    // Visual toggles
+    controller_subscribeOnKeyDown(&toggleMenu,   BUTTON_INDEX_L1);
+
+    // Sound
+    controller_subscribeOnKeyDown(&swapMusic,   BUTTON_INDEX_L2);
+    controller_subscribeOnKeyDown(&playSfx,     BUTTON_INDEX_R2);
 
 
     
@@ -372,10 +221,10 @@ int main(void){
             0, ONE, 0,
             0, 0, ONE
         );
-        rotateCurrentMatrix(0,0,0);
-        updateTranslationMatrix(0, 0, 0);
+        rotateCurrentMatrix(camPitch, camRoll, camYaw);
+        updateTranslationMatrix((camX), (camY), (camZ));
 
-        model_render(&myModel);
+        model_renderTextured(&myModel, &myHead_256);
 
 
         // Place the framebuffer offset and screen clearing commands last.
@@ -392,6 +241,18 @@ int main(void){
         dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
 
 
+
+        
+
+        yawSin = isin(camYaw);
+        yawCos = icos(camYaw);
+
+        if(showingMenu){
+            char textBuffer[1024];
+            sprintf(textBuffer, "D-Pad: Move\nFace buttons: Look Around\nL1: Toggle menu\nL2: Toggle music\nR2: Play SFX\n\nPitch(x): %d\nRoll (y): %d\nYaw  (Z): %d\n\nx: %d\ny: %d\nz: %d", camPitch, camRoll, camYaw, camX, camY, camZ);        
+            printString(activeChain, &font, 10, 10, textBuffer);
+        }
+
         // Update the stream state machine.
         // Feed more data if needed.
         // Do this every frame, or almost every frame.
@@ -401,6 +262,7 @@ int main(void){
         // Update the controller every frame.
         // Will run the function associated with each button if the button is pressed.
         controller_update();
+
 
 
         // This will wait for the GPU to be ready,
