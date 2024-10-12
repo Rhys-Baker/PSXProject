@@ -48,10 +48,9 @@ void multiplyCurrentMatrixByVectors(GTEMatrix *output) {
 	output->values[2][2] = gte_getIR3();
 }
 
-void rotateCurrentMatrix(int roll, int yaw, int pitch){
+void rotateCurrentMatrix(int pitch, int roll, int yaw){
     GTEMatrix multiplied;
     int s, c;
-
 	if (pitch) {
 		s = isin(pitch);
 		c = icos(pitch);
@@ -64,6 +63,7 @@ void rotateCurrentMatrix(int roll, int yaw, int pitch){
 		multiplyCurrentMatrixByVectors(&multiplied);
 		gte_loadRotationMatrix(&multiplied);
 	}
+	
 	if (yaw) {
 		s = isin(yaw);
 		c = icos(yaw);
@@ -76,6 +76,7 @@ void rotateCurrentMatrix(int roll, int yaw, int pitch){
 		multiplyCurrentMatrixByVectors(&multiplied);
 		gte_loadRotationMatrix(&multiplied);
 	}
+
 	if (roll) {
 		s = isin(roll);
 		c = icos(roll);
@@ -91,9 +92,9 @@ void rotateCurrentMatrix(int roll, int yaw, int pitch){
 }
 
 void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
-    int32_t tx = x;
-    int32_t ty = y;
-    int32_t tz = z;
+    int32_t tx = -x;
+    int32_t ty = -y;
+    int32_t tz = -z;
 
     #define GTE_SET(reg, input) \
      __asm__ volatile("mtc2 %0, $%1\n" :: "r"(input), "i"(reg))
