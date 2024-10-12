@@ -1,4 +1,4 @@
-IncludeTags = -Ilib -Ilib/libc -Ilib/ps1 -Ilib/vendor -Iinclude -Iinclude/core -Iinclude/hardware
+IncludeTags = -Ilib -Ilib/libc -Ilib/ps1 -Ilib/vendor -Iinclude -Iinclude/core -Iinclude/hardware -Iinclude/software
 
 # Detect which toolchain is available
 ifneq ($(shell which mipsel-none-elf-gcc 2>/dev/null),)
