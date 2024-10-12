@@ -22,6 +22,17 @@ typedef struct {
     uint16_t page, clut;
 } TextureInfo;
 
+
+// the X and Y of the buffer we are currently using.
+extern int bufferX;
+extern int bufferY;
+// The pointer to the DMA packet.
+// We allocate space for each packet before we use it.
+extern uint32_t *dmaPtr;
+extern DMAChain dmaChains[2];
+extern DMAChain *activeChain;
+extern bool usingSecondFrame;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

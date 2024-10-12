@@ -21,6 +21,20 @@
 #include "gpucmd.h"
 #include "registers.h"
 
+
+// TODO: Now that these variables are here, we can make most if not all of it private.
+
+// the X and Y of the buffer we are currently using.
+int bufferX = 0;
+int bufferY = 0;
+// The pointer to the DMA packet.
+// We allocate space for each packet before we use it.
+uint32_t *dmaPtr;
+DMAChain dmaChains[2];
+DMAChain *activeChain;
+bool usingSecondFrame = false;
+
+
 void initGPU(void){
     // Read the GPU's status register to check if it was left in PAL or NTSC mode by the BIOS
     if ((GPU_GP1 & GP1_STAT_MODE_BITMASK) == GP1_STAT_MODE_PAL){
