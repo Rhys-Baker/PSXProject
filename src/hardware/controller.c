@@ -50,7 +50,9 @@ uint16_t heldButtons;
 // Array of function pointers.
 // Assuming the pointer isn't null, the corresponding function will be run
 // when its button is pressed
-void (*controllerFunctions[16])();
+void (*onKeyDownFunctions[16])();
+void (*onKeyHoldFunctions[16])();
+void (*onKeyUpFunctions  [16])();
 
 
 void initControllerBus(void){
@@ -193,40 +195,63 @@ bool getControllerInfo(int port, ControllerInfo *output) {
     return true;
 }
 
-/// @brief Attach a function to a given controller button.
-/// @param function Function pointer to the function that will run when the button is pressed.
-/// @param buttonIndex The index of the button to trigger this function.
-void controller_attachFunctionToButton(void (*function)(), uint16_t buttonIndex){
-    controllerFunctions[buttonIndex] = function;
+
+/// @brief Subscribe a function to a given controller button's <onKeyDown> event
+/// @param function Function pointer to the function that will run when the button is pressed donw.
+/// @param buttonIndex Index of the button to trigger this function
+void controller_subscribeOnKeyDown(void (*function)(), uint16_t buttonIndex){
+    onKeyDownFunctions[buttonIndex] = function;
+}
+/// @brief Subscribe a function to a given controller button's <onKeyUp> event
+/// @param function Function pointer to the function that will run when the button is pressed donw.
+/// @param buttonIndex Index of the button to trigger this function
+void controller_subscribeOnKeyUp(void (*function)(), uint16_t buttonIndex){
+    onKeyUpFunctions[buttonIndex] = function;
+}
+/// @brief Subscribe a function to a given controller button's <onKeyHold> event
+/// @param function Function pointer to the function that will run when the button is pressed donw.
+/// @param buttonIndex Index of the button to trigger this function
+void controller_subscribeOnKeyHold(void (*function)(), uint16_t buttonIndex){
+    onKeyHoldFunctions[buttonIndex] = function;
 }
 
+/// @brief Check controller input and fire <onKeyDown> <onKeyUp> and <onKeyHold> events for each button
 void controller_update(void){
     getControllerInfo(0, &controllerInfo);
 
-    // OnKeyDown style of button press.
-    // Might add OnKeyUp and OnKeyHeld events too, but for now this will do.
-
-    // Run the function
     for(int i=0; i<16; i++){
         int _buttonMask = (1 << i);
+        // Button pressed?
+        if(controllerInfo.buttons & _buttonMask){
+            // Fire <onKeyHold> event.
+            if(onKeyHoldFunctions[i] != NULL)
+                (*onKeyHoldFunctions[i])();
+            
+            // If button was held down, stop.
+            if(heldButtons & _buttonMask)
+                continue;
+            
+            // Mark this button as being held.
+            heldButtons |= _buttonMask;
 
-        if(!(controllerInfo.buttons & _buttonMask)){
-            // Set the button's bit to zero
+            // Fire <onKeyDown> event
+            if(onKeyDownFunctions[i] != NULL)
+                (*onKeyDownFunctions[i])();
+            
+        } else {
+            
+            // If button was not already held down, stop.
+            if(!(heldButtons & _buttonMask))
+                continue;
+
+            // Mark the button as not being held.
             heldButtons &= ~_buttonMask;
-            continue;
-        }
 
-        if(heldButtons & _buttonMask){
-            continue;
+            //// Fire <onKeyUp> event.
+            if(onKeyUpFunctions[i] != NULL)
+                (*onKeyUpFunctions[i])();
+            
+            
         }
-
-        heldButtons |= _buttonMask;
-
-        if(controllerFunctions[i] == NULL){
-            continue;
-        }
-        
-        (*controllerFunctions[i])();
     }
-
 }

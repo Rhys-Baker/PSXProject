@@ -112,6 +112,8 @@ int exchangePacket(
 );
 
 bool getControllerInfo(int port, ControllerInfo *output);
-
+// Only these really need to be public?
 void controller_update(void);
-void controller_attachFunctionToButton(void (*function)(), uint16_t buttonIndex);
+void controller_subscribeOnKeyDown(void (*function)(), uint16_t buttonIndex);
+void controller_subscribeOnKeyUp  (void (*function)(), uint16_t buttonIndex);
+void controller_subscribeOnKeyHold(void (*function)(), uint16_t buttonIndex);
