@@ -8,21 +8,21 @@
 
 // TODO: If texture NULL, render missing texture?
 // Error check for missing model, etc
-void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotX, uint16_t rotY, uint16_t rotZ, int32_t tx, int32_t ty, int32_t tz){
+void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotx, uint16_t roty, uint16_t rotz, int32_t tx, int32_t ty, int32_t tz){
     
-    //GTEMatrix currentRotationMatrix;
-    //gte_storeRotationMatrix(&currentRotationMatrix);
-
-    // Save current translation matrix
-    //int32_t currentTx, currentTy, currentTz;
-    //gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
-
-    // Rotate and translate the model
-    //updateTranslationMatrix(-(currentTx + tx), -(currentTy + ty), -(currentTz + tz));
-    //rotateCurrentMatrix(-rotX, -rotY, -rotZ);
-    //updateTranslationMatrix((currentTx - tx), (currentTy - ty), (currentTz - tz));
+    // Save the current translation vector
+    int32_t currentTx, currentTy, currentTz;
+    gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
+    // Save the Current Rotation Matrix
+    GTEMatrix crm;
+    gte_storeRotationMatrix(&crm);
     
-
+    // Translate model
+    updateTranslationMatrix(tx, ty, tz);
+    // Rotate model
+    rotateCurrentMatrix(rotx, roty, rotz);
+    
+    // Add every triangle to the ordering table for rendering.
     for(int i = 0; i<model->numTris; i++){
 
         GTEVector16 a, b, c;
@@ -78,13 +78,13 @@ void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotX, uin
         dmaPtr[6] = uv2;
     }
 
-    // Restore the translation and rotation for this object
-    //gte_setTranslationVector(currentTx, currentTy, currentTz);
-    //gte_setRotationMatrix(
-    //    currentRotationMatrix.values[0][0], currentRotationMatrix.values[0][1], currentRotationMatrix.values[0][2], 
-    //    currentRotationMatrix.values[1][0], currentRotationMatrix.values[1][1], currentRotationMatrix.values[1][2], 
-    //    currentRotationMatrix.values[2][0], currentRotationMatrix.values[2][1], currentRotationMatrix.values[2][2]
-    //);
+    // Restore the translation and rotation back to the initial state as to not clober any other models.
+    gte_setTranslationVector(currentTx, currentTy, currentTz);
+    gte_setRotationMatrix(
+        crm.values[0][0], crm.values[0][1], crm.values[0][2],
+        crm.values[1][0], crm.values[1][1], crm.values[1][2],
+        crm.values[2][0], crm.values[2][1], crm.values[2][2]
+    );
 };
 
 
