@@ -2,12 +2,29 @@
 
 #include "cdrom.h"
 #include "filesystem.h"
+#include <stdio.h>
 #include <stdlib.h>
 
-// TODO: If texute NULL, render missing texture?
+
+// TODO: If texture NULL, render missing texture?
 // Error check for missing model, etc
-void model_renderTextured(Model *model, TextureInfo *texture){
+void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotX, uint16_t rotY, uint16_t rotZ, int32_t tx, int32_t ty, int32_t tz){
+    
+    //GTEMatrix currentRotationMatrix;
+    //gte_storeRotationMatrix(&currentRotationMatrix);
+
+    // Save current translation matrix
+    //int32_t currentTx, currentTy, currentTz;
+    //gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
+
+    // Rotate and translate the model
+    //updateTranslationMatrix(-(currentTx + tx), -(currentTy + ty), -(currentTz + tz));
+    //rotateCurrentMatrix(-rotX, -rotY, -rotZ);
+    //updateTranslationMatrix((currentTx - tx), (currentTy - ty), (currentTz - tz));
+    
+
     for(int i = 0; i<model->numTris; i++){
+
         GTEVector16 a, b, c;
         a.x = (model->verts[model->tris[i].a].x);
         a.y = (model->verts[model->tris[i].a].y);
@@ -21,9 +38,12 @@ void model_renderTextured(Model *model, TextureInfo *texture){
         c.y = (model->verts[model->tris[i].c].y);
         c.z = (model->verts[model->tris[i].c].z);
 
+        
+
         gte_loadV0(&a);
         gte_loadV1(&b);
         gte_loadV2(&c);
+
 
         gte_command(GTE_CMD_RTPT | GTE_SF);
         gte_command(GTE_CMD_NCLIP);
@@ -43,9 +63,9 @@ void model_renderTextured(Model *model, TextureInfo *texture){
         }
 
         // Calculate the texture UV coords for the verts in this face.
-        uint32_t uv0 = gp0_uv((texture->u + model->tris[i].auv) >> 8, (texture->v + model->tris[i].auv) & 0x00FF, texture->clut);
-        uint32_t uv1 = gp0_uv((texture->u + model->tris[i].buv) >> 8, (texture->v + model->tris[i].buv) & 0x00FF, texture->page);
-        uint32_t uv2 = gp0_uv((texture->u + model->tris[i].cuv) >> 8, (texture->v + model->tris[i].cuv) & 0x00FF, 0);
+        uint32_t uv0 = gp0_uv((uint32_t)(texture->u + model->tris[i].auv) >> 8, (uint32_t)((uint32_t)texture->v + (uint32_t)model->tris[i].auv) & 0x00FF, texture->clut);
+        uint32_t uv1 = gp0_uv((uint32_t)(texture->u + model->tris[i].buv) >> 8, (uint32_t)((uint32_t)texture->v + (uint32_t)model->tris[i].buv) & 0x00FF, texture->page);
+        uint32_t uv2 = gp0_uv((uint32_t)(texture->u + model->tris[i].cuv) >> 8, (uint32_t)((uint32_t)texture->v + (uint32_t)model->tris[i].cuv) & 0x00FF, 0);
 
         // Render a triangle at the XY coords calculated via the GTE with the texture UVs calculated above
         dmaPtr = allocatePacket(activeChain, zIndex, 7);
@@ -57,6 +77,14 @@ void model_renderTextured(Model *model, TextureInfo *texture){
         dmaPtr[5] = gte_getSXY2();
         dmaPtr[6] = uv2;
     }
+
+    // Restore the translation and rotation for this object
+    //gte_setTranslationVector(currentTx, currentTy, currentTz);
+    //gte_setRotationMatrix(
+    //    currentRotationMatrix.values[0][0], currentRotationMatrix.values[0][1], currentRotationMatrix.values[0][2], 
+    //    currentRotationMatrix.values[1][0], currentRotationMatrix.values[1][1], currentRotationMatrix.values[1][2], 
+    //    currentRotationMatrix.values[2][0], currentRotationMatrix.values[2][1], currentRotationMatrix.values[2][2]
+    //);
 };
 
 

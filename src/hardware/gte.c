@@ -48,6 +48,8 @@ void multiplyCurrentMatrixByVectors(GTEMatrix *output) {
 	output->values[2][2] = gte_getIR3();
 }
 
+
+
 void rotateCurrentMatrix(int pitch, int roll, int yaw){
     GTEMatrix multiplied;
     int s, c;

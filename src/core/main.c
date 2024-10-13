@@ -34,7 +34,11 @@ TextureInfo reference_64;
 extern const uint8_t myHead_256Data[];
 TextureInfo myHead_256;
 
+extern const uint8_t obama_256Data[];
+TextureInfo obama_256;
+
 Model myModel;
+Model obamaPrism;
 
 int screenColor = 0xfa823c;
 
@@ -86,8 +90,11 @@ void initHardware(void){
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1, 64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
+    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1,
+        64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
+
     uploadTexture(&myHead_256, myHead_256Data, SCREEN_WIDTH + 256, 0, 256, 256);
+    uploadTexture(&obama_256, obama_256Data, SCREEN_WIDTH + 256, 256, 256, 256);
     
 }
 
@@ -98,8 +105,8 @@ int yawCos;
 // Camera variables stored as separate variables.
 int camX     = 0;
 int camY     = 0;
-int camZ     = 0;
-int camYaw   = 0;
+int camZ     = 20000;
+int camYaw   = -2048;
 int camRoll  = 0;
 int camPitch = 0;
 
@@ -166,13 +173,14 @@ int main(void){
     
     // Load model from the disk
     model_load("MODEL.MDL;1", &myModel);
+    model_load("OBAMA.MDL;1", &obamaPrism);
 
     // Load sound and song from disk.
     sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
     
     // Begin playback of music on channels 0 and 1.
-    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
+    //stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
 
 
     // The song uses Left and Right channels to hold the Combat and Calm songs.
@@ -200,7 +208,17 @@ int main(void){
     controller_subscribeOnKeyDown(&playSfx,     BUTTON_INDEX_R2);
 
 
-    
+
+    int32_t transXoffset = 0;
+    int32_t transYoffset = 0;
+    int32_t transZoffset = 0;
+    int32_t rotXoffset = 0;
+    int32_t rotYoffset = 0;
+    int32_t rotZoffset = 0;
+
+    int dY = 20;
+
+
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
@@ -210,7 +228,15 @@ int main(void){
         // Reset the ordering table to a blank state.
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
-      
+
+        if(transYoffset > 500){
+            dY = -20;
+        }
+        if(transYoffset < -500){
+            dY = 20;
+        }
+        
+
         // Refresh the GTE for transformations
         gte_setRotationMatrix(
             ONE, 0, 0,
@@ -220,8 +246,7 @@ int main(void){
         rotateCurrentMatrix(camPitch, camRoll, camYaw);
         updateTranslationMatrix((camX), (camY), (camZ));
 
-
-        model_renderTextured(&myModel, &myHead_256);
+        model_renderTextured(&obamaPrism, &obama_256, 0, 0, 1024, 0, 0, 0);
 
 
         // Place the framebuffer offset and screen clearing commands last.
