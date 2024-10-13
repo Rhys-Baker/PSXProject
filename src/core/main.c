@@ -236,17 +236,22 @@ int main(void){
             dY = 20;
         }
         
-
         // Refresh the GTE for transformations
         gte_setRotationMatrix(
             ONE, 0, 0,
             0, ONE, 0,
             0, 0, ONE
         );
-        rotateCurrentMatrix(camPitch, camRoll, camYaw);
-        updateTranslationMatrix((camX), (camY), (camZ));
 
-        model_renderTextured(&obamaPrism, &obama_256, 0, 0, 1024, 0, 0, 0);
+        // Rotate camera
+        rotateCurrentMatrix(camPitch, camRoll, camYaw);
+        // Translate camera
+        setTranslationMatrix((camX), (camY), (camZ));
+
+
+
+        model_renderTextured(&obamaPrism, &obama_256, 0, 0, -1024, -5000, 0, 0);
+        model_renderTextured(&obamaPrism, &obama_256, 0, 0,  1024,  5000, 0, 0);
 
 
         // Place the framebuffer offset and screen clearing commands last.
@@ -283,7 +288,6 @@ int main(void){
         // Update the controller every frame.
         // Will run the function associated with each button if the button is pressed.
         controller_update();
-
 
 
         // This will wait for the GPU to be ready,
