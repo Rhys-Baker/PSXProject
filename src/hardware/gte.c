@@ -93,7 +93,7 @@ void rotateCurrentMatrix(int pitch, int roll, int yaw){
 	}
 }
 
-void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
+void setTranslationMatrix(int32_t x, int32_t y, int32_t z){
     int32_t tx = -x;
     int32_t ty = -y;
     int32_t tz = -z;
@@ -109,4 +109,27 @@ void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
     ty = gte_getIR2();
     tz = gte_getIR3();
 	gte_setTranslationVector(tx, ty, tz);
+}
+
+void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
+	int32_t tx = -x;
+    int32_t ty = -y;
+    int32_t tz = -z;
+
+	int32_t ctx;
+	int32_t cty;
+	int32_t ctz;
+
+    #define GTE_SET(reg, input) \
+     __asm__ volatile("mtc2 %0, $%1\n" :: "r"(input), "i"(reg))
+    GTE_SET(GTE_IR1, tx);
+    GTE_SET(GTE_IR2, ty);
+    GTE_SET(GTE_IR3, tz);
+	gte_command(GTE_CMD_MVMVA | GTE_SF | GTE_MX_RT | GTE_V_IR | GTE_CV_NONE);
+    
+	tx = gte_getIR1();
+    ty = gte_getIR2();
+    tz = gte_getIR3();
+	gte_getTranslationVector(&ctx, &cty, &ctz);
+	gte_setTranslationVector(ctx + tx, cty + ty, ctz + tz);
 }
