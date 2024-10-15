@@ -1,5 +1,6 @@
 #include "model.h"
 
+#include "camera.h"
 #include "cdrom.h"
 #include "filesystem.h"
 #include <stdio.h>
@@ -8,8 +9,18 @@
 
 // TODO: If texture NULL, render missing texture?
 // Error check for missing model, etc
-void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotx, uint16_t roty, uint16_t rotz, int32_t tx, int32_t ty, int32_t tz){
+void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint16_t rotx, uint16_t roty, uint16_t rotz, int32_t tx, int32_t ty, int32_t tz){
     
+    if(tx+cam->x > 32767 || tx+cam->x < -32768){
+        return;
+    }
+    if(ty+cam->y > 32767 || ty+cam->y < -32768){
+        return;
+    }
+    if(tz+cam->z > 32767 || tz+cam->z < -32768){
+        return;
+    }
+
     // Save the current translation vector
     int32_t currentTx, currentTy, currentTz;
     gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
@@ -18,7 +29,7 @@ void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotx, uin
     gte_storeRotationMatrix(&crm);
     
     // Translate model
-    updateTranslationMatrix(tx, ty, tz);
+    updateTranslationMatrix(tx+cam->x, ty+cam->y, tz+cam->z);
     // Rotate model
     rotateCurrentMatrix(rotx, roty, rotz);
     
@@ -59,6 +70,11 @@ void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotx, uin
 
         // If too close/behind camera, don't render
         if(zIndex <= 0){
+            continue;
+        }
+        
+        // Don't render things too far away.
+        if(zIndex >= ORDERING_TABLE_SIZE){
             continue;
         }
 

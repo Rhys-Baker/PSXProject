@@ -1,7 +1,8 @@
 #pragma once
 #include <stdint.h>
-#include "gte.h"
+#include "camera.h"
 #include "gpu.h"
+#include "gte.h"
 
 typedef struct Vert{
     int16_t x, y, z;
@@ -29,7 +30,7 @@ size_t model_load(const char *name, Model *model);
 /// @brief Render the model with the given texture mapped to its UVs
 /// @param model Pointer to the model to render
 /// @param texture Pointer to the TextureInfo of the texture to map.
-void model_renderTextured(Model *model, TextureInfo *texture, uint16_t rotX, uint16_t rotY, uint16_t rotZ, int32_t tX, int32_t tY, int32_t tZ);
+void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint16_t rotX, uint16_t rotY, uint16_t rotZ, int32_t tX, int32_t tY, int32_t tZ);
 
 // TODO: Check that this is okay to do with invalid pointers. Will free() break if I pass some other pointer?
 
