@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "camera.h"
 #include "cdrom.h"
 #include "controller.h"
 #include "filesystem.h"
@@ -34,7 +35,15 @@ TextureInfo reference_64;
 extern const uint8_t myHead_256Data[];
 TextureInfo myHead_256;
 
-Model myModel;
+extern const uint8_t obama_256Data[];
+TextureInfo obama_256;
+
+extern const uint8_t filth_128Data[];
+TextureInfo filth_128;
+
+Model myHead;
+Model obamaPrism;
+Model filth;
 
 int screenColor = 0xfa823c;
 
@@ -86,8 +95,12 @@ void initHardware(void){
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1, 64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
+    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1,
+        64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
+
     uploadTexture(&myHead_256, myHead_256Data, SCREEN_WIDTH + 256, 0, 256, 256);
+    uploadTexture(&obama_256, obama_256Data, SCREEN_WIDTH + 256, 256, 256, 256);
+    uploadTexture(&filth_128, filth_128Data, SCREEN_WIDTH, 128, 128, 128);
     
 }
 
@@ -95,45 +108,53 @@ void initHardware(void){
 int yawSin;
 int yawCos;
 
-// Camera variables stored as separate variables.
-int camX     = 0;
-int camY     = 0;
-int camZ     = 0;
-int camYaw   = 0;
-int camRoll  = 0;
-int camPitch = 0;
+Camera mainCamera = {
+    .x=2000,
+    .y=-(3*128),
+    .z=0,
+    .pitch=0,
+    .yaw=1024,
+    .roll=0,
+    };
 
 
 // Functions for look controls
 void lookLeft(void){
-    camYaw += 20;
+    mainCamera.yaw += 20;
 }
 void lookRight(void){
-    camYaw -= 20;
+    mainCamera.yaw -= 20;
 }
 void lookUp(void){
-    camPitch -= 20;
+    mainCamera.pitch -= 20;
 }
 void lookDown(void){
-    camPitch += 20;
+    mainCamera.pitch += 20;
 }
 
 // Functions for move controls
 void moveForward(void){
-    camX -= (yawSin)>>6;
-    camZ += (yawCos)>>6;
+    mainCamera.x -= (((int)yawSin) * MOVEMENT_SPEED) >>9;
+    mainCamera.z += (((int)yawCos) * MOVEMENT_SPEED) >>9;
 }
 void moveBackward(void){
-    camX += (yawSin)>>6;
-    camZ -= (yawCos)>>6;
+    mainCamera.x += (((int)yawSin) * MOVEMENT_SPEED) >>9;
+    mainCamera.z -= (((int)yawCos) * MOVEMENT_SPEED) >>9;
 }
 void moveLeft(void){
-    camX -=  ((yawCos)>>6);
-    camZ += -((yawSin)>>6);
+    mainCamera.x -=  (((int)yawCos) * MOVEMENT_SPEED) >>9;
+    mainCamera.z += -(((int)yawSin) * MOVEMENT_SPEED) >>9;
 }
 void moveRight(void){
-    camX +=  ((yawCos)>>6);
-    camZ -= -((yawSin)>>6);
+    mainCamera.x +=  (((int)yawCos) * MOVEMENT_SPEED) >>9;
+    mainCamera.z -= -(((int)yawSin) * MOVEMENT_SPEED) >>9;
+}
+
+void moveUp(void){
+    mainCamera.y -= 32;
+}
+void moveDown(void){
+    mainCamera.y += 32;
 }
 
 // Misc button functions
@@ -165,7 +186,9 @@ int main(void){
     stream_init();
     
     // Load model from the disk
-    model_load("MODEL.MDL;1", &myModel);
+    model_load("MYHEAD.MDL;1", &myHead);
+    model_load("OBAMA.MDL;1", &obamaPrism);
+    model_load("FILTH.MDL;1", &filth);
 
     // Load sound and song from disk.
     sound_loadSound("LASER.VAG;1", &laser);
@@ -193,6 +216,9 @@ int main(void){
     controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
     controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
     controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
+    controller_subscribeOnKeyHold(&moveUp,       BUTTON_INDEX_START   );
+    controller_subscribeOnKeyHold(&moveDown,     BUTTON_INDEX_SELECT   );
+
     // Visual toggles
     controller_subscribeOnKeyDown(&toggleText,   BUTTON_INDEX_L1);
     // Sound
@@ -200,7 +226,6 @@ int main(void){
     controller_subscribeOnKeyDown(&playSfx,     BUTTON_INDEX_R2);
 
 
-    
     // Main loop. Runs every frame, forever
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
@@ -210,18 +235,25 @@ int main(void){
         // Reset the ordering table to a blank state.
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
-      
+        
         // Refresh the GTE for transformations
         gte_setRotationMatrix(
             ONE, 0, 0,
             0, ONE, 0,
             0, 0, ONE
         );
-        rotateCurrentMatrix(camPitch, camRoll, camYaw);
-        updateTranslationMatrix((camX), (camY), (camZ));
+
+        // Rotate camera
+        rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
+        // Translate camera
+        setTranslationMatrix(0, 0, 0);
+        //setTranslationMatrix((camX), (camY), (camZ));
 
 
-        model_renderTextured(&myModel, &myHead_256);
+
+        model_renderTextured(&filth, &filth_128, &mainCamera, 0, 0, 0, 0, 0 ,0);
+        model_renderTextured(&myHead, &myHead_256, &mainCamera, 0, 0, 0, 0, 0, -2000);
+        model_renderTextured(&obamaPrism, &obama_256, &mainCamera, 0, 0, 0, 0, 5000, -32000);
 
 
         // Place the framebuffer offset and screen clearing commands last.
@@ -241,7 +273,7 @@ int main(void){
         // Display the help/debug text.
         if(showingText){
             char textBuffer[1024];
-            sprintf(textBuffer, "D-Pad: Move\nFace buttons: Look Around\nL1: Toggle menu\nL2: Toggle music\nR2: Play SFX\n\nPitch(x): %d\nRoll (y): %d\nYaw  (Z): %d\n\nx: %d\ny: %d\nz: %d", camPitch, camRoll, camYaw, camX, camY, camZ);        
+            sprintf(textBuffer, "D-Pad: Move\nFace buttons: Look Around\nL1: Toggle menu\nL2: Toggle music\nR2: Play SFX\n\nPitch(x): %d\nRoll (y): %d\nYaw  (Z): %d\n\nx: %d\ny: %d\nz: %d\n\n%d\n%d\n%d", mainCamera.pitch, mainCamera.roll, mainCamera.yaw, mainCamera.x, mainCamera.y, mainCamera.z, ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12);
             printString(activeChain, &font, 10, 10, textBuffer);
         }
 
@@ -253,12 +285,11 @@ int main(void){
 
         // Used for movement calculations.
         // Update these before polling the controller
-        yawSin = isin(camYaw);
-        yawCos = icos(camYaw);
+        yawSin = isin(mainCamera.yaw);
+        yawCos = icos(mainCamera.yaw);
         // Update the controller every frame.
         // Will run the function associated with each button if the button is pressed.
         controller_update();
-
 
 
         // This will wait for the GPU to be ready,

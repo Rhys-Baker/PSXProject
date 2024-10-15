@@ -238,6 +238,19 @@ VECTOR32_SETTER(RFC, GFC, BFC, FarColor)
 
 #undef VECTOR32_SETTER
 
+#define VECTOR32_GETTER(regA, regB, regC, name) \
+	static inline void gte_get##name(int32_t *x, int32_t *y, int32_t *z) { \
+		GTE_GETC(GTE_##regA, *x); \
+		GTE_GETC(GTE_##regB, *y); \
+		GTE_GETC(GTE_##regC, *z); \
+	}
+
+VECTOR32_GETTER(TRX, TRY, TRZ, TranslationVector)
+VECTOR32_GETTER(RBK, GBK, BBK, BackgroundColor)
+VECTOR32_GETTER(RFC, GFC, BFC, FarColor)
+
+#undef VECTOR32_GETTER
+
 #define MATRIX_SETTER(reg, name) \
 	static inline void gte_set##name( \
 		int16_t v11, int16_t v12, int16_t v13, \
@@ -255,17 +268,17 @@ VECTOR32_SETTER(RFC, GFC, BFC, FarColor)
 		GTE_SETC(GTE_##reg##31##reg##32, value); \
 		GTE_SETC(GTE_##reg##33,          v33); \
 	} \
-	static inline void gte_load##name(const GTEMatrix *input) { \
+	static inline void gte_load##name(GTEMatrix *input) { \
 		uint32_t value; \
-		value = ((const uint32_t *) input)[0]; \
+		value = ((uint32_t *) input)[0]; \
 		GTE_SETC(GTE_##reg##11##reg##12, value); \
-		value = ((const uint32_t *) input)[1]; \
+		value = ((uint32_t *) input)[1]; \
 		GTE_SETC(GTE_##reg##13##reg##21, value); \
-		value = ((const uint32_t *) input)[2]; \
+		value = ((uint32_t *) input)[2]; \
 		GTE_SETC(GTE_##reg##22##reg##23, value); \
-		value = ((const uint32_t *) input)[3]; \
+		value = ((uint32_t *) input)[3]; \
 		GTE_SETC(GTE_##reg##31##reg##32, value); \
-		value = ((const uint32_t *) input)[4]; \
+		value = ((uint32_t *) input)[4]; \
 		GTE_SETC(GTE_##reg##33,          value); \
 	}
 
@@ -274,6 +287,51 @@ MATRIX_SETTER(L,  LightMatrix)
 MATRIX_SETTER(LC, LightColorMatrix)
 
 #undef MATRIX_SETTER
+
+#define MATRIX_GETTER(reg, name) \
+	static inline void gte_get##name( \
+		int16_t *v11, int16_t *v12, int16_t *v13, \
+		int16_t *v21, int16_t *v22, int16_t *v23, \
+		int16_t *v31, int16_t *v32, int16_t *v33 \
+	) { \
+		uint32_t value; \
+		GTE_GETC(GTE_##reg##11##reg##12, value); \
+		*v11 = (int16_t) (value & 0xffff); \
+		*v12 = (int16_t) (value >> 16); \
+		GTE_GETC(GTE_##reg##13##reg##21, value); \
+		*v13 = (int16_t) (value & 0xffff); \
+		*v21 = (int16_t) (value >> 16); \
+		GTE_GETC(GTE_##reg##22##reg##23, value); \
+		*v22 = (int16_t) (value & 0xffff); \
+		*v23 = (int16_t) (value >> 16); \
+		GTE_GETC(GTE_##reg##31##reg##32, value); \
+		*v31 = (int16_t) (value & 0xffff); \
+		*v32 = (int16_t) (value >> 16); \
+		GTE_GETC(GTE_##reg##33, value); \
+		*v33 = (int16_t) value; \
+	} \
+	static inline void gte_store##name(GTEMatrix *output) { \
+		uint32_t value; \
+		GTE_GETC(GTE_##reg##11##reg##12, value); \
+		((uint32_t *) output)[0] = value; \
+		GTE_GETC(GTE_##reg##13##reg##21, value); \
+		((uint32_t *) output)[1] = value; \
+		GTE_GETC(GTE_##reg##22##reg##23, value); \
+		((uint32_t *) output)[2] = value; \
+		GTE_GETC(GTE_##reg##31##reg##32, value); \
+		((uint32_t *) output)[3] = value; \
+		GTE_GETC(GTE_##reg##33, value); \
+		((uint32_t *) output)[4] = value; \
+	}
+
+MATRIX_GETTER(RT, RotationMatrix)
+MATRIX_GETTER(L,  LightMatrix)
+MATRIX_GETTER(LC, LightColorMatrix)
+
+#undef MATRIX_GETTER
+
+
+
 
 static inline void gte_setXYOrigin(int x, int y) {
 	GTE_SETC(GTE_OFX, x << 16);

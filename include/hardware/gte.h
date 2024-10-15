@@ -22,4 +22,5 @@
 void setupGTE(int width, int height);
 void multiplyCurrentMatrixByVectors(GTEMatrix *output);
 void rotateCurrentMatrix(int roll, int yaw, int pitch);
+void setTranslationMatrix(int32_t x, int32_t y, int32_t z);
 void updateTranslationMatrix(int32_t x, int32_t y, int32_t z);
