@@ -12,6 +12,7 @@
 #include "gte.h"
 #include "irq.h"
 #include "model.h"
+#include "menu.h"
 #include "spu.h"
 #include "stream.h"
 #include "trig.h"
@@ -66,37 +67,7 @@ int selectedMusicChannel = 1;
 Sound laser;
 
 
-typedef struct MenuItem{
-    char *label;
-    void (*function)();
 
-} MenuItem;
-
-typedef struct Menu{
-    char *title;
-    uint8_t numItems;
-    MenuItem *menuItems;
-} Menu;
-
-// TODO: potentially refactor the constructor. The title must be const and is passed by reference
-// Should we specify the number of items upfront or make use of realloc?
-// I generally like to avoid malloc on the psx because of the limited memory and the higher possiblity of wasted space.
-Menu menu_create(const char* title, uint8_t numItems){
-    Menu _menu;
-    _menu.title = title;
-    _menu.numItems = numItems;
-    _menu.menuItems = (MenuItem*)malloc(sizeof(MenuItem) * numItems);
-    return _menu;
-}
-
-int menu_setItem(Menu* menu, int index, const char* label, void (*function)()){
-    if(index >= menu->numItems) return -1;
-    menu->menuItems[index].label = label;
-    menu->menuItems[index].function = function;
-    return 0;
-}
-
-Menu* activeMenu = NULL;
 
 
 void waitForVblank(){
@@ -209,14 +180,7 @@ void toggleText(void){
 
 
 
-// TODO: Check that the menu actually exists/is referenced before running the math.
-uint8_t selectedMenuIndex = 0;
-void selectNextMenuItem(void){
-    selectedMenuIndex = (selectedMenuIndex+1) % activeMenu->numItems;
-}
-void selectPrevMenuItem(void){
-    selectedMenuIndex = (selectedMenuIndex-1 + activeMenu->numItems) % activeMenu->numItems;
-}
+
 
 Menu pauseMenu;
 Menu settingsMenu;
@@ -287,23 +251,7 @@ void showPauseMenu(void){
     activeMenu = &pauseMenu;
 }
 
-void RenderActiveMenu(void){
-    // Build a string for the menu
-    char menuText[1024] = "";
 
-    // Print the title with a fancy header
-    sprintf(menuText, "=== %s ===\n", activeMenu->title);
-
-    // Render each item's label
-    for(int i=0; i<activeMenu->numItems; i++){
-        if(i == selectedMenuIndex){
-            sprintf(menuText, "%s>\t%s\n", menuText, activeMenu->menuItems[i]);
-        } else {
-            sprintf(menuText, "%s \t%s\n", menuText, activeMenu->menuItems[i]);
-        }
-    }
-    printString(activeChain, &font, 0, 0, menuText);
-}
 
 
 
@@ -338,31 +286,20 @@ int main(void){
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
     // Set up the pause menu
-    pauseMenu.title = "Pause Menu";
-    pauseMenu.numItems = 5;
-    pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
+    //pauseMenu.title = "Pause Menu";
+    //pauseMenu.numItems = 5;
+    //pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
+    menu_create(&pauseMenu, "Pause", 5);
+    menu_setItem(&pauseMenu, 0, "Resume",        unpauseGame);
+    menu_setItem(&pauseMenu, 1, "Settings Menu", showSettingsMenu);
+    menu_setItem(&pauseMenu, 2, "Third Item",    NULL);
+    menu_setItem(&pauseMenu, 3, "Fourth Item",   NULL);
+    menu_setItem(&pauseMenu, 4, "Fifth Item",    NULL);
     
-    pauseMenu.menuItems[0].label = "Resume";
-    pauseMenu.menuItems[0].function = unpauseGame;
-    pauseMenu.menuItems[1].label = "Settings Menu";
-    pauseMenu.menuItems[1].function = showSettingsMenu;
-    pauseMenu.menuItems[2].label = "Third Item";
-    pauseMenu.menuItems[2].function = NULL;
-    pauseMenu.menuItems[3].label = "Fourth Item";
-    pauseMenu.menuItems[3].function = NULL;
-    pauseMenu.menuItems[4].label = "Fith Item";
-    pauseMenu.menuItems[4].function = NULL;
-
-    settingsMenu.title = "Settings";
-    settingsMenu.numItems = 3;
-    settingsMenu.menuItems = malloc(sizeof(MenuItem) * 3);
-
-    settingsMenu.menuItems[0].label = "Setting 1";
-    settingsMenu.menuItems[0].function = NULL;
-    settingsMenu.menuItems[1].label = "Setting 2";
-    settingsMenu.menuItems[1].function = NULL;
-    settingsMenu.menuItems[2].label = "Back";
-    settingsMenu.menuItems[2].function = showPauseMenu;
+    menu_create(&settingsMenu, "Settings", 3);
+    menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
+    menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
+    menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
 
 
 
@@ -415,7 +352,31 @@ int main(void){
         // Display the help/debug text.
         if(showingText && !gamePaused){
             char textBuffer[1024];
-            sprintf(textBuffer, "D-Pad: Move\nFace buttons: Look Around\nL1: Toggle menu\nL2: Toggle music\nR2: Play SFX\n\nPitch(x): %d\nRoll (y): %d\nYaw  (Z): %d\n\nx: %d\ny: %d\nz: %d\n\n%d\n%d\n%d", mainCamera.pitch, mainCamera.roll, mainCamera.yaw, mainCamera.x, mainCamera.y, mainCamera.z, ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12);
+            sprintf(
+                textBuffer,
+                "D-Pad: Move\n"
+                "Face buttons: Look Around\n"
+                "L1: Toggle menu\n"
+                "L2: Toggle music\n"
+                "R2: Play SFX\n\n"
+                
+                "Pitch(x): %d\n"
+                "Roll (y): %d\n"
+                "Yaw  (Z): %d\n\n"
+                
+                "x: %d\n"
+                "y: %d\n"
+                "z: %d\n\n"
+                
+                "%d\n"
+                "%d\n"
+                "%d",
+
+                mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
+                mainCamera.x, mainCamera.y, mainCamera.z,
+                ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12
+            );
+
             printString(activeChain, &font, 10, 10, textBuffer);
         }
 
@@ -435,7 +396,7 @@ int main(void){
 
 
         if(gamePaused){
-            RenderActiveMenu();
+            RenderActiveMenu(&font);
         }
 
         // This will wait for the GPU to be ready,
