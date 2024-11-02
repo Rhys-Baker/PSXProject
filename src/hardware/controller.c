@@ -215,6 +215,15 @@ void controller_subscribeOnKeyHold(void (*function)(), uint16_t buttonIndex){
     onKeyHoldFunctions[buttonIndex] = function;
 }
 
+/// @brief Unsubscribe all controller button events.
+void controller_unsubscribeAll(void){
+    for (int i=0; i<16; i++){
+        onKeyHoldFunctions[i] = NULL;
+        onKeyDownFunctions[i] = NULL;
+        onKeyUpFunctions[i]   = NULL;
+    }
+}
+
 /// @brief Check controller input and fire <onKeyDown> <onKeyUp> and <onKeyHold> events for each button
 void controller_update(void){
     getControllerInfo(0, &controllerInfo);

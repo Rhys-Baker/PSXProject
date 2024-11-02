@@ -12,6 +12,7 @@
 #include "gte.h"
 #include "irq.h"
 #include "model.h"
+#include "menu.h"
 #include "spu.h"
 #include "stream.h"
 #include "trig.h"
@@ -58,12 +59,15 @@ int colours[6] = {
 };
 
 
-bool showingText = true;
+bool showingText = false;
 
 // Used to keep track of which channel is playing.
 // 0 is combat, 1 is clean.
 int selectedMusicChannel = 1;
 Sound laser;
+
+
+
 
 
 void waitForVblank(){
@@ -174,6 +178,83 @@ void toggleText(void){
     showingText = !showingText;
 }
 
+
+
+
+
+Menu pauseMenu;
+Menu settingsMenu;
+
+bool gamePaused = false;
+void pauseGame(void);
+void unpauseGame(void);
+void runSelectedItem(void);
+
+void runSelectedItem(void){
+    if(activeMenu->menuItems[selectedMenuIndex].function!=NULL){
+        (*activeMenu->menuItems[selectedMenuIndex].function)();
+    }
+}
+
+void pauseGame(void){
+    // TODO: Set up an actual GAMESTATE machine
+    // Set game state to GAMESTATE_PAUSED
+    if(!gamePaused){
+        gamePaused = true;
+    }
+    activeMenu = &pauseMenu;
+    selectedMenuIndex = 0;
+    
+    // Update all the controls. Set any unused controls to null.
+    controller_unsubscribeAll();
+
+    controller_subscribeOnKeyDown(&runSelectedItem,    BUTTON_INDEX_X       );
+    controller_subscribeOnKeyDown(&selectPrevMenuItem, BUTTON_INDEX_UP      );
+    controller_subscribeOnKeyDown(&selectNextMenuItem, BUTTON_INDEX_DOWN    );
+    controller_subscribeOnKeyDown(&unpauseGame,        BUTTON_INDEX_START   );
+}
+
+void unpauseGame(void){
+    if(gamePaused){
+        gamePaused = false;
+    }
+    // Remove the active menu
+    activeMenu = NULL;
+
+    // Update all the controls
+    controller_unsubscribeAll();
+    // Look controls
+    controller_subscribeOnKeyHold(&lookLeft,     BUTTON_INDEX_SQUARE  );
+    controller_subscribeOnKeyHold(&lookRight,    BUTTON_INDEX_CIRCLE  );
+    controller_subscribeOnKeyHold(&lookUp,       BUTTON_INDEX_TRIANGLE);
+    controller_subscribeOnKeyHold(&lookDown,     BUTTON_INDEX_X       );
+    // Move controls
+    controller_subscribeOnKeyHold(&moveForward,  BUTTON_INDEX_UP      );
+    controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
+
+    controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
+    controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
+    controller_subscribeOnKeyDown(&pauseGame,    BUTTON_INDEX_START   );
+    // Visual toggles
+    controller_subscribeOnKeyDown(&toggleText,   BUTTON_INDEX_L1);
+    // Sound
+    controller_subscribeOnKeyDown(&swapMusic,    BUTTON_INDEX_L2);
+    controller_subscribeOnKeyDown(&playSfx,      BUTTON_INDEX_R2);
+}
+
+void showSettingsMenu(void){
+    selectedMenuIndex = 0;
+    activeMenu = &settingsMenu;
+}
+void showPauseMenu(void){
+    selectedMenuIndex = 0;
+    activeMenu = &pauseMenu;
+}
+
+
+
+
+
 // Start of main
 __attribute__((noreturn))
 int main(void){
@@ -204,26 +285,27 @@ int main(void){
     setChannelVolume(( selectedMusicChannel), MAX_VOLUME);
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
+    // Set up the pause menu
+    //pauseMenu.title = "Pause Menu";
+    //pauseMenu.numItems = 5;
+    //pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
+    menu_create(&pauseMenu, "Pause", 5);
+    menu_setItem(&pauseMenu, 0, "Resume",        unpauseGame);
+    menu_setItem(&pauseMenu, 1, "Settings Menu", showSettingsMenu);
+    menu_setItem(&pauseMenu, 2, "Third Item",    NULL);
+    menu_setItem(&pauseMenu, 3, "Fourth Item",   NULL);
+    menu_setItem(&pauseMenu, 4, "Fifth Item",    NULL);
+    
+    menu_create(&settingsMenu, "Settings", 3);
+    menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
+    menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
+    menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
 
-    // Associate functions with keypresses (button presses)
-    // Look controls
-    controller_subscribeOnKeyHold(&lookLeft,     BUTTON_INDEX_SQUARE  );
-    controller_subscribeOnKeyHold(&lookRight,    BUTTON_INDEX_CIRCLE  );
-    controller_subscribeOnKeyHold(&lookUp,       BUTTON_INDEX_TRIANGLE);
-    controller_subscribeOnKeyHold(&lookDown,     BUTTON_INDEX_X       );
-    // Move controls
-    controller_subscribeOnKeyHold(&moveForward,  BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
-    controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
-    controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
-    controller_subscribeOnKeyHold(&moveUp,       BUTTON_INDEX_START   );
-    controller_subscribeOnKeyHold(&moveDown,     BUTTON_INDEX_SELECT   );
 
-    // Visual toggles
-    controller_subscribeOnKeyDown(&toggleText,   BUTTON_INDEX_L1);
-    // Sound
-    controller_subscribeOnKeyDown(&swapMusic,   BUTTON_INDEX_L2);
-    controller_subscribeOnKeyDown(&playSfx,     BUTTON_INDEX_R2);
+
+    // TODO
+    // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
+    unpauseGame();
 
 
     // Main loop. Runs every frame, forever
@@ -245,11 +327,8 @@ int main(void){
 
         // Rotate camera
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
-        // Translate camera
+        // Reset translation Matrix
         setTranslationMatrix(0, 0, 0);
-        //setTranslationMatrix((camX), (camY), (camZ));
-
-
 
         model_renderTextured(&filth, &filth_128, &mainCamera, 0, 0, 0, 0, 0 ,0);
         model_renderTextured(&myHead, &myHead_256, &mainCamera, 0, 0, 0, 0, 0, -2000);
@@ -271,9 +350,33 @@ int main(void){
     
 
         // Display the help/debug text.
-        if(showingText){
+        if(showingText && !gamePaused){
             char textBuffer[1024];
-            sprintf(textBuffer, "D-Pad: Move\nFace buttons: Look Around\nL1: Toggle menu\nL2: Toggle music\nR2: Play SFX\n\nPitch(x): %d\nRoll (y): %d\nYaw  (Z): %d\n\nx: %d\ny: %d\nz: %d\n\n%d\n%d\n%d", mainCamera.pitch, mainCamera.roll, mainCamera.yaw, mainCamera.x, mainCamera.y, mainCamera.z, ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12);
+            sprintf(
+                textBuffer,
+                "D-Pad: Move\n"
+                "Face buttons: Look Around\n"
+                "L1: Toggle menu\n"
+                "L2: Toggle music\n"
+                "R2: Play SFX\n\n"
+                
+                "Pitch(x): %d\n"
+                "Roll (y): %d\n"
+                "Yaw  (Z): %d\n\n"
+                
+                "x: %d\n"
+                "y: %d\n"
+                "z: %d\n\n"
+                
+                "%d\n"
+                "%d\n"
+                "%d",
+
+                mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
+                mainCamera.x, mainCamera.y, mainCamera.z,
+                ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12
+            );
+
             printString(activeChain, &font, 10, 10, textBuffer);
         }
 
@@ -291,6 +394,10 @@ int main(void){
         // Will run the function associated with each button if the button is pressed.
         controller_update();
 
+
+        if(gamePaused){
+            RenderActiveMenu(&font);
+        }
 
         // This will wait for the GPU to be ready,
         // It also waits for Vblank.
