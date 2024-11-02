@@ -58,12 +58,45 @@ int colours[6] = {
 };
 
 
-bool showingText = true;
+bool showingText = false;
 
 // Used to keep track of which channel is playing.
 // 0 is combat, 1 is clean.
 int selectedMusicChannel = 1;
 Sound laser;
+
+
+typedef struct MenuItem{
+    char *label;
+    void (*function)();
+
+} MenuItem;
+
+typedef struct Menu{
+    char *title;
+    uint8_t numItems;
+    MenuItem *menuItems;
+} Menu;
+
+// TODO: potentially refactor the constructor. The title must be const and is passed by reference
+// Should we specify the number of items upfront or make use of realloc?
+// I generally like to avoid malloc on the psx because of the limited memory and the higher possiblity of wasted space.
+Menu menu_create(const char* title, uint8_t numItems){
+    Menu _menu;
+    _menu.title = title;
+    _menu.numItems = numItems;
+    _menu.menuItems = (MenuItem*)malloc(sizeof(MenuItem) * numItems);
+    return _menu;
+}
+
+int menu_setItem(Menu* menu, int index, const char* label, void (*function)()){
+    if(index >= menu->numItems) return -1;
+    menu->menuItems[index].label = label;
+    menu->menuItems[index].function = function;
+    return 0;
+}
+
+Menu* activeMenu = NULL;
 
 
 void waitForVblank(){
@@ -175,23 +208,29 @@ void toggleText(void){
 }
 
 
-// TODO: This entire section needs to be rewritten
-// Especially where it relies on global variables and constants.
-// We should minimise their use and also accomate for different menus.
-// EG: Here I have `= n % 5` but the 5 should be whatever the active menu's length is, etc.
-// 
-// Consider having a single global variable for `Active Menu`
+
+// TODO: Check that the menu actually exists/is referenced before running the math.
 uint8_t selectedMenuIndex = 0;
 void selectNextMenuItem(void){
-    selectedMenuIndex = (selectedMenuIndex+1) % 5;
+    selectedMenuIndex = (selectedMenuIndex+1) % activeMenu->numItems;
 }
 void selectPrevMenuItem(void){
-    selectedMenuIndex = (selectedMenuIndex-1 + 5) % 5;
+    selectedMenuIndex = (selectedMenuIndex-1 + activeMenu->numItems) % activeMenu->numItems;
 }
+
+Menu pauseMenu;
+Menu settingsMenu;
 
 bool gamePaused = false;
 void pauseGame(void);
 void unpauseGame(void);
+void runSelectedItem(void);
+
+void runSelectedItem(void){
+    if(activeMenu->menuItems[selectedMenuIndex].function!=NULL){
+        (*activeMenu->menuItems[selectedMenuIndex].function)();
+    }
+}
 
 void pauseGame(void){
     // TODO: Set up an actual GAMESTATE machine
@@ -199,39 +238,27 @@ void pauseGame(void){
     if(!gamePaused){
         gamePaused = true;
     }
-
+    activeMenu = &pauseMenu;
     selectedMenuIndex = 0;
-    // Update all the controls. Set any unused controls to null.
-
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_SQUARE  );
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_CIRCLE  );
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_TRIANGLE);
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_X       );
     
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyHold(NULL, BUTTON_INDEX_DOWN    );
+    // Update all the controls. Set any unused controls to null.
+    controller_unsubscribeAll();
+
+    controller_subscribeOnKeyDown(&runSelectedItem,    BUTTON_INDEX_X       );
     controller_subscribeOnKeyDown(&selectPrevMenuItem, BUTTON_INDEX_UP      );
     controller_subscribeOnKeyDown(&selectNextMenuItem, BUTTON_INDEX_DOWN    );
-
-    controller_subscribeOnKeyHold(NULL,                BUTTON_INDEX_LEFT    );
-    controller_subscribeOnKeyHold(NULL,                BUTTON_INDEX_RIGHT   );
-
     controller_subscribeOnKeyDown(&unpauseGame,        BUTTON_INDEX_START   );
-    
-    controller_subscribeOnKeyHold(NULL,                BUTTON_INDEX_SELECT   );
-    
-    controller_subscribeOnKeyDown(NULL, BUTTON_INDEX_L1);
-    controller_subscribeOnKeyDown(NULL, BUTTON_INDEX_L2);
-    controller_subscribeOnKeyDown(NULL, BUTTON_INDEX_R2);
-
 }
 
 void unpauseGame(void){
     if(gamePaused){
         gamePaused = false;
     }
+    // Remove the active menu
+    activeMenu = NULL;
 
     // Update all the controls
+    controller_unsubscribeAll();
     // Look controls
     controller_subscribeOnKeyHold(&lookLeft,     BUTTON_INDEX_SQUARE  );
     controller_subscribeOnKeyHold(&lookRight,    BUTTON_INDEX_CIRCLE  );
@@ -240,16 +267,10 @@ void unpauseGame(void){
     // Move controls
     controller_subscribeOnKeyHold(&moveForward,  BUTTON_INDEX_UP      );
     controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
-    controller_subscribeOnKeyDown(NULL,          BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyDown(NULL,          BUTTON_INDEX_DOWN    );
-
 
     controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
     controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
     controller_subscribeOnKeyDown(&pauseGame,    BUTTON_INDEX_START   );
-
-    controller_subscribeOnKeyHold(NULL,          BUTTON_INDEX_SELECT  );
-
     // Visual toggles
     controller_subscribeOnKeyDown(&toggleText,   BUTTON_INDEX_L1);
     // Sound
@@ -257,28 +278,28 @@ void unpauseGame(void){
     controller_subscribeOnKeyDown(&playSfx,      BUTTON_INDEX_R2);
 }
 
+void showSettingsMenu(void){
+    selectedMenuIndex = 0;
+    activeMenu = &settingsMenu;
+}
+void showPauseMenu(void){
+    selectedMenuIndex = 0;
+    activeMenu = &pauseMenu;
+}
 
-
-void RenderMenu(){
+void RenderActiveMenu(void){
     // Build a string for the menu
     char menuText[1024] = "";
-    char *title = "Menu Title";
-    char *items[5] = {
-        "First Item",
-        "Second Item",
-        "Third Item",
-        "Fourth Item",
-        "Fith Item"
-    };
 
     // Print the title with a fancy header
-    sprintf(menuText, "=== %s ===\n", title);
+    sprintf(menuText, "=== %s ===\n", activeMenu->title);
+
     // Render each item's label
-    for(int i=0; i<5; i++){
+    for(int i=0; i<activeMenu->numItems; i++){
         if(i == selectedMenuIndex){
-            sprintf(menuText, "%s>\t%s\n", menuText, items[i]);
+            sprintf(menuText, "%s>\t%s\n", menuText, activeMenu->menuItems[i]);
         } else {
-            sprintf(menuText, "%s \t%s\n", menuText, items[i]);
+            sprintf(menuText, "%s \t%s\n", menuText, activeMenu->menuItems[i]);
         }
     }
     printString(activeChain, &font, 0, 0, menuText);
@@ -316,9 +337,37 @@ int main(void){
     setChannelVolume(( selectedMusicChannel), MAX_VOLUME);
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
+    // Set up the pause menu
+    pauseMenu.title = "Pause Menu";
+    pauseMenu.numItems = 5;
+    pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
     
+    pauseMenu.menuItems[0].label = "Resume";
+    pauseMenu.menuItems[0].function = unpauseGame;
+    pauseMenu.menuItems[1].label = "Settings Menu";
+    pauseMenu.menuItems[1].function = showSettingsMenu;
+    pauseMenu.menuItems[2].label = "Third Item";
+    pauseMenu.menuItems[2].function = NULL;
+    pauseMenu.menuItems[3].label = "Fourth Item";
+    pauseMenu.menuItems[3].function = NULL;
+    pauseMenu.menuItems[4].label = "Fith Item";
+    pauseMenu.menuItems[4].function = NULL;
+
+    settingsMenu.title = "Settings";
+    settingsMenu.numItems = 3;
+    settingsMenu.menuItems = malloc(sizeof(MenuItem) * 3);
+
+    settingsMenu.menuItems[0].label = "Setting 1";
+    settingsMenu.menuItems[0].function = NULL;
+    settingsMenu.menuItems[1].label = "Setting 2";
+    settingsMenu.menuItems[1].function = NULL;
+    settingsMenu.menuItems[2].label = "Back";
+    settingsMenu.menuItems[2].function = showPauseMenu;
+
+
+
     // TODO
-    // Probably need to create a better function for this, but this will subscribe all the button events
+    // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
     unpauseGame();
 
 
@@ -341,11 +390,8 @@ int main(void){
 
         // Rotate camera
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
-        // Translate camera
+        // Reset translation Matrix
         setTranslationMatrix(0, 0, 0);
-        //setTranslationMatrix((camX), (camY), (camZ));
-
-
 
         model_renderTextured(&filth, &filth_128, &mainCamera, 0, 0, 0, 0, 0 ,0);
         model_renderTextured(&myHead, &myHead_256, &mainCamera, 0, 0, 0, 0, 0, -2000);
@@ -389,7 +435,7 @@ int main(void){
 
 
         if(gamePaused){
-            RenderMenu();
+            RenderActiveMenu();
         }
 
         // This will wait for the GPU to be ready,
