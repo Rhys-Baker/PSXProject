@@ -251,8 +251,42 @@ void showPauseMenu(void){
     activeMenu = &pauseMenu;
 }
 
+// TODO: Consider renaming this to be a bit more specific?
+// This is for anything that has a model, basically. Probably going to extend the functionality in future.
+typedef struct Entity{
+    Model *model;
+    TextureInfo *texture;
+    uint32_t xpos, ypos, zpos;
+    uint16_t xrot, yrot, zrot;
+} Entity;
+
+Entity loadedEntities[128];
 
 
+int loadEntity(Model *model, TextureInfo *texture, uint32_t xpos, uint32_t ypos, uint32_t zpos, uint16_t xrot, uint16_t yrot, uint16_t zrot){
+    // Linear search to find next free entry
+    for(int i=0; i<128; i++){
+        if(loadedEntities[i].model == NULL){
+            loadedEntities[i].model = model;
+            loadedEntities[i].texture = texture;
+            loadedEntities[i].xpos = xpos;
+            loadedEntities[i].ypos = ypos;
+            loadedEntities[i].zpos = zpos;
+            loadedEntities[i].xrot = xrot;
+            loadedEntities[i].yrot = yrot;
+            loadedEntities[i].zrot = zrot;
+            return i;
+        }
+    }
+    return -1;
+}
+void unloadEntity(int index){
+    loadedEntities[index].model = NULL;
+}
+
+void spawnFilthAtPlayer(void){
+    loadEntity(&filth, &filth_128, -mainCamera.x, 0, -mainCamera.z, 0, 0, (-mainCamera.yaw)-(ONE/4));
+}
 
 
 // Start of main
@@ -286,22 +320,17 @@ int main(void){
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
     // Set up the pause menu
-    //pauseMenu.title = "Pause Menu";
-    //pauseMenu.numItems = 5;
-    //pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
     menu_create(&pauseMenu, "Pause", 5);
     menu_setItem(&pauseMenu, 0, "Resume",        unpauseGame);
     menu_setItem(&pauseMenu, 1, "Settings Menu", showSettingsMenu);
-    menu_setItem(&pauseMenu, 2, "Third Item",    NULL);
-    menu_setItem(&pauseMenu, 3, "Fourth Item",   NULL);
+    menu_setItem(&pauseMenu, 2, "Spawn Filth",    spawnFilthAtPlayer);
+    menu_setItem(&pauseMenu, 3, "Toggle Music",   swapMusic);
     menu_setItem(&pauseMenu, 4, "Fifth Item",    NULL);
     
     menu_create(&settingsMenu, "Settings", 3);
     menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
     menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
     menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
-
-
 
     // TODO
     // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
@@ -330,9 +359,19 @@ int main(void){
         // Reset translation Matrix
         setTranslationMatrix(0, 0, 0);
 
-        model_renderTextured(&filth, &filth_128, &mainCamera, 0, 0, 0, 0, 0 ,0);
-        model_renderTextured(&myHead, &myHead_256, &mainCamera, 0, 0, 0, 0, 0, -2000);
-        model_renderTextured(&obamaPrism, &obama_256, &mainCamera, 0, 0, 0, 0, 5000, -32000);
+        for (int i=0; i<128; i++){
+            model_renderTextured(
+                loadedEntities[i].model,
+                loadedEntities[i].texture,
+                &mainCamera,
+                loadedEntities[i].xrot,
+                loadedEntities[i].yrot,
+                loadedEntities[i].zrot,
+                loadedEntities[i].xpos,
+                loadedEntities[i].ypos,
+                loadedEntities[i].zpos
+            );
+        }
 
 
         // Place the framebuffer offset and screen clearing commands last.
