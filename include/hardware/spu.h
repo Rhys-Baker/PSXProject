@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include "registers.h"
 
@@ -37,10 +38,6 @@ static inline uint32_t concat4_8(uint8_t a, uint8_t b, uint8_t c, uint8_t d){
 
 static inline uint32_t concat4_16(uint16_t a, uint16_t b){
     return (a | (b << 16));
-}
-
-static inline int min(int a, int b){
-    return (a<b) ? a : b;
 }
 
 static inline const uint32_t bswap32(uint32_t num){

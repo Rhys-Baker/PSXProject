@@ -29,6 +29,12 @@ static inline int abs(int value) {
 static inline long labs(long value) {
 	return (value < 0) ? (-value) : value;
 }
+static inline int max(int a, int b){
+	return (a > b) ? a : b;
+}
+static inline int min(int a, int b){
+	return (a < b) ? a : b;
+}
 
 void abort(void);
 
