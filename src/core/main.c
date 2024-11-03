@@ -45,6 +45,7 @@ TextureInfo filth_128;
 Model myHead;
 Model obamaPrism;
 Model filth;
+Model amorph;
 
 int screenColor = 0xfa823c;
 
@@ -65,9 +66,6 @@ bool showingText = false;
 // 0 is combat, 1 is clean.
 int selectedMusicChannel = 1;
 Sound laser;
-
-
-
 
 
 void waitForVblank(){
@@ -94,8 +92,6 @@ void initHardware(void){
     initGPU(); // Disables screen blanking after setting up screen.
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
@@ -105,7 +101,6 @@ void initHardware(void){
     uploadTexture(&myHead_256, myHead_256Data, SCREEN_WIDTH + 256, 0, 256, 256);
     uploadTexture(&obama_256, obama_256Data, SCREEN_WIDTH + 256, 256, 256, 256);
     uploadTexture(&filth_128, filth_128Data, SCREEN_WIDTH, 128, 128, 128);
-    
 }
 
 // Used for movement calculations.
@@ -177,10 +172,6 @@ void playSfx(void){
 void toggleText(void){
     showingText = !showingText;
 }
-
-
-
-
 
 Menu pauseMenu;
 Menu settingsMenu;
@@ -288,6 +279,14 @@ void spawnFilthAtPlayer(void){
     loadEntity(&filth, &filth_128, -mainCamera.x, 0, -mainCamera.z, 0, 0, (-mainCamera.yaw)-(ONE/4));
 }
 
+void spawnObamaAtPlayer(void){
+    loadEntity(&obamaPrism, &obama_256, -mainCamera.x, 0, -mainCamera.z, 0, 0, (-mainCamera.yaw)-(ONE/4));
+}
+
+void spawnAmorphAtPlayer(void){
+    loadEntity(&amorph, &reference_64, -mainCamera.x, 0, -mainCamera.z, 0, 0, (-mainCamera.yaw)-(ONE/4));
+}
+
 
 // Start of main
 __attribute__((noreturn))
@@ -298,20 +297,25 @@ int main(void){
 
     // Initialise important things for later
     initHardware();
+    
     stream_init();
+    
     
     // Load model from the disk
     model_load("MYHEAD.MDL;1", &myHead);
     model_load("OBAMA.MDL;1", &obamaPrism);
     model_load("FILTH.MDL;1", &filth);
+    model_load("AMORPH.MDL;1", &amorph);
+    
 
     // Load sound and song from disk.
     sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
     
+    
     // Begin playback of music on channels 0 and 1.
     stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
-
+    
 
     // The song uses Left and Right channels to hold the Combat and Calm songs.
     // I set the selected channel to Max on both left and right. This allows me
@@ -320,45 +324,52 @@ int main(void){
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
     // Set up the pause menu
-    menu_create(&pauseMenu, "Pause", 5);
-    menu_setItem(&pauseMenu, 0, "Resume",        unpauseGame);
-    menu_setItem(&pauseMenu, 1, "Settings Menu", showSettingsMenu);
-    menu_setItem(&pauseMenu, 2, "Spawn Filth",    spawnFilthAtPlayer);
-    menu_setItem(&pauseMenu, 3, "Toggle Music",   swapMusic);
-    menu_setItem(&pauseMenu, 4, "Fifth Item",    NULL);
+    menu_create(&pauseMenu, "Pause", 6);
+    menu_setItem(&pauseMenu, 0, "Resume",           unpauseGame);
+    menu_setItem(&pauseMenu, 1, "Settings Menu",    showSettingsMenu);
+    menu_setItem(&pauseMenu, 2, "Spawn Filth",      spawnFilthAtPlayer);
+    menu_setItem(&pauseMenu, 3, "Spawn ObamaPrism", spawnObamaAtPlayer);
+    menu_setItem(&pauseMenu, 4, "Spawn Amorph",     spawnAmorphAtPlayer);
+    menu_setItem(&pauseMenu, 5, "Toggle Music",     swapMusic);
+    
     
     menu_create(&settingsMenu, "Settings", 3);
     menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
     menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
     menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
+    
 
     // TODO
     // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
     unpauseGame();
-
+    
 
     // Main loop. Runs every frame, forever
+    
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
         activeChain = &dmaChains[usingSecondFrame];
         usingSecondFrame = !usingSecondFrame;
 
+        
         // Reset the ordering table to a blank state.
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
-        
+
         // Refresh the GTE for transformations
         gte_setRotationMatrix(
             ONE, 0, 0,
             0, ONE, 0,
             0, 0, ONE
         );
+        
 
         // Rotate camera
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
         // Reset translation Matrix
         setTranslationMatrix(0, 0, 0);
 
+        numPrims = 0;
         for (int i=0; i<128; i++){
             model_renderTextured(
                 loadedEntities[i].model,
@@ -386,7 +397,6 @@ int main(void){
         dmaPtr[1] = gp0_fbOffset1(bufferX, bufferY);
         dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
         dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
-    
 
         // Display the help/debug text.
         if(showingText && !gamePaused){
@@ -407,13 +417,11 @@ int main(void){
                 "y: %d\n"
                 "z: %d\n\n"
                 
-                "%d\n"
-                "%d\n"
-                "%d",
+                "p: %d",
 
                 mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
                 mainCamera.x, mainCamera.y, mainCamera.z,
-                ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12
+                numPrims
             );
 
             printString(activeChain, &font, 10, 10, textBuffer);
@@ -451,6 +459,5 @@ int main(void){
         // We don't need to add a terminator, as it is already done for us by the OTC.
         sendLinkedList(&(activeChain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
    }
-
     __builtin_unreachable();
 }
