@@ -8,17 +8,19 @@
 
 #include "spu.h"
 
-bool waitingForInt1;
-bool waitingForInt2;
-bool waitingForInt3;
-bool waitingForInt4;
-bool waitingForInt5;
+#include <stdio.h>
+
+volatile bool waitingForInt1;
+volatile bool waitingForInt2;
+volatile bool waitingForInt3;
+volatile bool waitingForInt4;
+volatile bool waitingForInt5;
 
 bool cdromDataReady;
 
 void  *cdromReadDataPtr;
 size_t cdromReadDataSectorSize;
-size_t cdromReadDataNumSectors;
+volatile size_t cdromReadDataNumSectors;
 
 uint8_t cdromResponse[16];
 uint8_t cdromRespLength;
@@ -93,7 +95,7 @@ void waitForINT2(){
 }
 
 void waitForINT3(){
-     while(waitingForInt3 && waitingForInt5){
+    while(waitingForInt3 && waitingForInt5){
         __asm__ volatile("");
     }
 }

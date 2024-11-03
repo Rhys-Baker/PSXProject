@@ -9,7 +9,7 @@
 #include "registers.h"
 #include "system.h"
 
-bool vblank = false;
+volatile bool vblank = false;
 
 // Sets the global vblank variable to true.
 void handleVSyncIRQ(void){

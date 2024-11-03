@@ -1,7 +1,7 @@
 #pragma once
 #include <stdbool.h>
 
-extern bool vblank;
+extern volatile bool vblank;
 
 void initIRQ(void);
 
