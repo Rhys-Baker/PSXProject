@@ -4,6 +4,8 @@
 #include "gpu.h"
 #include "gte.h"
 
+extern int numPrims;
+
 typedef struct Vert{
     int16_t x, y, z;
     int16_t _;
