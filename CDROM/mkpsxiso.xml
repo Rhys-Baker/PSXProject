@@ -65,6 +65,7 @@
 			<file name="MYHEAD.MDL" type="data" source="myHeadLowPoly.mdl"        />
 			<file name="OBAMA.MDL" type="data" source="obama.mdl"        />
 			<file name="FILTH.MDL" type="data" source="filth.mdl" />
+			<file name="AMORPH.MDL" type="data" source="amorph.mdl" />
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
 			<!-- end of the disc image. It must be a pretty large one to -->
