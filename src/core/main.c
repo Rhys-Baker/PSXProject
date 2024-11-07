@@ -297,7 +297,6 @@ int main(void){
 
     // Initialise important things for later
     initHardware();
-    
     stream_init();
     
     
@@ -324,26 +323,29 @@ int main(void){
     setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
 
     // Set up the pause menu
-    menu_create(&pauseMenu, "Pause", 6);
+    menu_create(&pauseMenu, "Pause", 5);
     menu_setItem(&pauseMenu, 0, "Resume",           unpauseGame);
-    menu_setItem(&pauseMenu, 1, "Settings Menu",    showSettingsMenu);
+    menu_setItem(&pauseMenu, 1, "Toggle Music",     swapMusic);
     menu_setItem(&pauseMenu, 2, "Spawn Filth",      spawnFilthAtPlayer);
     menu_setItem(&pauseMenu, 3, "Spawn ObamaPrism", spawnObamaAtPlayer);
     menu_setItem(&pauseMenu, 4, "Spawn Amorph",     spawnAmorphAtPlayer);
-    menu_setItem(&pauseMenu, 5, "Toggle Music",     swapMusic);
-    
-    
-    menu_create(&settingsMenu, "Settings", 3);
-    menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
-    menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
-    menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
     
 
     // TODO
     // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
     unpauseGame();
     
-
+    // Initialise Timer
+    TIMER_CTRL(1) = (TIMER_CTRL_EXT_CLOCK);
+    TIMER_TARGET(1) = 0xFFFF;
+    int deltaTime = 0;
+    int prevTimerValue = 0;
+    if(TIMER_CTRL(1) & TIMER_CTRL_OVERFLOWED){
+        deltaTime = 0xFFFF + TIMER_VALUE(1);
+    } else {
+        deltaTime = TIMER_VALUE(1);
+    }
+    int newTimerValue = TIMER_VALUE(1);
     // Main loop. Runs every frame, forever
     
     for(;;){
@@ -417,11 +419,15 @@ int main(void){
                 "y: %d\n"
                 "z: %d\n\n"
                 
-                "p: %d",
+                "Prims: %d\n\n"
+
+                "Timer: %d\n"
+                "dt: %d",
 
                 mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
                 mainCamera.x, mainCamera.y, mainCamera.z,
-                numPrims
+                numPrims,
+                prevTimerValue, deltaTime
             );
 
             printString(activeChain, &font, 10, 10, textBuffer);
@@ -441,7 +447,6 @@ int main(void){
         // Will run the function associated with each button if the button is pressed.
         controller_update();
 
-
         if(gamePaused){
             RenderActiveMenu(&font);
         }
@@ -450,6 +455,15 @@ int main(void){
         // It also waits for Vblank.
         waitForGP0Ready();
         waitForVblank();
+
+        // Update deltaTime
+        newTimerValue = TIMER_VALUE(1);
+        if(TIMER_CTRL(1) & TIMER_CTRL_OVERFLOWED){
+            deltaTime = ((0xFFFF + newTimerValue - prevTimerValue) * 1000 ) / 15734;
+        } else {
+            deltaTime = ((newTimerValue - prevTimerValue) * 1000) / 15734;
+        }
+        prevTimerValue = newTimerValue;
 
         // Swap the frame buffers.
         bufferY = usingSecondFrame ? SCREEN_HEIGHT : 0;
