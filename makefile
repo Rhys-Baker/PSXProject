@@ -19,7 +19,7 @@ endif
 
 CC = $(CC_PREFIX)-gcc
 CFLAGS_DEBUG = $(IncludeTags) -g -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -Og -mdivide-breaks
-CFLAGS_RELEASE = $(IncludeTags)  -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -O3 -mdivide-breaks
+CFLAGS_RELEASE = $(IncludeTags)  -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata     -O3 -mdivide-breaks
 
 # By default, use the debug flags
 CFLAGS = $(CFLAGS_DEBUG)
