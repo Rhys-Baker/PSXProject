@@ -60,7 +60,7 @@ int colours[6] = {
 };
 
 
-bool showingText = false;
+bool showingText = true;
 
 // Used to keep track of which channel is playing.
 // 0 is combat, 1 is clean.
@@ -74,6 +74,7 @@ void waitForVblank(){
     }
     vblank = false;
 }
+
 
 // Gets called once at the start of main.
 void initHardware(void){
@@ -298,19 +299,21 @@ int main(void){
     // Initialise important things for later
     initHardware();
     stream_init();
-    
+    printf("Logging started!\n");
     
     // Load model from the disk
     model_load("MYHEAD.MDL;1", &myHead);
     model_load("OBAMA.MDL;1", &obamaPrism);
     model_load("FILTH.MDL;1", &filth);
     model_load("AMORPH.MDL;1", &amorph);
+    printf("All models loaded. Max verts length: %d\n", maxNumVerts);
     
+    transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
 
     // Load sound and song from disk.
     sound_loadSound("LASER.VAG;1", &laser);
     stream_loadSong("SONG.VAG;1");
-    
+    printf("All sounds and songs loaded. Beginning song playback\n");
     
     // Begin playback of music on channels 0 and 1.
     stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
@@ -329,7 +332,7 @@ int main(void){
     menu_setItem(&pauseMenu, 2, "Spawn Filth",      spawnFilthAtPlayer);
     menu_setItem(&pauseMenu, 3, "Spawn ObamaPrism", spawnObamaAtPlayer);
     menu_setItem(&pauseMenu, 4, "Spawn Amorph",     spawnAmorphAtPlayer);
-    
+    printf("Menu created.\n");
 
     // TODO
     // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
@@ -348,6 +351,18 @@ int main(void){
     int newTimerValue = TIMER_VALUE(1);
     // Main loop. Runs every frame, forever
     
+
+    
+    loadEntity(&filth, &filth_128, -500, 0, -375, 0, 0, 1024);
+    loadEntity(&filth, &filth_128, -500, 0, -250, 0, 0, 1024);
+    loadEntity(&filth, &filth_128, -500, 0, -125, 0, 0, 1024);
+
+    loadEntity(&filth, &filth_128, -500, 0,  125, 0, 0,-1024);
+    loadEntity(&filth, &filth_128, -500, 0,  250, 0, 0,-1024);
+    loadEntity(&filth, &filth_128, -500, 0,  375, 0, 0,-1024);
+    printf("Test entities loaded.\n");
+
+    printf("Begin main loop!\n");
     for(;;){
         // Point to the relevant DMA chain for this frame, then swap the active frame.
         activeChain = &dmaChains[usingSecondFrame];
@@ -370,7 +385,6 @@ int main(void){
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
         // Reset translation Matrix
         setTranslationMatrix(0, 0, 0);
-
         numPrims = 0;
         for (int i=0; i<128; i++){
             model_renderTextured(
@@ -419,15 +433,14 @@ int main(void){
                 "y: %d\n"
                 "z: %d\n\n"
                 
-                "Prims: %d\n\n"
+                "Prims: %d\n"
 
-                "Timer: %d\n"
                 "dt: %d",
 
                 mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
                 mainCamera.x, mainCamera.y, mainCamera.z,
                 numPrims,
-                prevTimerValue, deltaTime
+                deltaTime
             );
 
             printString(activeChain, &font, 10, 10, textBuffer);
