@@ -81,7 +81,9 @@ def convertIndexedImage(
 
 	# Pad the palette to 16 or 256 colors.
 	if maxNumColors > numColors:
-		clut = numpy.c_[ clut, numpy.zeros(maxNumColors - numColors, "<H") ]
+		#clut = numpy.c_[ clut, numpy.zeros(maxNumColors - numColors, "<H") ]
+		clut = numpy.pad(clut, (0, maxNumColors - numColors), 'constant')
+		
 
 	image: ndarray = numpy.asarray(imageObj, "B")
 	if image.shape[1] % 2:
