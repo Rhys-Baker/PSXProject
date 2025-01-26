@@ -73,7 +73,6 @@ void initHardware(void){
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
 }
 
-
 uint32_t hsv_to_rgb(int h) {
     uint8_t r, g, b;
     // Ensure H is within 0-359
@@ -102,7 +101,11 @@ uint32_t hsv_to_rgb(int h) {
     return rgb;
 }
 
-void drawCross(int16_t x, int16_t y, uint32_t colour){
+void drawCross(Point2 p, uint32_t colour){
+    int32_t x, y;
+    x = p.x>>12;
+    y = p.y>>12;
+
     dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x-2, y-2);
@@ -112,6 +115,13 @@ void drawCross(int16_t x, int16_t y, uint32_t colour){
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x+2, y-2);
     dmaPtr[2] = gp0_xy(x-2, y+2);
+}
+
+void drawLine(Point2 a, Point2 b, uint32_t colour){
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(a.x>>12, a.y>>12);
+    dmaPtr[2] = gp0_xy(b.x>>12, b.y>>12);
 }
 
 
@@ -125,43 +135,102 @@ Camera mainCamera = {
 };
 
 
+typedef struct Line {
+    Point2 a, b;
+} Line;
+
+Line lines[] = {
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 10<<12,
+            .y = 230<<12
+        }
+    },
+    {
+        .a = {
+            .x = 310<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 230<<12
+        }
+    },
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 10<<12
+        }
+    },
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 230<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 230<<12
+        }
+    }
+};
+
 Point2 startPoint = {20<<12, 20<<12};
+Point2 intersectionPoint;
 Point2 endPoint;
+Vector2 facingVector = {1<<12, 0};
 
 // All the planes in the BSP tree
-BSPPlane bspPlanes[3] = {
+BSPPlane bspPlanes[4] = {
     {
         .normal = {.x=1<<12, .y=0},
         .distance = 10<<12
+    },
+    {
+        .normal = {.x=1<<12, .y=0},
+        .distance = 310<<12
     },
     {
         .normal = {.x=0, .y=1<<12},
         .distance = 10<<12
     },
     {
-        .normal = {.x=1<<11, .y=1<<11},
-        .distance = 40<<12
+        .normal = {.x=0, .y=1<<12},
+        .distance = 230<<12
     }
 };
 
 // Define the BSP tree and all the nodes within it.
-BSPNode bspNodes[3] = {
+BSPNode bspNodes[4] = {
     {
         .planeNum = 0,
         .children = {
-            1, -1
+            1, -2
         }
     },
     {
         .planeNum = 1,
         .children = {
-            2, -1
+            -2, 2
         }
     },
     {
         .planeNum = 2,
         .children = {
-            -1, -2
+            3, -2
+        }
+    },
+    {
+        .planeNum = 3,
+        .children = {
+            -2, -1
         }
     }
 };
@@ -169,15 +238,14 @@ BSPNode bspNodes[3] = {
 BSPTree bspTree = {
     .planes = bspPlanes,
     .nodes = bspNodes,
-    .numPlanes = 3,
-    .numNodes = 3
+    .numPlanes = 4,
+    .numNodes = 4
 };
-
 
 int32_t bspContents;
 uint32_t crossColour;
 
-char *str_HelloWorld = "Hello World!";
+char str_Buffer[256];
 
 
 void moveLeft(void){
@@ -193,6 +261,14 @@ void moveDown(void){
     startPoint.y+=1<<12;
 }
 
+#define ROTATION_SPEED 1<<4
+void rotateClockwise(void){
+    facingVector = rotateVector2(facingVector, ROTATION_SPEED);
+}
+void rotateCounterClockwise(void){
+    facingVector = rotateVector2(facingVector, -ROTATION_SPEED);
+}
+
 // Start of main
 __attribute__((noreturn))
 int main(void){
@@ -204,10 +280,12 @@ int main(void){
     initHardware();
 
     // Run this stuff once before the main loop.
-    controller_subscribeOnKeyHold(moveLeft,  BUTTON_INDEX_LEFT );
-    controller_subscribeOnKeyHold(moveRight, BUTTON_INDEX_RIGHT);
-    controller_subscribeOnKeyHold(moveUp,    BUTTON_INDEX_UP   );
-    controller_subscribeOnKeyHold(moveDown,  BUTTON_INDEX_DOWN );
+    controller_subscribeOnKeyHold(moveLeft,               BUTTON_INDEX_LEFT );
+    controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
+    controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
+    controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
+    controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1   );
+    controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1   );
 
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -216,6 +294,7 @@ int main(void){
     // Reset the ordering table to a blank state.
     clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
     activeChain->nextPacket = activeChain->data;
+
 
     printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever
@@ -228,34 +307,52 @@ int main(void){
         controller_update();
         
 
+
+        // Set the end point's location
+        endPoint.x = startPoint.x + fixed32_mul(facingVector.x, 40<<12);
+        endPoint.y = startPoint.y + fixed32_mul(facingVector.y, 40<<12);
+
+
         bspContents = BSPPointContents(&bspTree, 0, startPoint);
-        if(bspContents == -1){
+        if(bspContents == -2){
             crossColour = 0x0000FF;
         } else {
             crossColour = 0x000000;
         }
-        
+
+        BSPRecursiveCast(&bspTree, 0, startPoint, endPoint, &intersectionPoint);
+
+        sprintf(str_Buffer, "%d, %d", intersectionPoint.x>>12, intersectionPoint.y>>12);
 
         ///////////////////////////
         //       Rendering       //
         ///////////////////////////
 
         // Text rendering
-        printString(activeChain, &font, 125, 100, str_HelloWorld);
+        printString(activeChain, &font, 100, 10, str_Buffer);
 
-        drawCross(startPoint.x>>12, startPoint.y>>12, crossColour);
+        drawCross(startPoint, crossColour);
+        drawCross(endPoint, 0x000000);
+        drawCross(intersectionPoint, 0x0000FF);
+
+        drawLine(startPoint, intersectionPoint, 0x000000);
+
+        for(int i = 0; i < 4; i++){
+            drawLine(lines[i].a, lines[i].b, 0x000000);
+        }
+
+
 
 
         // Update the screen colour
-        screenHue++;
-        screenColor = hsv_to_rgb(screenHue);
+        //screenHue++;
+        //screenColor = hsv_to_rgb(screenHue);
 
         // Draw a plain background
         dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
         dmaPtr[0] = screenColor | gp0_vramFill();
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
-
 
 
 
