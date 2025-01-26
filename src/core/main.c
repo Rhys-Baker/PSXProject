@@ -102,6 +102,18 @@ uint32_t hsv_to_rgb(int h) {
     return rgb;
 }
 
+void drawCross(int16_t x, int16_t y, uint32_t colour){
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(x-2, y-2);
+    dmaPtr[2] = gp0_xy(x+2, y+2);
+
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(x+2, y-2);
+    dmaPtr[2] = gp0_xy(x-2, y+2);
+}
+
 
 Camera mainCamera = {
     .x=2000,
@@ -113,9 +125,73 @@ Camera mainCamera = {
 };
 
 
+Point2 startPoint = {20<<12, 20<<12};
+Point2 endPoint;
+
+// All the planes in the BSP tree
+BSPPlane bspPlanes[3] = {
+    {
+        .normal = {.x=1<<12, .y=0},
+        .distance = 10<<12
+    },
+    {
+        .normal = {.x=0, .y=1<<12},
+        .distance = 10<<12
+    },
+    {
+        .normal = {.x=1<<11, .y=1<<11},
+        .distance = 40<<12
+    }
+};
+
+// Define the BSP tree and all the nodes within it.
+BSPNode bspNodes[3] = {
+    {
+        .planeNum = 0,
+        .children = {
+            1, -1
+        }
+    },
+    {
+        .planeNum = 1,
+        .children = {
+            2, -1
+        }
+    },
+    {
+        .planeNum = 2,
+        .children = {
+            -1, -2
+        }
+    }
+};
+
+BSPTree bspTree = {
+    .planes = bspPlanes,
+    .nodes = bspNodes,
+    .numPlanes = 3,
+    .numNodes = 3
+};
+
+
+int32_t bspContents;
+uint32_t crossColour;
 
 char *str_HelloWorld = "Hello World!";
 
+
+void moveLeft(void){
+    startPoint.x-=1<<12;
+}
+void moveRight(void){
+    startPoint.x+=1<<12;
+}
+void moveUp(void){
+    startPoint.y-=1<<12;
+}
+void moveDown(void){
+    startPoint.y+=1<<12;
+}
 
 // Start of main
 __attribute__((noreturn))
@@ -126,6 +202,12 @@ int main(void){
 
     // Initialise important things for later
     initHardware();
+
+    // Run this stuff once before the main loop.
+    controller_subscribeOnKeyHold(moveLeft,  BUTTON_INDEX_LEFT );
+    controller_subscribeOnKeyHold(moveRight, BUTTON_INDEX_RIGHT);
+    controller_subscribeOnKeyHold(moveUp,    BUTTON_INDEX_UP   );
+    controller_subscribeOnKeyHold(moveDown,  BUTTON_INDEX_DOWN );
 
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -146,7 +228,13 @@ int main(void){
         controller_update();
         
 
-
+        bspContents = BSPPointContents(&bspTree, 0, startPoint);
+        if(bspContents == -1){
+            crossColour = 0x0000FF;
+        } else {
+            crossColour = 0x000000;
+        }
+        
 
         ///////////////////////////
         //       Rendering       //
@@ -154,6 +242,9 @@ int main(void){
 
         // Text rendering
         printString(activeChain, &font, 125, 100, str_HelloWorld);
+
+        drawCross(startPoint.x>>12, startPoint.y>>12, crossColour);
+
 
         // Update the screen colour
         screenHue++;
