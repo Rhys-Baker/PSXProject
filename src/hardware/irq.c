@@ -87,3 +87,10 @@ void initIRQ(void){
     IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM) | (1 << IRQ_SPU);
     enableInterrupts();
 }
+
+void waitForVblank(void){
+    while(!vblank){
+        // Do nothing
+    }
+    vblank = false;
+}

@@ -3,19 +3,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bsp.h"
 #include "camera.h"
 #include "cdrom.h"
 #include "controller.h"
 #include "filesystem.h"
+#include "fixedPoint.h"
 #include "font.h"
 #include "gpu.h"
 #include "gte.h"
 #include "irq.h"
+#include "math.h"
 #include "model.h"
 #include "menu.h"
 #include "spu.h"
 #include "stream.h"
 #include "trig.h"
+#include "types.h"
 
 #include "registers.h"
 #include "system.h"
@@ -106,7 +110,7 @@ Camera mainCamera = {
     .pitch=0,
     .yaw=1024,
     .roll=0,
-    };
+};
 
 
 
@@ -123,13 +127,13 @@ int main(void){
     // Initialise important things for later
     initHardware();
 
-        // Point to the relevant DMA chain for this frame, then swap the active frame.
-        activeChain = &dmaChains[usingSecondFrame];
-        usingSecondFrame = !usingSecondFrame;
-        
-        // Reset the ordering table to a blank state.
-        clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
-        activeChain->nextPacket = activeChain->data;
+    // Point to the relevant DMA chain for this frame, then swap the active frame.
+    activeChain = &dmaChains[usingSecondFrame];
+    usingSecondFrame = !usingSecondFrame;
+
+    // Reset the ordering table to a blank state.
+    clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
+    activeChain->nextPacket = activeChain->data;
 
     printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever

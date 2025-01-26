@@ -33,3 +33,4 @@ void RenderActiveMenu(TextureInfo *font);
 // TODO: Check that the menu actually exists/is referenced before running the math.
 void selectNextMenuItem(void);
 void selectPrevMenuItem(void);
+void runSelectedItem(void);
