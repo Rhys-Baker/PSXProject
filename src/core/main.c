@@ -27,6 +27,10 @@
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    256
 
+#define ACCELERATION_CONSTANT (1<<10)
+#define MAX_SPEED (1<<13)
+#define FRICTION_CONSTANT (1<<8)
+
 
 // Include texture data files
 extern const uint8_t fontData[];
@@ -45,7 +49,6 @@ int colours[6] = {
     0xFFFF00,
     0x00FFFF
 };
-
 
 // Gets called once at the start of main.
 void initHardware(void){
@@ -189,48 +192,56 @@ Vector2 facingVector = {1<<12, 0};
 
 // All the planes in the BSP tree
 BSPPlane bspPlanes[4] = {
+    // Left wall
     {
-        .normal = {.x=1<<12, .y=0},
-        .distance = 10<<12
+        .normal = {.x=(1<<12), .y=0},
+        .distance = (10<<12)
     },
+    // Right wall
     {
-        .normal = {.x=1<<12, .y=0},
-        .distance = 310<<12
+        .normal = {.x=-(1<<12), .y=0},
+        .distance = -(310<<12)
     },
+    // Top wall
     {
-        .normal = {.x=0, .y=1<<12},
-        .distance = 10<<12
+        .normal = {.x=0, .y=(1<<12)},
+        .distance = (10<<12)
     },
+    // Bottom wall
     {
-        .normal = {.x=0, .y=1<<12},
-        .distance = 230<<12
+        .normal = {.x=0, .y=-(1<<12)},
+        .distance = -(230<<12)
     }
 };
 
 // Define the BSP tree and all the nodes within it.
 BSPNode bspNodes[4] = {
+    // Left wall
     {
         .planeNum = 0,
         .children = {
             1, -2
         }
     },
+    // Right wall
     {
         .planeNum = 1,
         .children = {
-            -2, 2
+            2, -2
         }
     },
+    // Top wall
     {
         .planeNum = 2,
         .children = {
             3, -2
         }
     },
+    // Bottom wall
     {
         .planeNum = 3,
         .children = {
-            -2, -1
+            -1, -2
         }
     }
 };
@@ -248,26 +259,52 @@ uint32_t crossColour;
 char str_Buffer[256];
 
 
+struct player{
+    Point2 pos;
+    Point2 delta;
+} player;
+
 void moveLeft(void){
-    startPoint.x-=1<<12;
+    player.delta.x-=(1<<12);
+    if(player.delta.x < -MAX_SPEED){
+        player.delta.x = -MAX_SPEED;
+    }
 }
 void moveRight(void){
-    startPoint.x+=1<<12;
+    player.delta.x+=(1<<12);
+    if(player.delta.x > MAX_SPEED){
+        player.delta.x = MAX_SPEED;
+    }
 }
 void moveUp(void){
-    startPoint.y-=1<<12;
+    player.delta.y-=(1<<12);
+    if(player.delta.y < -MAX_SPEED){
+        player.delta.y = -MAX_SPEED;
+    }
 }
 void moveDown(void){
-    startPoint.y+=1<<12;
+    player.delta.y+=(1<<12);
+    if(player.delta.y > MAX_SPEED){
+        player.delta.y = MAX_SPEED;
+    }
 }
 
-#define ROTATION_SPEED 1<<4
+#define ROTATION_SPEED (1<<4)
 void rotateClockwise(void){
     facingVector = rotateVector2(facingVector, ROTATION_SPEED);
 }
 void rotateCounterClockwise(void){
     facingVector = rotateVector2(facingVector, -ROTATION_SPEED);
 }
+Point2 oldEndPoint;
+Point2 newEndPoint;
+Point2 oldIntersectionPoint;
+
+void teleport(void){
+    player.pos.x = newEndPoint.x;
+    player.pos.y = newEndPoint.y;
+}
+
 
 // Start of main
 __attribute__((noreturn))
@@ -286,6 +323,7 @@ int main(void){
     controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
     controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1   );
     controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1   );
+    controller_subscribeOnKeyDown(teleport,               BUTTON_INDEX_X    );
 
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -295,6 +333,28 @@ int main(void){
     clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
     activeChain->nextPacket = activeChain->data;
 
+    // Init player
+    player.pos.x = 20<<12;
+    player.pos.y = 20<<12;
+    player.delta.x = 0;
+    player.delta.y = 0;
+
+
+    int32_t intA = 10<<12; // 10.0
+    int32_t intB = -(1<<11); // -0.5
+
+    int32_t intC = 10<<12; // 10.0
+    int16_t intD = -(1<<11); // -0.5
+    
+
+
+    printf("A: %d * %d = %d\n", intA>>12, intB>>12, fixed32_mul(intA, intB)>>12);
+    printf("B: %d * %d = %d\n", intC>>12, intD>>12, fixed32_mul(intC, intD)>>12);
+    printf("\n");
+
+    //while(true){
+        // Do nothing
+    //}
 
     printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever
@@ -305,24 +365,43 @@ int main(void){
         
         // Poll the controllers and run their assoicated functions
         controller_update();
-        
 
-
-        // Set the end point's location
-        endPoint.x = startPoint.x + fixed32_mul(facingVector.x, 40<<12);
-        endPoint.y = startPoint.y + fixed32_mul(facingVector.y, 40<<12);
-
-
-        bspContents = BSPPointContents(&bspTree, 0, startPoint);
-        if(bspContents == -2){
-            crossColour = 0x0000FF;
-        } else {
-            crossColour = 0x000000;
+        // Horizontal Friction
+        if(player.delta.x > 0){
+            if(player.delta.x < FRICTION_CONSTANT){
+                player.delta.x = 0;
+            } else {
+                player.delta.x -= FRICTION_CONSTANT;
+            }
+        } else if(player.delta.x < 0){
+            if(player.delta.x > -FRICTION_CONSTANT){
+                player.delta.x = 0;
+            } else {
+                player.delta.x += FRICTION_CONSTANT;
+            }
+        }
+        // Vertical Friction
+        if(player.delta.y > 0){
+            if(player.delta.y < FRICTION_CONSTANT){
+                player.delta.y = 0;
+            } else {
+                player.delta.y -= FRICTION_CONSTANT;
+            }
+        } else if(player.delta.y < 0){
+            if(player.delta.y > -FRICTION_CONSTANT){
+                player.delta.y = 0;
+            } else {
+                player.delta.y += FRICTION_CONSTANT;
+            }
         }
 
-        BSPRecursiveCast(&bspTree, 0, startPoint, endPoint, &intersectionPoint);
+        Point2 startPoint = {player.pos.x, player.pos.y};
+        Point2 endPoint = {player.pos.x + player.delta.x, player.pos.y + player.delta.y};
+        BSPHandleCollision(&bspTree, startPoint, endPoint, &player.pos);
+    
 
-        sprintf(str_Buffer, "%d, %d", intersectionPoint.x>>12, intersectionPoint.y>>12);
+
+
 
         ///////////////////////////
         //       Rendering       //
@@ -331,18 +410,13 @@ int main(void){
         // Text rendering
         printString(activeChain, &font, 100, 10, str_Buffer);
 
-        drawCross(startPoint, crossColour);
-        drawCross(endPoint, 0x000000);
-        drawCross(intersectionPoint, 0x0000FF);
+        // Draw Cross
+        drawCross(startPoint,        0x000000);
 
-        drawLine(startPoint, intersectionPoint, 0x000000);
-
+        // Draw walls
         for(int i = 0; i < 4; i++){
             drawLine(lines[i].a, lines[i].b, 0x000000);
         }
-
-
-
 
         // Update the screen colour
         //screenHue++;
