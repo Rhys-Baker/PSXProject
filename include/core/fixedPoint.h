@@ -14,8 +14,8 @@ static inline int16_t fixed16_mul(int16_t a, int16_t b){
 
 static inline int32_t fixed32_mul(int32_t a, int32_t b){
     int64_t product = ((int64_t)a * b) >> FIXED_OFFSET;
-    if (product > INT32_MAX) return INT32_MAX;
-    if (product < INT32_MIN) return INT32_MIN;
+    //if (product > INT32_MAX) return INT32_MAX;
+    //if (product < INT32_MIN) return INT32_MIN;
     return (int32_t)product;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include "fixedPoint.h"
 #include "trig.h"
 #include "types.h"
