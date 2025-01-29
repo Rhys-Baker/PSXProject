@@ -20,6 +20,7 @@
 #include "stream.h"
 #include "trig.h"
 #include "types.h"
+#include "util.h"
 
 #include "registers.h"
 #include "system.h"
@@ -74,34 +75,6 @@ void initHardware(void){
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
-}
-
-uint32_t hsv_to_rgb(int h) {
-    uint8_t r, g, b;
-    // Ensure H is within 0-359
-    h = h % 360;
-
-    // Scale up for integer math
-    int region = h / 60;       // Integer part of H / 60
-    int remainder = h % 60;    // Remainder of H / 60
-    int p = 0;                 // Min value (S = V = 100%)
-    int q = (255 * (60 - remainder)) / 60;  // Falling edge
-    int t = (255 * remainder) / 60;         // Rising edge
-
-    // Assign RGB based on region
-    switch (region) {
-        case 0: r = 255; g = t;   b = p;   break; // Red to Yellow
-        case 1: r = q;   g = 255; b = p;   break; // Yellow to Green
-        case 2: r = p;   g = 255; b = t;   break; // Green to Cyan
-        case 3: r = p;   g = q;   b = 255; break; // Cyan to Blue
-        case 4: r = t;   g = p;   b = 255; break; // Blue to Magenta
-        case 5: r = 255; g = p;   b = q;   break; // Magenta to Red
-    }
-    uint32_t rgb = 0;
-    rgb += r;
-    rgb += g << 8;
-    rgb += b << 16;
-    return rgb;
 }
 
 void drawCross(Point2 p, uint32_t colour){
@@ -185,8 +158,8 @@ Line lines[] = {
     }
 };
 
-Point2 startPoint = {20<<12, 20<<12};
-Point2 intersectionPoint;
+
+
 Point2 endPoint;
 Vector2 facingVector = {1<<12, 0};
 
@@ -289,22 +262,6 @@ void moveDown(void){
     }
 }
 
-#define ROTATION_SPEED (1<<4)
-void rotateClockwise(void){
-    facingVector = rotateVector2(facingVector, ROTATION_SPEED);
-}
-void rotateCounterClockwise(void){
-    facingVector = rotateVector2(facingVector, -ROTATION_SPEED);
-}
-Point2 oldEndPoint;
-Point2 newEndPoint;
-Point2 oldIntersectionPoint;
-
-void teleport(void){
-    player.pos.x = newEndPoint.x;
-    player.pos.y = newEndPoint.y;
-}
-
 
 // Start of main
 __attribute__((noreturn))
@@ -321,9 +278,6 @@ int main(void){
     controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
     controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
     controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
-    controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1   );
-    controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1   );
-    controller_subscribeOnKeyDown(teleport,               BUTTON_INDEX_X    );
 
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -395,9 +349,9 @@ int main(void){
             }
         }
 
-        Point2 startPoint = {player.pos.x, player.pos.y};
-        Point2 endPoint = {player.pos.x + player.delta.x, player.pos.y + player.delta.y};
-        BSPHandleCollision(&bspTree, startPoint, endPoint, &player.pos);
+        endPoint.x = player.pos.x + player.delta.x;
+        endPoint.y = player.pos.y + player.delta.y;
+        BSPHandleCollision(&bspTree, player.pos, endPoint, &player.pos);
     
 
 
@@ -411,7 +365,7 @@ int main(void){
         printString(activeChain, &font, 100, 10, str_Buffer);
 
         // Draw Cross
-        drawCross(startPoint,        0x000000);
+        drawCross(player.pos,        0x000000);
 
         // Draw walls
         for(int i = 0; i < 4; i++){
