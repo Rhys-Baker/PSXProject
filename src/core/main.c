@@ -28,8 +28,8 @@
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    256
 
-#define ACCELERATION_CONSTANT (1<<10)
-#define MAX_SPEED (1<<13)
+#define ACCELERATION_CONSTANT (1<<12)
+#define MAX_SPEED (1<<12)
 #define FRICTION_CONSTANT (1<<8)
 
 
@@ -155,7 +155,47 @@ Line lines[] = {
             .x = 310<<12,
             .y = 230<<12
         }
-    }
+    },
+    {
+        .a = {
+            .x = 92<<12,
+            .y = 120<<12
+        },
+        .b = {
+            .x = 159<<12,
+            .y = 187<<12
+        }
+    },
+    {
+        .a = {
+            .x = 226<<12,
+            .y = 120<<12
+        },
+        .b = {
+            .x = 159<<12,
+            .y = 187<<12
+        }
+    },
+    {
+        .a = {
+            .x = 159<<12,
+            .y = 53<<12
+        },
+        .b = {
+            .x = 92<<12,
+            .y = 120<<12
+        }
+    },
+    {
+        .a = {
+            .x = 159<<12,
+            .y = 53<<12
+        },
+        .b = {
+            .x = 226<<12,
+            .y = 120<<12
+        }
+    },
 };
 
 
@@ -163,67 +203,76 @@ Line lines[] = {
 Point2 endPoint;
 Vector2 facingVector = {1<<12, 0};
 
-// All the planes in the BSP tree
-BSPPlane bspPlanes[4] = {
-    // Left wall
-    {
-        .normal = {.x=(1<<12), .y=0},
-        .distance = (10<<12)
-    },
-    // Right wall
-    {
-        .normal = {.x=-(1<<12), .y=0},
-        .distance = -(310<<12)
-    },
-    // Top wall
-    {
-        .normal = {.x=0, .y=(1<<12)},
-        .distance = (10<<12)
-    },
-    // Bottom wall
-    {
-        .normal = {.x=0, .y=-(1<<12)},
-        .distance = -(230<<12)
-    }
-};
-
 // Define the BSP tree and all the nodes within it.
-BSPNode bspNodes[4] = {
-    // Left wall
+BSPNode bspNodes[9] = {
     {
-        .planeNum = 0,
+        .normal = { .x = 4096, .y = 0},
+        .distance = 40960,
         .children = {
             1, -2
         }
     },
-    // Right wall
     {
-        .planeNum = 1,
+        .normal = { .x = -4096, .y = 0},
+        .distance = -1269760,
         .children = {
             2, -2
         }
     },
-    // Top wall
     {
-        .planeNum = 2,
+        .normal = { .x = 0, .y = 4096},
+        .distance = 491520,
         .children = {
-            3, -2
+            6, 3
         }
     },
-    // Bottom wall
     {
-        .planeNum = 3,
+        .normal = { .x = 0, .y = 4096},
+        .distance = 40960,
+        .children = {
+            4, -2
+        }
+    },
+    {
+        .normal = { .x = -2896, .y = -2896},
+        .distance = -614400,
+        .children = {
+            -1, 5
+        }
+    },
+    {
+        .normal = { .x = 2896, .y = -2896},
+        .distance = 307200,
         .children = {
             -1, -2
         }
-    }
+    },
+    {
+        .normal = { .x = 0, .y = -4096},
+        .distance = -942080,
+        .children = {
+            7, -2
+        }
+    },
+    {
+        .normal = { .x = -2896, .y = 2896},
+        .distance = 81920,
+        .children = {
+            -1, 8
+        }
+    },
+    {
+        .normal = { .x = 2896, .y = 2896},
+        .distance = 1003520,
+        .children = {
+            -1, -2
+        }
+    },
 };
 
 BSPTree bspTree = {
-    .planes = bspPlanes,
     .nodes = bspNodes,
-    .numPlanes = 4,
-    .numNodes = 4
+    .numNodes = 9
 };
 
 int32_t bspContents;
@@ -262,6 +311,25 @@ void moveDown(void){
     }
 }
 
+void moveLeftNoVelocity(void){
+    player.pos.x-=(1<<12);
+}
+void moveRightNoVelocity(void){
+    player.pos.x+=(1<<12);
+}
+void moveUpNoVelocity(void){
+    player.pos.y-=(1<<12);
+}
+void moveDownNoVelocity(void){
+    player.pos.y+=(1<<12);
+}
+
+void rotateClockwise(void){
+    facingVector = rotateVector2(facingVector, 10);
+}
+void rotateCounterClockwise(void){
+    facingVector = rotateVector2(facingVector, -10);
+}
 
 // Start of main
 __attribute__((noreturn))
@@ -279,6 +347,16 @@ int main(void){
     controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
     controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
 
+    if(false){
+        controller_subscribeOnKeyHold(moveLeftNoVelocity,               BUTTON_INDEX_LEFT );
+        controller_subscribeOnKeyHold(moveRightNoVelocity,              BUTTON_INDEX_RIGHT);
+        controller_subscribeOnKeyHold(moveUpNoVelocity,                 BUTTON_INDEX_UP   );
+        controller_subscribeOnKeyHold(moveDownNoVelocity,               BUTTON_INDEX_DOWN );
+    }
+
+    controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1);
+    controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1);
+
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
     usingSecondFrame = !usingSecondFrame;
@@ -293,22 +371,6 @@ int main(void){
     player.delta.x = 0;
     player.delta.y = 0;
 
-
-    int32_t intA = 10<<12; // 10.0
-    int32_t intB = -(1<<11); // -0.5
-
-    int32_t intC = 10<<12; // 10.0
-    int16_t intD = -(1<<11); // -0.5
-    
-
-
-    printf("A: %d * %d = %d\n", intA>>12, intB>>12, fixed32_mul(intA, intB)>>12);
-    printf("B: %d * %d = %d\n", intC>>12, intD>>12, fixed32_mul(intC, intD)>>12);
-    printf("\n");
-
-    //while(true){
-        // Do nothing
-    //}
 
     printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever
@@ -349,12 +411,21 @@ int main(void){
             }
         }
 
-        endPoint.x = player.pos.x + player.delta.x;
-        endPoint.y = player.pos.y + player.delta.y;
-        BSPHandleCollision(&bspTree, player.pos, endPoint, &player.pos);
-    
 
-
+        Point2 intersectionPoint;
+        if(true){
+            endPoint.x = player.pos.x + player.delta.x;
+            endPoint.y = player.pos.y + player.delta.y;
+            BSPHandleCollision(&bspTree, player.pos, endPoint, &player.pos);
+        } else {
+            player.pos.x += player.delta.x;
+            player.pos.y += player.delta.y;
+            endPoint.x = player.pos.x + (facingVector.x * 50);
+            endPoint.y = player.pos.y + (facingVector.y * 50);
+            
+            BSPHandleCollision(&bspTree, player.pos, endPoint, &intersectionPoint);
+        }
+        
 
 
         ///////////////////////////
@@ -366,9 +437,12 @@ int main(void){
 
         // Draw Cross
         drawCross(player.pos,        0x000000);
+        //drawCross(endPoint, 0x000000);
+        //drawCross(intersectionPoint, 0x0000FF);
+        //drawLine(player.pos, intersectionPoint, 0x0000FF);
 
         // Draw walls
-        for(int i = 0; i < 4; i++){
+        for(int i = 0; i < 8; i++){
             drawLine(lines[i].a, lines[i].b, 0x000000);
         }
 

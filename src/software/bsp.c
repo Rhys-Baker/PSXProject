@@ -6,24 +6,22 @@
 int32_t BSPPointContents (BSPTree *bspTree, int num, Point2 p, Vector2 *wallNormal){
 	int32_t fdot;
 	BSPNode *node;
-	BSPPlane *plane;
 	while (num >= 0){
 		assert(num < bspTree->numNodes && num >= 0);
         
 		node = &bspTree->nodes[num];
-		plane = &bspTree->planes[node->planeNum];
        
-		fdot = dot2VectorPoint(plane->normal, p);
+		fdot = dot2VectorPoint(node->normal, p);
 
-        fdot -= plane->distance;
+        fdot -= node->distance;
         if(fdot < 0){
             num = node->children[1];
         } else {
             num = node->children[0];
         }
 	}
-    wallNormal->x = plane->normal.x;
-    wallNormal->y = plane->normal.y;
+    wallNormal->x = node->normal.x;
+    wallNormal->y = node->normal.y;
     return num;
 }
 #include <stdio.h>
@@ -45,9 +43,8 @@ bool BSPRecursiveCast(BSPTree *bspTree, int node_num, Point2 p1, Point2 p2, Poin
 
 
     BSPNode *node = &bspTree->nodes[node_num];
-    BSPPlane *plane = &bspTree->planes[node->planeNum];
-    int32_t t1 = dot2VectorPoint(plane->normal, p1) - plane->distance;
-    int32_t t2 = dot2VectorPoint(plane->normal, p2) - plane->distance;
+    int32_t t1 = dot2VectorPoint(node->normal, p1) - node->distance;
+    int32_t t2 = dot2VectorPoint(node->normal, p2) - node->distance;
     
     
     // Handle cases where the entire line is within a single child.
@@ -66,17 +63,23 @@ bool BSPRecursiveCast(BSPTree *bspTree, int node_num, Point2 p1, Point2 p2, Poin
     // `side` gives the child containing `p1`.
     int32_t side = (t1 >= 0) ? 0 : 1;
 
-    intersectionNormal->x = plane->normal.x;
-    intersectionNormal->y = plane->normal.y;
+    intersectionNormal->x = node->normal.x;
+    intersectionNormal->y = node->normal.y;
+
     // Trace through child nodes in order
     if (BSPRecursiveCast(bspTree, node->children[side], p1, mid, intersection, intersectionNormal)){
         return true;
     }
     
-    intersectionNormal->x = plane->normal.x;
-    intersectionNormal->y = plane->normal.y;
-    return BSPRecursiveCast(bspTree, node->children[1 - side], mid, p2, intersection, intersectionNormal);
+    intersectionNormal->x = node->normal.x;
+    intersectionNormal->y = node->normal.y;
+    
+    if(BSPRecursiveCast(bspTree, node->children[1 - side], mid, p2, intersection, intersectionNormal)){
+        return true;
+    }
+    return false;
 }
+
 
 void BSPHandleCollision(BSPTree *bspTree, Point2 startPoint, Point2 endPoint, Point2 *result){
     Point2 newEndPoint;
@@ -124,7 +127,7 @@ void BSPHandleCollision(BSPTree *bspTree, Point2 startPoint, Point2 endPoint, Po
         // Simple solution is to shove in the direction of the wall's normal until we aren't
         // TODO: Make this better. Rather than shove some amount, maybe try shoving exactly the right amount?
         // Either way, we shouldn't find ourselves inside walls if all goes well.
-        result->x -= fixed32_mul(1<<12, wallNormal.x);
-        result->y -= fixed32_mul(1<<12, wallNormal.y);
+        result->x += fixed32_mul(1<<12, wallNormal.x);
+        result->y += fixed32_mul(1<<12, wallNormal.y);
     }
 }

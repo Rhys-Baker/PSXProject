@@ -14,7 +14,8 @@ typedef struct BSPPlane {
 } BSPPlane;
 
 typedef struct BSPNode {
-    uint16_t planeNum;
+    Vector2 normal;
+	int32_t distance;
     int16_t children[2];
 } BSPNode;
 
