@@ -3,19 +3,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bsp.h"
 #include "camera.h"
 #include "cdrom.h"
 #include "controller.h"
 #include "filesystem.h"
+#include "fixedPoint.h"
 #include "font.h"
 #include "gpu.h"
 #include "gte.h"
 #include "irq.h"
+#include "math.h"
 #include "model.h"
 #include "menu.h"
 #include "spu.h"
 #include "stream.h"
 #include "trig.h"
+#include "types.h"
+#include "util.h"
 
 #include "registers.h"
 #include "system.h"
@@ -23,29 +28,17 @@
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    256
 
+#define ACCELERATION_CONSTANT (1<<12)
+#define MAX_SPEED (1<<12)
+#define FRICTION_CONSTANT (1<<8)
+
 
 // Include texture data files
 extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
 
-extern const uint8_t reference_64Data[];
-extern const uint8_t reference_64Palette[];
-TextureInfo reference_64;
-
-extern const uint8_t myHead_256Data[];
-TextureInfo myHead_256;
-
-extern const uint8_t obama_256Data[];
-TextureInfo obama_256;
-
-extern const uint8_t filth_128Data[];
-TextureInfo filth_128;
-
-Model myHead;
-Model obamaPrism;
-Model filth;
-
+int screenHue = 0;
 int screenColor = 0xfa823c;
 
 // Lookup table of 6 colours, used for debugging purposes
@@ -57,25 +50,6 @@ int colours[6] = {
     0xFFFF00,
     0x00FFFF
 };
-
-
-bool showingText = false;
-
-// Used to keep track of which channel is playing.
-// 0 is combat, 1 is clean.
-int selectedMusicChannel = 1;
-Sound laser;
-
-
-
-
-
-void waitForVblank(){
-    while(!vblank){
-        // Do nothing
-    }
-    vblank = false;
-}
 
 // Gets called once at the start of main.
 void initHardware(void){
@@ -94,23 +68,38 @@ void initHardware(void){
     initGPU(); // Disables screen blanking after setting up screen.
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-    uploadIndexedTexture(&reference_64, reference_64Data, SCREEN_WIDTH, FONT_HEIGHT+1,
-        64, 64, reference_64Palette, SCREEN_WIDTH, FONT_HEIGHT+65, GP0_COLOR_4BPP);
 
-    uploadTexture(&myHead_256, myHead_256Data, SCREEN_WIDTH + 256, 0, 256, 256);
-    uploadTexture(&obama_256, obama_256Data, SCREEN_WIDTH + 256, 256, 256, 256);
-    uploadTexture(&filth_128, filth_128Data, SCREEN_WIDTH, 128, 128, 128);
-    
+    // Initalise the transformed verts list
+    // TODO: Look into whether this is actually useful or not
+    transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
 }
 
-// Used for movement calculations.
-int yawSin;
-int yawCos;
+void drawCross(Point2 p, uint32_t colour){
+    int32_t x, y;
+    x = p.x>>12;
+    y = p.y>>12;
+
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(x-2, y-2);
+    dmaPtr[2] = gp0_xy(x+2, y+2);
+
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(x+2, y-2);
+    dmaPtr[2] = gp0_xy(x-2, y+2);
+}
+
+void drawLine(Point2 a, Point2 b, uint32_t colour){
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_line(false, false);
+    dmaPtr[1] = gp0_xy(a.x>>12, a.y>>12);
+    dmaPtr[2] = gp0_xy(b.x>>12, b.y>>12);
+}
+
 
 Camera mainCamera = {
     .x=2000,
@@ -119,141 +108,228 @@ Camera mainCamera = {
     .pitch=0,
     .yaw=1024,
     .roll=0,
-    };
+};
 
 
-// Functions for look controls
-void lookLeft(void){
-    mainCamera.yaw += 20;
-}
-void lookRight(void){
-    mainCamera.yaw -= 20;
-}
-void lookUp(void){
-    mainCamera.pitch -= 20;
-}
-void lookDown(void){
-    mainCamera.pitch += 20;
-}
+typedef struct Line {
+    Point2 a, b;
+} Line;
 
-// Functions for move controls
-void moveForward(void){
-    mainCamera.x -= (((int)yawSin) * MOVEMENT_SPEED) >>9;
-    mainCamera.z += (((int)yawCos) * MOVEMENT_SPEED) >>9;
-}
-void moveBackward(void){
-    mainCamera.x += (((int)yawSin) * MOVEMENT_SPEED) >>9;
-    mainCamera.z -= (((int)yawCos) * MOVEMENT_SPEED) >>9;
-}
+Line lines[] = {
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 10<<12,
+            .y = 230<<12
+        }
+    },
+    {
+        .a = {
+            .x = 310<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 230<<12
+        }
+    },
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 10<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 10<<12
+        }
+    },
+    {
+        .a = {
+            .x = 10<<12,
+            .y = 230<<12
+        },
+        .b = {
+            .x = 310<<12,
+            .y = 230<<12
+        }
+    },
+    {
+        .a = {
+            .x = 92<<12,
+            .y = 120<<12
+        },
+        .b = {
+            .x = 159<<12,
+            .y = 187<<12
+        }
+    },
+    {
+        .a = {
+            .x = 226<<12,
+            .y = 120<<12
+        },
+        .b = {
+            .x = 159<<12,
+            .y = 187<<12
+        }
+    },
+    {
+        .a = {
+            .x = 159<<12,
+            .y = 53<<12
+        },
+        .b = {
+            .x = 92<<12,
+            .y = 120<<12
+        }
+    },
+    {
+        .a = {
+            .x = 159<<12,
+            .y = 53<<12
+        },
+        .b = {
+            .x = 226<<12,
+            .y = 120<<12
+        }
+    },
+};
+
+
+
+Point2 endPoint;
+Vector2 facingVector = {1<<12, 0};
+
+// Define the BSP tree and all the nodes within it.
+BSPNode bspNodes[9] = {
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 40960,
+        .children = {
+            1, -2
+        }
+    },
+    {
+        .normal = { .x = -4096, .y = 0},
+        .distance = -1269760,
+        .children = {
+            2, -2
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 491520,
+        .children = {
+            6, 3
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 40960,
+        .children = {
+            4, -2
+        }
+    },
+    {
+        .normal = { .x = -2896, .y = -2896},
+        .distance = -614400,
+        .children = {
+            -1, 5
+        }
+    },
+    {
+        .normal = { .x = 2896, .y = -2896},
+        .distance = 307200,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = { .x = 0, .y = -4096},
+        .distance = -942080,
+        .children = {
+            7, -2
+        }
+    },
+    {
+        .normal = { .x = -2896, .y = 2896},
+        .distance = 81920,
+        .children = {
+            -1, 8
+        }
+    },
+    {
+        .normal = { .x = 2896, .y = 2896},
+        .distance = 1003520,
+        .children = {
+            -1, -2
+        }
+    },
+};
+
+BSPTree bspTree = {
+    .nodes = bspNodes,
+    .numNodes = 9
+};
+
+int32_t bspContents;
+uint32_t crossColour;
+
+char str_Buffer[256];
+
+
+struct player{
+    Point2 pos;
+    Point2 delta;
+} player;
+
 void moveLeft(void){
-    mainCamera.x -=  (((int)yawCos) * MOVEMENT_SPEED) >>9;
-    mainCamera.z += -(((int)yawSin) * MOVEMENT_SPEED) >>9;
+    player.delta.x-=(1<<12);
+    if(player.delta.x < -MAX_SPEED){
+        player.delta.x = -MAX_SPEED;
+    }
 }
 void moveRight(void){
-    mainCamera.x +=  (((int)yawCos) * MOVEMENT_SPEED) >>9;
-    mainCamera.z -= -(((int)yawSin) * MOVEMENT_SPEED) >>9;
+    player.delta.x+=(1<<12);
+    if(player.delta.x > MAX_SPEED){
+        player.delta.x = MAX_SPEED;
+    }
 }
-
 void moveUp(void){
-    mainCamera.y -= 32;
+    player.delta.y-=(1<<12);
+    if(player.delta.y < -MAX_SPEED){
+        player.delta.y = -MAX_SPEED;
+    }
 }
 void moveDown(void){
-    mainCamera.y += 32;
-}
-
-// Misc button functions
-void swapMusic(void){
-    setChannelVolume(selectedMusicChannel, 0);
-    selectedMusicChannel = !selectedMusicChannel;
-    setChannelVolume(selectedMusicChannel, MAX_VOLUME);
-    // Update screen colour to reflect which music we are playing.
-    screenColor = selectedMusicChannel ? 0xfa823c : 0x0c34e8;
-}
-
-void playSfx(void){
-    sound_play(&laser, MAX_VOLUME, MAX_VOLUME);
-}
-
-void toggleText(void){
-    showingText = !showingText;
-}
-
-
-
-
-
-Menu pauseMenu;
-Menu settingsMenu;
-
-bool gamePaused = false;
-void pauseGame(void);
-void unpauseGame(void);
-void runSelectedItem(void);
-
-void runSelectedItem(void){
-    if(activeMenu->menuItems[selectedMenuIndex].function!=NULL){
-        (*activeMenu->menuItems[selectedMenuIndex].function)();
+    player.delta.y+=(1<<12);
+    if(player.delta.y > MAX_SPEED){
+        player.delta.y = MAX_SPEED;
     }
 }
 
-void pauseGame(void){
-    // TODO: Set up an actual GAMESTATE machine
-    // Set game state to GAMESTATE_PAUSED
-    if(!gamePaused){
-        gamePaused = true;
-    }
-    activeMenu = &pauseMenu;
-    selectedMenuIndex = 0;
-    
-    // Update all the controls. Set any unused controls to null.
-    controller_unsubscribeAll();
-
-    controller_subscribeOnKeyDown(&runSelectedItem,    BUTTON_INDEX_X       );
-    controller_subscribeOnKeyDown(&selectPrevMenuItem, BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyDown(&selectNextMenuItem, BUTTON_INDEX_DOWN    );
-    controller_subscribeOnKeyDown(&unpauseGame,        BUTTON_INDEX_START   );
+void moveLeftNoVelocity(void){
+    player.pos.x-=(1<<12);
+}
+void moveRightNoVelocity(void){
+    player.pos.x+=(1<<12);
+}
+void moveUpNoVelocity(void){
+    player.pos.y-=(1<<12);
+}
+void moveDownNoVelocity(void){
+    player.pos.y+=(1<<12);
 }
 
-void unpauseGame(void){
-    if(gamePaused){
-        gamePaused = false;
-    }
-    // Remove the active menu
-    activeMenu = NULL;
-
-    // Update all the controls
-    controller_unsubscribeAll();
-    // Look controls
-    controller_subscribeOnKeyHold(&lookLeft,     BUTTON_INDEX_SQUARE  );
-    controller_subscribeOnKeyHold(&lookRight,    BUTTON_INDEX_CIRCLE  );
-    controller_subscribeOnKeyHold(&lookUp,       BUTTON_INDEX_TRIANGLE);
-    controller_subscribeOnKeyHold(&lookDown,     BUTTON_INDEX_X       );
-    // Move controls
-    controller_subscribeOnKeyHold(&moveForward,  BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyHold(&moveBackward, BUTTON_INDEX_DOWN    );
-
-    controller_subscribeOnKeyHold(&moveLeft,     BUTTON_INDEX_LEFT    );
-    controller_subscribeOnKeyHold(&moveRight,    BUTTON_INDEX_RIGHT   );
-    controller_subscribeOnKeyDown(&pauseGame,    BUTTON_INDEX_START   );
-    // Visual toggles
-    controller_subscribeOnKeyDown(&toggleText,   BUTTON_INDEX_L1);
-    // Sound
-    controller_subscribeOnKeyDown(&swapMusic,    BUTTON_INDEX_L2);
-    controller_subscribeOnKeyDown(&playSfx,      BUTTON_INDEX_R2);
+void rotateClockwise(void){
+    facingVector = rotateVector2(facingVector, 10);
 }
-
-void showSettingsMenu(void){
-    selectedMenuIndex = 0;
-    activeMenu = &settingsMenu;
+void rotateCounterClockwise(void){
+    facingVector = rotateVector2(facingVector, -10);
 }
-void showPauseMenu(void){
-    selectedMenuIndex = 0;
-    activeMenu = &pauseMenu;
-}
-
-
-
-
 
 // Start of main
 __attribute__((noreturn))
@@ -264,52 +340,152 @@ int main(void){
 
     // Initialise important things for later
     initHardware();
-    stream_init();
-    
-    // Load model from the disk
-    model_load("MYHEAD.MDL;1", &myHead);
-    model_load("OBAMA.MDL;1", &obamaPrism);
-    model_load("FILTH.MDL;1", &filth);
 
-    // Load sound and song from disk.
-    sound_loadSound("LASER.VAG;1", &laser);
-    stream_loadSong("SONG.VAG;1");
-    
-    // Begin playback of music on channels 0 and 1.
-    stream_startWithChannelMask(MAX_VOLUME, MAX_VOLUME, 0b000000000000000000000011);
+    // Run this stuff once before the main loop.
+    controller_subscribeOnKeyHold(moveLeft,               BUTTON_INDEX_LEFT );
+    controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
+    controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
+    controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
 
+    if(false){
+        controller_subscribeOnKeyHold(moveLeftNoVelocity,               BUTTON_INDEX_LEFT );
+        controller_subscribeOnKeyHold(moveRightNoVelocity,              BUTTON_INDEX_RIGHT);
+        controller_subscribeOnKeyHold(moveUpNoVelocity,                 BUTTON_INDEX_UP   );
+        controller_subscribeOnKeyHold(moveDownNoVelocity,               BUTTON_INDEX_DOWN );
+    }
 
-    // The song uses Left and Right channels to hold the Combat and Calm songs.
-    // I set the selected channel to Max on both left and right. This allows me
-    // to swap the song instantly without needing to load anything.
-    setChannelVolume(( selectedMusicChannel), MAX_VOLUME);
-    setChannelVolume((!selectedMusicChannel), 0); // Mute the other channel
+    controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1);
+    controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1);
 
-    // Set up the pause menu
-    //pauseMenu.title = "Pause Menu";
-    //pauseMenu.numItems = 5;
-    //pauseMenu.menuItems = malloc(sizeof(MenuItem) * 5);
-    menu_create(&pauseMenu, "Pause", 5);
-    menu_setItem(&pauseMenu, 0, "Resume",        unpauseGame);
-    menu_setItem(&pauseMenu, 1, "Settings Menu", showSettingsMenu);
-    menu_setItem(&pauseMenu, 2, "Third Item",    NULL);
-    menu_setItem(&pauseMenu, 3, "Fourth Item",   NULL);
-    menu_setItem(&pauseMenu, 4, "Fifth Item",    NULL);
-    
-    menu_create(&settingsMenu, "Settings", 3);
-    menu_setItem(&settingsMenu, 0, "Setting 1", NULL);
-    menu_setItem(&settingsMenu, 1, "Setting 2", NULL);
-    menu_setItem(&settingsMenu, 2, "Back",      showPauseMenu);
+    // Point to the relevant DMA chain for this frame, then swap the active frame.
+    activeChain = &dmaChains[usingSecondFrame];
+    usingSecondFrame = !usingSecondFrame;
+
+    // Reset the ordering table to a blank state.
+    clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
+    activeChain->nextPacket = activeChain->data;
+
+    // Init player
+    player.pos.x = 20<<12;
+    player.pos.y = 20<<12;
+    player.delta.x = 0;
+    player.delta.y = 0;
 
 
-
-    // TODO
-    // Probably need to create a better function for this, but this will subscribe all the button events and set the game state
-    unpauseGame();
-
-
+    printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever
     for(;;){
+        ///////////////////////////
+        //       Game logic      //
+        ///////////////////////////
+        
+        // Poll the controllers and run their assoicated functions
+        controller_update();
+
+        // Horizontal Friction
+        if(player.delta.x > 0){
+            if(player.delta.x < FRICTION_CONSTANT){
+                player.delta.x = 0;
+            } else {
+                player.delta.x -= FRICTION_CONSTANT;
+            }
+        } else if(player.delta.x < 0){
+            if(player.delta.x > -FRICTION_CONSTANT){
+                player.delta.x = 0;
+            } else {
+                player.delta.x += FRICTION_CONSTANT;
+            }
+        }
+        // Vertical Friction
+        if(player.delta.y > 0){
+            if(player.delta.y < FRICTION_CONSTANT){
+                player.delta.y = 0;
+            } else {
+                player.delta.y -= FRICTION_CONSTANT;
+            }
+        } else if(player.delta.y < 0){
+            if(player.delta.y > -FRICTION_CONSTANT){
+                player.delta.y = 0;
+            } else {
+                player.delta.y += FRICTION_CONSTANT;
+            }
+        }
+
+
+        Point2 intersectionPoint;
+        if(true){
+            endPoint.x = player.pos.x + player.delta.x;
+            endPoint.y = player.pos.y + player.delta.y;
+            BSPHandleCollision(&bspTree, player.pos, endPoint, &player.pos);
+        } else {
+            player.pos.x += player.delta.x;
+            player.pos.y += player.delta.y;
+            endPoint.x = player.pos.x + (facingVector.x * 50);
+            endPoint.y = player.pos.y + (facingVector.y * 50);
+            Vector2 wallNormal;
+            testHue = 50;
+            BSPHandleCollision(&bspTree, player.pos, endPoint, &intersectionPoint);
+            //BSPRecursiveCast2(&bspTree, 0, player.pos, endPoint, &intersectionPoint, &wallNormal);
+        }
+        
+
+
+        ///////////////////////////
+        //       Rendering       //
+        ///////////////////////////
+
+        // Text rendering
+        printString(activeChain, &font, 100, 10, str_Buffer);
+
+        // Draw Cross
+        drawCross(player.pos,        0x000000);
+        //drawCross(endPoint, 0x000000);
+        //drawCross(intersectionPoint, 0x0000FF);
+        //drawLine(player.pos, intersectionPoint, 0x0000FF);
+        //drawLine(player.pos, endPoint, 0x00FF00);
+
+        // Draw walls
+        for(int i = 0; i < 8; i++){
+            drawLine(lines[i].a, lines[i].b, 0x000000);
+        }
+
+        // Update the screen colour
+        //screenHue++;
+        //screenColor = hsv_to_rgb(screenHue);
+
+        // Draw a plain background
+        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
+        dmaPtr[0] = screenColor | gp0_vramFill();
+        dmaPtr[1] = gp0_xy(bufferX, bufferY);
+        dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+
+
+
+        ///////////////////////////
+        //   Framebuffer Logic   //
+        ///////////////////////////
+        
+        // Set the framebuffer offset.
+        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
+        dmaPtr[0] = gp0_texpage(0, true, false);
+        dmaPtr[1] = gp0_fbOffset1(bufferX, bufferY);
+        dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
+        dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
+
+        // This will wait for the GPU to be ready,
+        // It also waits for Vblank.
+        waitForGP0Ready();
+        waitForVblank();
+
+        // Give DMA a pointer to the last item in the ordering table.
+        // We don't need to add a terminator, as it is already done for us by the OTC.
+        sendLinkedList(&(activeChain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
+
+        // Swap the frame buffers.
+        bufferY = usingSecondFrame ? 0 : SCREEN_HEIGHT;
+        GPU_GP1 = gp1_fbOffset(bufferX, bufferY);
+
         // Point to the relevant DMA chain for this frame, then swap the active frame.
         activeChain = &dmaChains[usingSecondFrame];
         usingSecondFrame = !usingSecondFrame;
@@ -317,101 +493,6 @@ int main(void){
         // Reset the ordering table to a blank state.
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
-        
-        // Refresh the GTE for transformations
-        gte_setRotationMatrix(
-            ONE, 0, 0,
-            0, ONE, 0,
-            0, 0, ONE
-        );
-
-        // Rotate camera
-        rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
-        // Reset translation Matrix
-        setTranslationMatrix(0, 0, 0);
-
-        model_renderTextured(&filth, &filth_128, &mainCamera, 0, 0, 0, 0, 0 ,0);
-        model_renderTextured(&myHead, &myHead_256, &mainCamera, 0, 0, 0, 0, 0, -2000);
-        model_renderTextured(&obamaPrism, &obama_256, &mainCamera, 0, 0, 0, 0, 5000, -32000);
-
-
-        // Place the framebuffer offset and screen clearing commands last.
-        // This means they will be executed first and be at the back of the screen.
-        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
-        dmaPtr[0] = screenColor | gp0_vramFill();
-        dmaPtr[1] = gp0_xy(bufferX, bufferY);
-        dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-        dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
-        dmaPtr[0] = gp0_texpage(0, true, false);
-        dmaPtr[1] = gp0_fbOffset1(bufferX, bufferY);
-        dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
-        dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
-    
-
-        // Display the help/debug text.
-        if(showingText && !gamePaused){
-            char textBuffer[1024];
-            sprintf(
-                textBuffer,
-                "D-Pad: Move\n"
-                "Face buttons: Look Around\n"
-                "L1: Toggle menu\n"
-                "L2: Toggle music\n"
-                "R2: Play SFX\n\n"
-                
-                "Pitch(x): %d\n"
-                "Roll (y): %d\n"
-                "Yaw  (Z): %d\n\n"
-                
-                "x: %d\n"
-                "y: %d\n"
-                "z: %d\n\n"
-                
-                "%d\n"
-                "%d\n"
-                "%d",
-
-                mainCamera.pitch, mainCamera.roll, mainCamera.yaw,
-                mainCamera.x, mainCamera.y, mainCamera.z,
-                ((int)yawCos), ((int) yawCos) * 30, (((int)yawCos) * 30) >>12
-            );
-
-            printString(activeChain, &font, 10, 10, textBuffer);
-        }
-
-        // Update the stream state machine.
-        // Feed more data if needed.
-        // Do this every frame, or almost every frame.
-        // It is non-blocking but must be checked constantly.
-        stream_update();
-
-        // Used for movement calculations.
-        // Update these before polling the controller
-        yawSin = isin(mainCamera.yaw);
-        yawCos = icos(mainCamera.yaw);
-        // Update the controller every frame.
-        // Will run the function associated with each button if the button is pressed.
-        controller_update();
-
-
-        if(gamePaused){
-            RenderActiveMenu(&font);
-        }
-
-        // This will wait for the GPU to be ready,
-        // It also waits for Vblank.
-        waitForGP0Ready();
-        waitForVblank();
-
-        // Swap the frame buffers.
-        bufferY = usingSecondFrame ? SCREEN_HEIGHT : 0;
-        GPU_GP1 = gp1_fbOffset(bufferX, bufferY);
-
-        // Give DMA a pointer to the last item in the ordering table.
-        // We don't need to add a terminator, as it is already done for us by the OTC.
-        sendLinkedList(&(activeChain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
    }
-
     __builtin_unreachable();
 }

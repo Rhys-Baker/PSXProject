@@ -18,7 +18,16 @@ PYTHON = python3
 endif
 
 CC = $(CC_PREFIX)-gcc
-CFLAGS = $(IncludeTags) -g -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -Og -mdivide-breaks
+CFLAGS_DEBUG = $(IncludeTags) -g -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata -G8 -Og -mdivide-breaks
+CFLAGS_RELEASE = $(IncludeTags)  -Wall -Wa,--strip-local-absolute -ffreestanding -fno-builtin -fno-pic -nostdlib -fdata-sections -ffunction-sections -fsigned-char -fno-strict-overflow -march=r3000 -mabi=32 -mfp32 -mno-mt -mno-llsc -mno-abicalls -mgpopt -mno-extern-sdata     -O3 -mdivide-breaks
+
+# By default, use the debug flags
+CFLAGS = $(CFLAGS_DEBUG)
+
+# If 'release' target is specified, override CFLAGS
+ifeq ($(MAKECMDGOALS),release)
+CFLAGS = $(CFLAGS_RELEASE)
+endif
 
 AS = $(CC_PREFIX)-gcc
 AFLAGS = $(CFLAGS)
@@ -115,7 +124,9 @@ $(AUDIO_BUILD_DIR)/%Audio.s: $(AUDIO_BUILD_DIR)/%Audio.dat
 	@echo '	.incbin "$(dir $@)$(basename $(notdir $<)).dat"' >> $@
 	@echo '$(basename $(notdir $<))_end:' >> $@
 
-# Rules for all .dat and .s files
+
+
+release: all
 all: convertImages convertAudio build buildCD
 
 convertImages: $(DAT_FILES) $(S_FILES)
@@ -220,5 +231,5 @@ clean:
 	rm -f CDROM/$(TARGET_PSEXE)
 	rm -f CDROM/GAME.cue CDROM/GAME.bin CDROM/GAME.EXE
 
-.PHONY: all clean convertImages build
+.PHONY: all clean convertImages build release
 

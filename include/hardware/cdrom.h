@@ -3,17 +3,17 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-extern bool waitingForInt1;
-extern bool waitingForInt2;
-extern bool waitingForInt3;
-extern bool waitingForInt4;
-extern bool waitingForInt5;
+extern volatile bool waitingForInt1;
+extern volatile bool waitingForInt2;
+extern volatile bool waitingForInt3;
+extern volatile bool waitingForInt4;
+extern volatile bool waitingForInt5;
 
 extern bool cdromDataReady;
 
 extern void  *cdromReadDataPtr;
 extern size_t cdromReadDataSectorSize;
-extern size_t cdromReadDataNumSectors;
+extern volatile size_t cdromReadDataNumSectors;
 
 extern uint8_t cdromResponse[16];
 extern uint8_t cdromRespLength;

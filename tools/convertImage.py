@@ -79,6 +79,7 @@ def convertIndexedImage(
         transparentColor, blackColor
     ).reshape(( numColors, ))
 
+
     # Pad the palette to 16 or 256 colors.
     if maxNumColors > numColors:
         #clut = numpy.c_[ clut, numpy.zeros(maxNumColors - numColors, "<H") ]

@@ -196,19 +196,19 @@ bool getControllerInfo(int port, ControllerInfo *output) {
 }
 
 
-/// @brief Subscribe a function to a given controller button's <onKeyDown> event
+/// @brief Subscribe a function to a given controller button's `<onKeyDown>` event
 /// @param function Function pointer to the function that will run when the button is pressed donw.
 /// @param buttonIndex Index of the button to trigger this function
 void controller_subscribeOnKeyDown(void (*function)(), uint16_t buttonIndex){
     onKeyDownFunctions[buttonIndex] = function;
 }
-/// @brief Subscribe a function to a given controller button's <onKeyUp> event
+/// @brief Subscribe a function to a given controller button's `<onKeyUp>` event
 /// @param function Function pointer to the function that will run when the button is pressed donw.
 /// @param buttonIndex Index of the button to trigger this function
 void controller_subscribeOnKeyUp(void (*function)(), uint16_t buttonIndex){
     onKeyUpFunctions[buttonIndex] = function;
 }
-/// @brief Subscribe a function to a given controller button's <onKeyHold> event
+/// @brief Subscribe a function to a given controller button's `<onKeyHold>` event
 /// @param function Function pointer to the function that will run when the button is pressed donw.
 /// @param buttonIndex Index of the button to trigger this function
 void controller_subscribeOnKeyHold(void (*function)(), uint16_t buttonIndex){
@@ -224,7 +224,7 @@ void controller_unsubscribeAll(void){
     }
 }
 
-/// @brief Check controller input and fire <onKeyDown> <onKeyUp> and <onKeyHold> events for each button
+/// @brief Check controller input and fire `<onKeyDown>` `<onKeyUp>` and `<onKeyHold>` events for each button
 void controller_update(void){
     getControllerInfo(0, &controllerInfo);
 

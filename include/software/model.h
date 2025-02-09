@@ -4,14 +4,23 @@
 #include "gpu.h"
 #include "gte.h"
 
+extern int numPrims;
+extern int maxNumVerts;
+
+
 typedef struct Vert{
     int16_t x, y, z;
     int16_t _;
 } Vert;
 typedef struct Tri{
-    uint16_t a ,auv,
-             b, buv,
-             c ,cuv;
+    uint16_t a;
+    uint8_t  av, au;
+
+    uint16_t b;
+    uint8_t  bv, bu;
+
+    uint16_t c;
+    uint8_t  cv, cu;
 } Tri;
 typedef struct Model{
     uint16_t numVerts;
@@ -19,6 +28,13 @@ typedef struct Model{
     Vert    *verts;
     Tri     *tris;
 } Model;
+
+typedef struct TransformedVert{
+    uint32_t XY;
+    uint32_t  Z;
+} TransformedVert;
+
+extern TransformedVert *transformedVerts;
 
 
 /// @brief Load a model from a file on disc. The .verts and .tris properties will be set. It is important to free these as they are allocated on the heap. Use model_destroy() to do this.

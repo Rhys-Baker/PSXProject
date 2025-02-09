@@ -227,7 +227,7 @@ typedef enum {
 
 #define TIMER_VALUE(N)  _MMIO16((IO_BASE | 0x100) + (16 * (N)))
 #define TIMER_CTRL(N)   _MMIO16((IO_BASE | 0x104) + (16 * (N)))
-#define TIMER_RELOAD(N) _MMIO16((IO_BASE | 0x108) + (16 * (N)))
+#define TIMER_TARGET(N) _MMIO16((IO_BASE | 0x108) + (16 * (N)))
 
 /* CD-ROM drive */
 

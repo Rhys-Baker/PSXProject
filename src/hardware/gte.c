@@ -14,6 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fixedPoint.h"
 #include "gpu.h"
 #include "gte.h"
 #include "trig.h"

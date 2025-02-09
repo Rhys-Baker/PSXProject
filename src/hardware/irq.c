@@ -9,7 +9,7 @@
 #include "registers.h"
 #include "system.h"
 
-bool vblank = false;
+volatile bool vblank = false;
 
 // Sets the global vblank variable to true.
 void handleVSyncIRQ(void){
@@ -86,4 +86,11 @@ void initIRQ(void){
     // The IRQ mask specifies which interrupt sources are actually allowed to raise an interrupt.
     IRQ_MASK = (1 << IRQ_VSYNC) | (1 << IRQ_CDROM) | (1 << IRQ_SPU);
     enableInterrupts();
+}
+
+void waitForVblank(void){
+    while(!vblank){
+        // Do nothing
+    }
+    vblank = false;
 }

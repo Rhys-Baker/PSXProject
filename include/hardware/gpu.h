@@ -4,7 +4,7 @@
 #include "ps1/gpucmd.h"
 
 #define DMA_MAX_CHUNK_SIZE 16
-#define CHAIN_BUFFER_SIZE 32768
+#define CHAIN_BUFFER_SIZE 65536
 #define ORDERING_TABLE_SIZE 2048
 
 #define SCREEN_WIDTH     320

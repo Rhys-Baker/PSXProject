@@ -56,3 +56,8 @@ void selectNextMenuItem(void){
 void selectPrevMenuItem(void){
     selectedMenuIndex = (selectedMenuIndex-1 + activeMenu->numItems) % activeMenu->numItems;
 }
+void runSelectedItem(void){
+    if(activeMenu->menuItems[selectedMenuIndex].function!=NULL){
+        (*activeMenu->menuItems[selectedMenuIndex].function)();
+    }
+}
