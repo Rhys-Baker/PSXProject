@@ -422,8 +422,10 @@ int main(void){
             player.pos.y += player.delta.y;
             endPoint.x = player.pos.x + (facingVector.x * 50);
             endPoint.y = player.pos.y + (facingVector.y * 50);
-            
+            Vector2 wallNormal;
+            testHue = 50;
             BSPHandleCollision(&bspTree, player.pos, endPoint, &intersectionPoint);
+            //BSPRecursiveCast2(&bspTree, 0, player.pos, endPoint, &intersectionPoint, &wallNormal);
         }
         
 
@@ -440,6 +442,7 @@ int main(void){
         //drawCross(endPoint, 0x000000);
         //drawCross(intersectionPoint, 0x0000FF);
         //drawLine(player.pos, intersectionPoint, 0x0000FF);
+        //drawLine(player.pos, endPoint, 0x00FF00);
 
         // Draw walls
         for(int i = 0; i < 8; i++){
