@@ -226,12 +226,26 @@ bool sound_initFromVAGHeader(Sound *sound, const VAGHeader *vagHeader, uint32_t 
     return true;
 }
 
+#include <stdio.h>
+
+/// @brief Play a sound on a given channel.
+/// @param sound Pointer to the sound to play.
+/// @param left Left channel volume.
+/// @param right Right channel volume.
+/// @param ch Channel to play on
+/// @return Channel number playback started on, if successful.
+/// -1 for invalid channel selection
+/// -2 for invalid sound offset
 Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel ch) {
     if((ch<0) || (ch >= NUM_CHANNELS)){
         return -1;
     }
     if(!sound->offset){
-        return -1;
+        printf("Length:     %d\n", sound->length);
+        printf("Offset:     %d\n", sound->offset);
+        printf("SampleRate: %d\n", sound->sampleRate);
+        printf("INVALID SOUND OFFSET: %d\n", sound->offset);
+        return -2;
     }
 
     SPU_CH_VOL_L(ch) = left;
@@ -250,7 +264,6 @@ Channel sound_playOnChannel(Sound *sound, uint16_t left, uint16_t right, Channel
     return ch;
 }
 
-#include <stdio.h>
 int sound_loadSound(const char *name, Sound *sound){
     int remainingLength;
     int uploadedData;
@@ -260,15 +273,21 @@ int sound_loadSound(const char *name, Sound *sound){
     
     // Find the file on the filesystem
     _vagLba = getLbaToFile(name);
-    if(!_vagLba){
-        // File not found
-        return 1;
-    }
+    assert(_vagLba); // File not found
+
     // Load the data into the sector
     startCDROMRead(_vagLba, &_sectorBuffer, 1, 2048, true, true);
     // Set the header data
     const VAGHeader *_vagHeader = (const VAGHeader*) _sectorBuffer;
     
+    printf("Sound: %s\n", name);
+    printf("%d\n",   _vagHeader->channels);
+    printf("%d\n",   _vagHeader->interleave);
+    printf("%d\n",   _vagHeader->length);
+    printf("%d\n",   _vagHeader->magic);
+    printf("%d\n\n", _vagHeader->version);
+    printf("%d\n\n", _vagHeader->sampleRate);
+
     // Initialise the sound
     sound_create(sound);
     if(!sound_initFromVAGHeader(sound, _vagHeader, spuAllocPtr)){
@@ -311,5 +330,37 @@ int sound_loadSound(const char *name, Sound *sound){
 
     }
 
+    return 0;
+}
+
+
+int sound_loadSoundFromBinary(const uint8_t *data, Sound *sound){
+    int remainingLength;
+    
+    VAGHeader *_vagHeader = (const VAGHeader*) data;
+    
+    printf("%d\n",   _vagHeader->channels);
+    printf("%d\n",   _vagHeader->interleave);
+    printf("%d\n",   _vagHeader->length);
+    printf("%d\n",   _vagHeader->magic);
+    printf("%d\n\n", _vagHeader->version);
+    printf("%d\n\n", _vagHeader->sampleRate);
+
+    _vagHeader->sampleRate = (_vagHeader->sampleRate * 2) / 3;
+
+    // Initialise the sound
+    sound_create(sound);
+    if(!sound_initFromVAGHeader(sound, _vagHeader, spuAllocPtr)){
+        // Failed to validate magic header
+        return 2;
+    }
+
+    upload(
+        spuAllocPtr,
+        vagHeader_getData(_vagHeader),
+        sound->length,
+        true
+    );
+    
     return 0;
 }
