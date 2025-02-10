@@ -29,7 +29,7 @@
 #define SCREEN_HEIGHT    256
 
 #define ACCELERATION_CONSTANT (1<<12)
-#define MAX_SPEED (1<<12)
+#define MAX_SPEED (3<<12)
 #define FRICTION_CONSTANT (1<<8)
 
 
@@ -37,6 +37,13 @@
 extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
+
+extern const uint8_t stepgrassAudio[];
+
+Sound step;
+Sound step2;
+Sound laser;
+
 
 int screenHue = 0;
 int screenColor = 0xfa823c;
@@ -60,10 +67,10 @@ void initHardware(void){
     // Initialise the serial port for printing
     initSerialIO(115200);
     initSPU();
-    initCDROM();
+    //initCDROM();
     initIRQ();
     initControllerBus();
-    initFilesystem();
+    //initFilesystem();
     // TODO: Fill the screen with black / Add a loading screen here?
     initGPU(); // Disables screen blanking after setting up screen.
     
@@ -71,6 +78,15 @@ void initHardware(void){
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
+    
+
+    int result;
+
+    //result = sound_loadSound("LASER.VAG;1", &laser);
+    //result = sound_loadSound("STEP.VAG;1", &step);
+    sound_loadSoundFromBinary(stepgrassAudio, &step2);
+
+    
 
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
@@ -115,160 +131,70 @@ typedef struct Line {
     Point2 a, b;
 } Line;
 
+
+
 Line lines[] = {
     {
         .a = {
-            .x = 10<<12,
-            .y = 10<<12
-        },
-        .b = {
-            .x = 10<<12,
-            .y = 230<<12
-        }
-    },
-    {
-        .a = {
-            .x = 310<<12,
-            .y = 10<<12
-        },
-        .b = {
-            .x = 310<<12,
-            .y = 230<<12
-        }
-    },
-    {
-        .a = {
-            .x = 10<<12,
-            .y = 10<<12
-        },
-        .b = {
-            .x = 310<<12,
-            .y = 10<<12
-        }
-    },
-    {
-        .a = {
-            .x = 10<<12,
-            .y = 230<<12
-        },
-        .b = {
-            .x = 310<<12,
-            .y = 230<<12
-        }
-    },
-    {
-        .a = {
-            .x = 92<<12,
+            .x = 0,
             .y = 120<<12
         },
         .b = {
-            .x = 159<<12,
-            .y = 187<<12
-        }
-    },
-    {
-        .a = {
-            .x = 226<<12,
-            .y = 120<<12
-        },
-        .b = {
-            .x = 159<<12,
-            .y = 187<<12
-        }
-    },
-    {
-        .a = {
-            .x = 159<<12,
-            .y = 53<<12
-        },
-        .b = {
-            .x = 92<<12,
+            .x = 160<<12,
             .y = 120<<12
         }
     },
     {
         .a = {
-            .x = 159<<12,
-            .y = 53<<12
+            .x = 160<<12,
+            .y = 0
         },
         .b = {
-            .x = 226<<12,
+            .x = 160<<12,
             .y = 120<<12
         }
     },
+    {
+        .a = {
+            .x = 160<<12,
+            .y = 40<<12
+        },
+        .b = {
+            .x = 320<<12,
+            .y = 40<<12
+        }
+    }
 };
 
-
-
-Point2 endPoint;
-Vector2 facingVector = {1<<12, 0};
-
-// Define the BSP tree and all the nodes within it.
-BSPNode bspNodes[9] = {
+BSPNode bspNodes[3] = {
     {
         .normal = { .x = 4096, .y = 0},
-        .distance = 40960,
+        .distance = 655360,
         .children = {
-            1, -2
-        }
-    },
-    {
-        .normal = { .x = -4096, .y = 0},
-        .distance = -1269760,
-        .children = {
-            2, -2
+            2, 1
         }
     },
     {
         .normal = { .x = 0, .y = 4096},
         .distance = 491520,
         .children = {
-            6, 3
-        }
-    },
-    {
-        .normal = { .x = 0, .y = 4096},
-        .distance = 40960,
-        .children = {
-            4, -2
-        }
-    },
-    {
-        .normal = { .x = -2896, .y = -2896},
-        .distance = -614400,
-        .children = {
-            -1, 5
-        }
-    },
-    {
-        .normal = { .x = 2896, .y = -2896},
-        .distance = 307200,
-        .children = {
             -1, -2
         }
     },
     {
-        .normal = { .x = 0, .y = -4096},
-        .distance = -942080,
-        .children = {
-            7, -2
-        }
-    },
-    {
-        .normal = { .x = -2896, .y = 2896},
-        .distance = 81920,
-        .children = {
-            -1, 8
-        }
-    },
-    {
-        .normal = { .x = 2896, .y = 2896},
-        .distance = 1003520,
+        .normal = { .x = 0, .y = 4096},
+        .distance = 163840,
         .children = {
             -1, -2
         }
     },
 };
+
+
+Point2 endPoint;
+Vector2 facingVector = {1<<12, 0};
+
+
 
 BSPTree bspTree = {
     .nodes = bspNodes,
@@ -331,6 +257,19 @@ void rotateCounterClockwise(void){
     facingVector = rotateVector2(facingVector, -10);
 }
 
+void playFootstep(void){
+    int result = sound_playOnChannel(&step, MAX_VOLUME, MAX_VOLUME, 0);
+    printf("sound_play(&step): %d\n", result);
+}
+void playFootstep2(void){
+    int result = sound_playOnChannel(&step2, MAX_VOLUME, MAX_VOLUME, 0);
+    printf("sound_play(&step2): %d\n", result);
+}
+void playLaser(void){
+    int result = sound_playOnChannel(&laser, MAX_VOLUME/2, MAX_VOLUME/2, 0);
+    printf("sound_play(&laser): %d\n", result);
+}
+
 // Start of main
 __attribute__((noreturn))
 int main(void){
@@ -346,6 +285,10 @@ int main(void){
     controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
     controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
     controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
+
+    controller_subscribeOnKeyDown(playFootstep,  BUTTON_INDEX_X        );
+    controller_subscribeOnKeyDown(playLaser,     BUTTON_INDEX_SQUARE   );
+    controller_subscribeOnKeyDown(playFootstep2, BUTTON_INDEX_TRIANGLE );
 
     if(false){
         controller_subscribeOnKeyHold(moveLeftNoVelocity,               BUTTON_INDEX_LEFT );
@@ -366,8 +309,8 @@ int main(void){
     activeChain->nextPacket = activeChain->data;
 
     // Init player
-    player.pos.x = 20<<12;
-    player.pos.y = 20<<12;
+    player.pos.x = 170<<12;
+    player.pos.y = 200<<12;
     player.delta.x = 0;
     player.delta.y = 0;
 
@@ -378,7 +321,7 @@ int main(void){
         ///////////////////////////
         //       Game logic      //
         ///////////////////////////
-        
+
         // Poll the controllers and run their assoicated functions
         controller_update();
 
@@ -445,7 +388,7 @@ int main(void){
         //drawLine(player.pos, endPoint, 0x00FF00);
 
         // Draw walls
-        for(int i = 0; i < 8; i++){
+        for(int i = 0; i < 3; i++){
             drawLine(lines[i].a, lines[i].b, 0x000000);
         }
 
@@ -458,7 +401,6 @@ int main(void){
         dmaPtr[0] = screenColor | gp0_vramFill();
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
-
 
 
 
