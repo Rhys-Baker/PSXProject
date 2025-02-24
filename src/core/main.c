@@ -43,46 +43,15 @@ extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
 
-
 Player2 player;
 char str_Buffer[256];
-
-
 int screenColor = 0xfa823c;
 int wallColor = 0x3c82fa;
 
 
-// Gets called once at the start of main.
-void initHardware(void){
-    // Enable display blanking if not already.
-    // Prevents logo from appearing while loading.
-    GPU_GP1 = gp1_dispBlank(true);
-
-    // Initialise the serial port for printing
-    initSerialIO(115200);
-    initSPU();
-    initIRQ();
-    initControllerBus();
-    //initCDROM();
-    //initFilesystem();
-    // TODO: Fill the screen with black / Add a loading screen here?
-    initGPU();
-    
-    setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
-    // Upload textures
-    uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
-        fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-
-    // Initalise the transformed verts list
-    // TODO: Look into whether this is actually useful or not
-    transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
-
-    // TODO: Render a logo/loading screen to the framebuffer
-
-    // Manually disable display blanking after all loading is complete
-    GPU_GP1 = gp1_dispBlank(false);
-}
-
+//////////////////////////////
+// Drawing Helper Functions //
+//////////////////////////////
 #pragma region Drawing Helpers
 void drawCross(Vector2 p, uint32_t colour){
     int32_t x, y;
@@ -128,14 +97,6 @@ void drawTri(Triangle tri, uint32_t colour){
 }
 #pragma endregion
 
-Camera mainCamera = {
-    .x=2000,
-    .y=-(3*128),
-    .z=0,
-    .pitch=0,
-    .yaw=1024,
-    .roll=0,
-};
 
 
 ///////////////////////////////////////////////
@@ -392,6 +353,48 @@ void jump(void){
 }
 #pragma endregion
 
+
+// Gets called once at the start of main.
+void initHardware(void){
+    // Enable display blanking if not already.
+    // Prevents logo from appearing while loading.
+    GPU_GP1 = gp1_dispBlank(true);
+
+    // Initialise the serial port for printing
+    initSerialIO(115200);
+    initSPU();
+    initIRQ();
+    initControllerBus();
+    //initCDROM();
+    //initFilesystem();
+    // TODO: Fill the screen with black / Add a loading screen here?
+    initGPU();
+    
+    setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
+    // Upload textures
+    uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
+        fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
+
+    // Initalise the transformed verts list
+    // TODO: Look into whether this is actually useful or not
+    transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
+
+    
+    // Point to the relevant DMA chain for this frame, then swap the active frame.
+    activeChain = &dmaChains[usingSecondFrame];
+    usingSecondFrame = !usingSecondFrame;
+    // Reset the ordering table to a blank state.
+    clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
+    activeChain->nextPacket = activeChain->data;
+
+
+    // TODO: Render a logo/loading screen to the framebuffer
+
+
+    // Manually disable display blanking after all loading is complete
+    GPU_GP1 = gp1_dispBlank(false);
+}
+
 // Start of main
 __attribute__((noreturn))
 int main(void){
@@ -408,14 +411,7 @@ int main(void){
     controller_subscribeOnKeyHold(moveUp,    BUTTON_INDEX_UP   );
     controller_subscribeOnKeyDown(jump,      BUTTON_INDEX_X    );
 
-    // Point to the relevant DMA chain for this frame, then swap the active frame.
-    activeChain = &dmaChains[usingSecondFrame];
-    usingSecondFrame = !usingSecondFrame;
-
-    // Reset the ordering table to a blank state.
-    clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
-    activeChain->nextPacket = activeChain->data;
-
+    
     // Init player
     player.position.x = 10<<12;
     player.position.y = 10<<12;
