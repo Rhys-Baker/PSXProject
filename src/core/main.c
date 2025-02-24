@@ -25,9 +25,6 @@
 #include "registers.h"
 #include "system.h"
 
-#define SCREEN_WIDTH     320
-#define SCREEN_HEIGHT    256
-
 #define ACCELERATION_CONSTANT (1<<12)
 #define MAX_SPEED (3<<12)
 #define JUMP_FORCE (10<<12)
@@ -50,6 +47,7 @@ Sound laser;
 
 int screenHue = 0;
 int screenColor = 0xfa823c;
+int wallColor = 0x3c82fa;
 
 // Lookup table of 6 colours, used for debugging purposes
 int colours[6] = {
@@ -96,7 +94,7 @@ void initHardware(void){
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
 }
 
-void drawCross(Point2 p, uint32_t colour){
+void drawCross(Vector2 p, uint32_t colour){
     int32_t x, y;
     x = p.x>>12;
     y = p.y>>12;
@@ -112,7 +110,7 @@ void drawCross(Point2 p, uint32_t colour){
     dmaPtr[2] = gp0_xy(x-2, y+2);
 }
 
-void drawLine(Point2 a, Point2 b, uint32_t colour){
+void drawLine(Vector2 a, Vector2 b, uint32_t colour){
     dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(a.x>>12, a.y>>12);
@@ -153,7 +151,7 @@ Camera mainCamera = {
 
 
 typedef struct Line {
-    Point2 a, b;
+    Vector2 a, b;
 } Line;
 
 
@@ -220,7 +218,7 @@ const Rectangle mapRects[] = {
 },
 };
 
-const BSPNode bspNodes[] = {
+const BSPNode2 bspNodes[] = {
     {
         .normal = { .x = 4096, .y = 0},
         .distance = 4096,
@@ -356,7 +354,7 @@ const BSPNode bspNodes[] = {
     },
 };
 
-const BSPTree bspTree = {
+const BSPTree2 bspTree = {
     .nodes=bspNodes,
     .numNodes=19
 };
@@ -368,17 +366,9 @@ const BSPTree bspTree = {
 //////////////////
 
 
-
-//Point2 endPoint;
-Vector2 facingVector = {1<<12, 0};
-
-int32_t bspContents;
-uint32_t crossColour;
-
-Player player;
+Player2 player;
 
 char str_Buffer[256];
-
 
 
 void moveLeft(void){
@@ -397,12 +387,6 @@ void moveUp(void){
     player.velocity.y-=(1<<12);
     if(player.velocity.y < -MAX_SPEED){
         player.velocity.y = -MAX_SPEED;
-    }
-}
-void moveDown(void){
-    player.velocity.y+=(1<<12);
-    if(player.velocity.y > MAX_SPEED){
-        player.velocity.y = MAX_SPEED;
     }
 }
 
@@ -427,25 +411,6 @@ void jump(void){
     }
 }
 
-void rotateClockwise(void){
-    facingVector = rotateVector2(facingVector, 10);
-}
-void rotateCounterClockwise(void){
-    facingVector = rotateVector2(facingVector, -10);
-}
-
-void playFootstep(void){
-    int result = sound_playOnChannel(&step, MAX_VOLUME, MAX_VOLUME, 0);
-    printf("sound_play(&step): %d\n", result);
-}
-void playFootstep2(void){
-    int result = sound_playOnChannel(&step2, MAX_VOLUME, MAX_VOLUME, 0);
-    printf("sound_play(&step2): %d\n", result);
-}
-void playLaser(void){
-    int result = sound_playOnChannel(&laser, MAX_VOLUME/2, MAX_VOLUME/2, 0);
-    printf("sound_play(&laser): %d\n", result);
-}
 
 // Start of main
 __attribute__((noreturn))
@@ -458,21 +423,10 @@ int main(void){
     initHardware();
 
     // Run this stuff once before the main loop.
-    controller_subscribeOnKeyHold(moveLeft,               BUTTON_INDEX_LEFT );
-    controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
-    controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
-    controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
-    controller_subscribeOnKeyDown(jump,                   BUTTON_INDEX_X    );
-
-    if(false){
-        controller_subscribeOnKeyHold(moveLeftNoVelocity,               BUTTON_INDEX_LEFT );
-        controller_subscribeOnKeyHold(moveRightNoVelocity,              BUTTON_INDEX_RIGHT);
-        controller_subscribeOnKeyHold(moveUpNoVelocity,                 BUTTON_INDEX_UP   );
-        controller_subscribeOnKeyHold(moveDownNoVelocity,               BUTTON_INDEX_DOWN );
-    }
-
-    controller_subscribeOnKeyHold(rotateClockwise,        BUTTON_INDEX_R1);
-    controller_subscribeOnKeyHold(rotateCounterClockwise, BUTTON_INDEX_L1);
+    controller_subscribeOnKeyHold(moveLeft,  BUTTON_INDEX_LEFT );
+    controller_subscribeOnKeyHold(moveRight, BUTTON_INDEX_RIGHT);
+    controller_subscribeOnKeyHold(moveUp,    BUTTON_INDEX_UP   );
+    controller_subscribeOnKeyDown(jump,      BUTTON_INDEX_X    );
 
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -492,6 +446,7 @@ int main(void){
     printf("\n\n\nStart of main loop!\n\n\n");
     // Main loop. Runs every frame, forever
     for(;;){
+
         ///////////////////////////
         //       Game logic      //
         ///////////////////////////
@@ -514,7 +469,6 @@ int main(void){
             }
         }
 
-        
         // Gravity
         if(!player.isGrounded){
             player.velocity.y += GRAVITY_CONSTANT;
@@ -525,8 +479,10 @@ int main(void){
         }
 
 
-        move_player(&bspTree, &player);
-        //printf("Player position: %d %d | Player velocity: %d %d\n", player.position.x, player.position.y, player.velocity.x, player.velocity.y);
+        // Move the player and handle collisions
+        Player2_move(&bspTree, &player);
+
+
 
 
         ///////////////////////////
@@ -538,33 +494,22 @@ int main(void){
 
         // Draw Cross
         drawCross(player.position,        0x000000);
-        //drawCross(endPoint, 0x000000);
-        //drawCross(intersectionPoint, 0x0000FF);
-        //drawLine(player.position, intersectionPoint, 0x0000FF);
-        //drawLine(player.position, endPoint, 0x00FF00);
 
-        // Draw walls
-        //for(int i = 0; i < 3; i++){
-        //    drawLine(lines[i].a, lines[i].b, 0x000000);
-        ////}
         // Draw rectangles
         for(int i = 0; i<numRects; i++){
-            drawRect(mapRects[i], 0x0000FF);
+            drawRect(mapRects[i], wallColor);
         }
         // Draw triangles
         for(int i = 0; i<numTris; i++){
-            drawTri(mapTris[i], 0x0000FF);
+            drawTri(mapTris[i], wallColor);
         }
-
-        // Update the screen colour
-        //screenHue++;
-        //screenColor = hsv_to_rgb(screenHue);
 
         // Draw a plain background
         dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
         dmaPtr[0] = screenColor | gp0_vramFill();
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 
 
 
@@ -599,6 +544,7 @@ int main(void){
         // Reset the ordering table to a blank state.
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
+
    }
     __builtin_unreachable();
 }

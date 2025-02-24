@@ -10,7 +10,7 @@
 #define ORDERING_TABLE_SIZE 2048
 
 #define SCREEN_WIDTH     320
-#define SCREEN_HEIGHT    256
+#define SCREEN_HEIGHT    240
 
 typedef struct{
     uint32_t data[CHAIN_BUFFER_SIZE];
@@ -25,10 +25,10 @@ typedef struct {
 } TextureInfo;
 
 typedef struct Triangle{
-    Point2 A, B, C;
+    Vector2 A, B, C;
 } Triangle;
 typedef struct Rectangle{
-    Point2 A, B, C, D;
+    Vector2 A, B, C, D;
 } Rectangle;
 
 
