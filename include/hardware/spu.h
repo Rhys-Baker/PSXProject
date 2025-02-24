@@ -136,3 +136,5 @@ static inline Channel sound_play(Sound *sound, uint16_t left, uint16_t right){
 /// @param sound Pointer to the sound struct to save the sound data in.
 /// @return Error code
 int sound_loadSound(const char *name, Sound *sound);
+
+int sound_loadSoundFromBinary(const uint8_t *data, Sound *sound);

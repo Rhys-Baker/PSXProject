@@ -38,7 +38,7 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
         directoryEntry->name[2] = '\0';
         return 0; // Parent Dir
     }
-    __builtin_memcpy(&directoryEntry->name, &dataSector[33], dataSector[32]);
+    __builtin_memcpy(directoryEntry->name, &dataSector[33], dataSector[32]);
     directoryEntry->name[dataSector[32]] = '\0';
     return 0;
 }
@@ -72,6 +72,8 @@ void getRootDirData(void *rootDirData){
    );
 }
 
+#include <stdio.h>
+
 /// @brief Get the LBA to the file with a given filename, assuming it is stored in the root directory.
 /// @param rootDirData Pointer to the root directory data.
 /// @param filename String containing the filename of the requested file.
@@ -80,7 +82,7 @@ uint32_t getLbaToFile(const char *filename){
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
-    for(int i=0; i<10; i++){
+    while(offset < 2048){
         if(parseDirRecord(
             &rootDirData[offset],
             &recLen,
@@ -89,7 +91,8 @@ uint32_t getLbaToFile(const char *filename){
            break;
         }
         offset += recLen;
-        
+        printf(" Read file name: %s\t| %s\n", directoryEntry.name, __builtin_strcmp(directoryEntry.name, filename) ? "False" : "True");
+
         if(!__builtin_strcmp(directoryEntry.name, filename)){
             return directoryEntry.lba;
         }
