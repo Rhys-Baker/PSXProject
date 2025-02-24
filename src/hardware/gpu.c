@@ -48,7 +48,6 @@ void initGPU(void){
     DMA_DPCR |= DMA_DPCR_ENABLE << (DMA_OTC * 4);
 
     GPU_GP1 = gp1_dmaRequestMode(GP1_DREQ_GP0_WRITE); // Fetch GP0 commands from DMA when possible
-    GPU_GP1 = gp1_dispBlank(false); // Disable display blanking
 }
 
 void setupGPU(GP1VideoMode mode, int width, int height){

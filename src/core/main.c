@@ -1,3 +1,7 @@
+// Define RELEASE to remove all debug() print statements and other debug features
+//#define RELEASE
+
+#pragma region Includes
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -24,6 +28,7 @@
 
 #include "registers.h"
 #include "system.h"
+#pragma endregion
 
 #define ACCELERATION_CONSTANT (1<<12)
 #define MAX_SPEED (3<<12)
@@ -38,26 +43,14 @@ extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
 
-extern const uint8_t stepgrassAudio[];
 
-Sound step;
-Sound step2;
-Sound laser;
+Player2 player;
+char str_Buffer[256];
 
 
-int screenHue = 0;
 int screenColor = 0xfa823c;
 int wallColor = 0x3c82fa;
 
-// Lookup table of 6 colours, used for debugging purposes
-int colours[6] = {
-    0xFF0000,
-    0x00FF00,
-    0x0000FF,
-    0xFF00FF,
-    0xFFFF00,
-    0x00FFFF
-};
 
 // Gets called once at the start of main.
 void initHardware(void){
@@ -68,32 +61,29 @@ void initHardware(void){
     // Initialise the serial port for printing
     initSerialIO(115200);
     initSPU();
-    //initCDROM();
     initIRQ();
     initControllerBus();
+    //initCDROM();
     //initFilesystem();
     // TODO: Fill the screen with black / Add a loading screen here?
-    initGPU(); // Disables screen blanking after setting up screen.
+    initGPU();
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-    
-
-    int result;
-
-    //result = sound_loadSound("LASER.VAG;1", &laser);
-    //result = sound_loadSound("STEP.VAG;1", &step);
-    sound_loadSoundFromBinary(stepgrassAudio, &step2);
-
-    
 
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
+
+    // TODO: Render a logo/loading screen to the framebuffer
+
+    // Manually disable display blanking after all loading is complete
+    GPU_GP1 = gp1_dispBlank(false);
 }
 
+#pragma region Drawing Helpers
 void drawCross(Vector2 p, uint32_t colour){
     int32_t x, y;
     x = p.x>>12;
@@ -109,7 +99,6 @@ void drawCross(Vector2 p, uint32_t colour){
     dmaPtr[1] = gp0_xy(x+2, y-2);
     dmaPtr[2] = gp0_xy(x-2, y+2);
 }
-
 void drawLine(Vector2 a, Vector2 b, uint32_t colour){
     dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
@@ -130,7 +119,6 @@ void drawRect(Rectangle rect, uint32_t colour){
     dmaPtr[2] = gp0_xy(maxx - minx, maxy-miny);
 
 }
-
 void drawTri(Triangle tri, uint32_t colour){
     dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
     dmaPtr[0] = colour | gp0_triangle(false, false);
@@ -138,7 +126,7 @@ void drawTri(Triangle tri, uint32_t colour){
     dmaPtr[2] = gp0_xy(tri.B.x, tri.B.y);
     dmaPtr[3] = gp0_xy(tri.C.x, tri.C.y);
 }
-
+#pragma endregion
 
 Camera mainCamera = {
     .x=2000,
@@ -150,14 +138,10 @@ Camera mainCamera = {
 };
 
 
-typedef struct Line {
-    Vector2 a, b;
-} Line;
-
-
 ///////////////////////////////////////////////
 // BSP Tree Definition and Shape Definitions //
 ///////////////////////////////////////////////
+#pragma region BSP Tree
 
 const int numTris = 14;
 const int numRects = 3;
@@ -218,7 +202,7 @@ const Rectangle mapRects[] = {
 },
 };
 
-const BSPNode2 bspNodes[] = {
+BSPNode2 bspNodes[] = {
     {
         .normal = { .x = 4096, .y = 0},
         .distance = 4096,
@@ -354,23 +338,19 @@ const BSPNode2 bspNodes[] = {
     },
 };
 
-const BSPTree2 bspTree = {
+BSPTree2 bspTree = {
     .nodes=bspNodes,
     .numNodes=19
 };
 
+#pragma endregion
 
 
-//////////////////
-// End BSP Tree //
-//////////////////
 
-
-Player2 player;
-
-char str_Buffer[256];
-
-
+//////////////////////////
+// Controller Functions //
+//////////////////////////
+#pragma region Controller Funcs
 void moveLeft(void){
     player.velocity.x-=(1<<12);
     if(player.velocity.x < -MAX_SPEED){
@@ -410,7 +390,7 @@ void jump(void){
         player.coyoteTimer = 0;
     }
 }
-
+#pragma endregion
 
 // Start of main
 __attribute__((noreturn))
@@ -443,14 +423,14 @@ int main(void){
     player.velocity.y = 0;
 
 
-    printf("\n\n\nStart of main loop!\n\n\n");
+    debug("Start of main loop");
     // Main loop. Runs every frame, forever
     for(;;){
 
         ///////////////////////////
         //       Game logic      //
         ///////////////////////////
-
+        #pragma region Game logic
         // Poll the controllers and run their assoicated functions
         controller_update();
 
@@ -481,13 +461,14 @@ int main(void){
 
         // Move the player and handle collisions
         Player2_move(&bspTree, &player);
-
+        #pragma endregion
 
 
 
         ///////////////////////////
         //       Rendering       //
         ///////////////////////////
+        #pragma region Rendering
 
         // Text rendering
         printString(activeChain, &font, 100, 10, str_Buffer);
@@ -510,13 +491,15 @@ int main(void){
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
 
+        #pragma endregion
 
 
 
         ///////////////////////////
         //   Framebuffer Logic   //
         ///////////////////////////
-        
+        #pragma region Framebuffer Logic
+
         // Set the framebuffer offset.
         dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
         dmaPtr[0] = gp0_texpage(0, true, false);
@@ -545,6 +528,7 @@ int main(void){
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
 
+        #pragma endregion
    }
     __builtin_unreachable();
 }

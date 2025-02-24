@@ -2,6 +2,7 @@
 
 uint32_t hsv_to_rgb(int h) {
     uint8_t r, g, b;
+    r = g = b = 0; // Initialise to 0 to prevent uninitialised values.
     // Ensure H is within 0-359
     h = h % 360;
 
