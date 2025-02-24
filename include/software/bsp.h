@@ -56,3 +56,6 @@ bool BSPRecursiveCast(BSPTree *bspTree, int node_num, Point2 p1, Point2 p2, Poin
 /// @param endPoint End point of the movement.
 /// @param result Final coordinate of the movement.
 void BSPHandleCollision(BSPTree *bspTree, Point2 startPoint, Point2 endPoint, Point2 *result);
+
+
+void move_player(BSPTree *bspTree, Player *player);

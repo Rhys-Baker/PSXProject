@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include "types.h"
 #include "math.h"
 #include "util.h"
 #include "gpu.h"
@@ -195,4 +196,63 @@ void BSPHandleCollision(BSPTree *bspTree, Point2 startPoint, Point2 endPoint, Po
 
     result->x = intersectionPoint.x;
     result->y = intersectionPoint.y;
+}
+
+
+Vector2 slide_along_wall( Vector2 velocity, Vector2 normal){
+    int32_t dot = dotVector2(velocity, normal);
+    Vector2 proj = scaleVector2(normal, dot);
+    return subVector2(velocity, proj);
+}
+
+#include <stdio.h>
+void move_player(BSPTree *bspTree, Player *player) {
+    Point2 prevPos = player->position;
+    Point2 nextPos = {player->position.x + player->velocity.x, player->position.y + player->velocity.y};
+
+    Point2 hitPoint;
+    Vector2 hitNormal;
+
+    const int maxIterations = 5;
+    int iterations = 0;
+
+    player->isGrounded = false;
+
+    while (BSPRecursiveCast(bspTree, 0, prevPos, nextPos, &hitPoint, &hitNormal)){
+        if (iterations++ >= maxIterations) {
+            break; // Prevent infinite loops
+        }
+
+        // Determine collision type
+        if (abs(hitNormal.y) <= abs(hitNormal.x)) {  
+            // Wall collision -> Slide along the wall
+            player->velocity = slide_along_wall(player->velocity, hitNormal);
+        } 
+        else if (hitNormal.y < abs(hitNormal.x)) {  
+            // Walkable slope -> Snap to ground
+            player->position = hitPoint;
+            player->velocity.y = 0;  
+            player->isGrounded = true;
+            player->coyoteTimer = COYOTE_TIME;
+
+            // Align movement with slope tangent
+            Vector2 tangent = {-hitNormal.y, hitNormal.x}; 
+            player->velocity = scaleVector2(tangent, player->velocity.x);
+        } 
+        else {  
+            // Ceiling or steep slope -> Slide along it
+            player->velocity = slide_along_wall(player->velocity, hitNormal);
+        }
+
+        // Update positions for next iteration
+        prevPos = hitPoint;
+        nextPos = (Point2){player->position.x + player->velocity.x, player->position.y + player->velocity.y};
+    }
+
+    // Final position update
+    player->position = nextPos;
+
+    if(!player->isGrounded && player->coyoteTimer > 0){
+        player->coyoteTimer--;
+    }
 }

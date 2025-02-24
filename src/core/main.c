@@ -30,7 +30,10 @@
 
 #define ACCELERATION_CONSTANT (1<<12)
 #define MAX_SPEED (3<<12)
+#define JUMP_FORCE (10<<12)
 #define FRICTION_CONSTANT (1<<8)
+#define TERMINAL_VELOCITY (5<<12)
+#define GRAVITY_CONSTANT (1<<11)
 
 
 // Include texture data files
@@ -115,6 +118,28 @@ void drawLine(Point2 a, Point2 b, uint32_t colour){
     dmaPtr[1] = gp0_xy(a.x>>12, a.y>>12);
     dmaPtr[2] = gp0_xy(b.x>>12, b.y>>12);
 }
+void drawRect(Rectangle rect, uint32_t colour){
+    int minx = min(min(rect.A.x, rect.B.x), min(rect.C.x, rect.D.x));
+    int miny = min(min(rect.A.y, rect.B.y), min(rect.C.y, rect.D.y));
+
+    int maxx = max(max(rect.A.x, rect.B.x), max(rect.C.x, rect.D.x));
+    int maxy = max(max(rect.A.y, rect.B.y), max(rect.C.y, rect.D.y));
+
+
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr[0] = colour | gp0_rectangle(false, true, false);
+    dmaPtr[1] = gp0_xy(minx, miny);
+    dmaPtr[2] = gp0_xy(maxx - minx, maxy-miny);
+
+}
+
+void drawTri(Triangle tri, uint32_t colour){
+    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
+    dmaPtr[0] = colour | gp0_triangle(false, false);
+    dmaPtr[1] = gp0_xy(tri.A.x, tri.A.y);
+    dmaPtr[2] = gp0_xy(tri.B.x, tri.B.y);
+    dmaPtr[3] = gp0_xy(tri.C.x, tri.C.y);
+}
 
 
 Camera mainCamera = {
@@ -132,122 +157,274 @@ typedef struct Line {
 } Line;
 
 
+///////////////////////////////////////////////
+// BSP Tree Definition and Shape Definitions //
+///////////////////////////////////////////////
 
-Line lines[] = {
-    {
-        .a = {
-            .x = 0,
-            .y = 120<<12
-        },
-        .b = {
-            .x = 160<<12,
-            .y = 120<<12
-        }
-    },
-    {
-        .a = {
-            .x = 160<<12,
-            .y = 0
-        },
-        .b = {
-            .x = 160<<12,
-            .y = 120<<12
-        }
-    },
-    {
-        .a = {
-            .x = 160<<12,
-            .y = 40<<12
-        },
-        .b = {
-            .x = 320<<12,
-            .y = 40<<12
-        }
-    }
+const int numTris = 14;
+const int numRects = 3;
+const Triangle mapTris[] = {
+{
+    {1, 0}, {320, 0}, {320, 1}
+},
+{
+    {1, 0}, {320, 1}, {1, 1}
+},
+{
+    {1, 100}, {1, 40}, {140, 40}
+},
+{
+    {1, 100}, {140, 40}, {140, 100}
+},
+{
+    {180, 1}, {220, 1}, {220, 60}
+},
+{
+    {180, 1}, {220, 60}, {180, 60}
+},
+{
+    {220, 120}, {300, 120}, {300, 160}
+},
+{
+    {220, 120}, {300, 160}, {220, 160}
+},
+{
+    {300, 1}, {319, 1}, {319, 80}
+},
+{
+    {300, 1}, {319, 80}, {300, 80}
+},
+{
+    {319, 240}, {1, 240}, {1, 239}
+},
+{
+    {319, 240}, {1, 239}, {319, 239}
+},
+{
+    {320, 1}, {320, 240}, {319, 240}
+},
+{
+    {320, 1}, {319, 240}, {319, 1}
+},
 };
 
-BSPNode bspNodes[3] = {
+const Rectangle mapRects[] = {
+{
+    {0, 0}, {1, 0}, {1, 240}, {0, 240}
+},
+{
+    {1, 239}, {1, 200}, {100, 200}, {100, 239}
+},
+{
+    {220, 160}, {260, 160}, {260, 239}, {220, 239}
+},
+};
+
+const BSPNode bspNodes[] = {
     {
         .normal = { .x = 4096, .y = 0},
+        .distance = 4096,
+        .children = {
+            1, -2
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 4096,
+        .children = {
+            2, -2
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 1306624,
+        .children = {
+            -2, 3
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 978944,
+        .children = {
+            -2, 4
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
         .distance = 655360,
         .children = {
-            2, 1
+            15, 5
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 1228800,
+        .children = {
+            14, 6
         }
     },
     {
         .normal = { .x = 0, .y = 4096},
         .distance = 491520,
         .children = {
-            -1, -2
+            13, 7
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 573440,
+        .children = {
+            10, 8
         }
     },
     {
         .normal = { .x = 0, .y = 4096},
         .distance = 163840,
         .children = {
+            9, -1
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 409600,
+        .children = {
             -1, -2
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 737280,
+        .children = {
+            11, -1
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 245760,
+        .children = {
+            -1, 12
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 901120,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 901120,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 327680,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 1064960,
+        .children = {
+            -1, 16
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 901120,
+        .children = {
+            -2, 17
+        }
+    },
+    {
+        .normal = { .x = 4096, .y = 0},
+        .distance = 409600,
+        .children = {
+            -1, 18
+        }
+    },
+    {
+        .normal = { .x = 0, .y = 4096},
+        .distance = 819200,
+        .children = {
+            -2, -1
         }
     },
 };
 
-
-Point2 endPoint;
-Vector2 facingVector = {1<<12, 0};
-
-
-
-BSPTree bspTree = {
-    .nodes = bspNodes,
-    .numNodes = 9
+const BSPTree bspTree = {
+    .nodes=bspNodes,
+    .numNodes=19
 };
+
+
+
+//////////////////
+// End BSP Tree //
+//////////////////
+
+
+
+//Point2 endPoint;
+Vector2 facingVector = {1<<12, 0};
 
 int32_t bspContents;
 uint32_t crossColour;
 
+Player player;
+
 char str_Buffer[256];
 
 
-struct player{
-    Point2 pos;
-    Point2 delta;
-} player;
 
 void moveLeft(void){
-    player.delta.x-=(1<<12);
-    if(player.delta.x < -MAX_SPEED){
-        player.delta.x = -MAX_SPEED;
+    player.velocity.x-=(1<<12);
+    if(player.velocity.x < -MAX_SPEED){
+        player.velocity.x = -MAX_SPEED;
     }
 }
 void moveRight(void){
-    player.delta.x+=(1<<12);
-    if(player.delta.x > MAX_SPEED){
-        player.delta.x = MAX_SPEED;
+    player.velocity.x+=(1<<12);
+    if(player.velocity.x > MAX_SPEED){
+        player.velocity.x = MAX_SPEED;
     }
 }
 void moveUp(void){
-    player.delta.y-=(1<<12);
-    if(player.delta.y < -MAX_SPEED){
-        player.delta.y = -MAX_SPEED;
+    player.velocity.y-=(1<<12);
+    if(player.velocity.y < -MAX_SPEED){
+        player.velocity.y = -MAX_SPEED;
     }
 }
 void moveDown(void){
-    player.delta.y+=(1<<12);
-    if(player.delta.y > MAX_SPEED){
-        player.delta.y = MAX_SPEED;
+    player.velocity.y+=(1<<12);
+    if(player.velocity.y > MAX_SPEED){
+        player.velocity.y = MAX_SPEED;
     }
 }
 
 void moveLeftNoVelocity(void){
-    player.pos.x-=(1<<12);
+    player.position.x-=(1<<12);
 }
 void moveRightNoVelocity(void){
-    player.pos.x+=(1<<12);
+    player.position.x+=(1<<12);
 }
 void moveUpNoVelocity(void){
-    player.pos.y-=(1<<12);
+    player.position.y-=(1<<12);
 }
 void moveDownNoVelocity(void){
-    player.pos.y+=(1<<12);
+    player.position.y+=(1<<12);
+}
+
+void jump(void){
+    if(player.isGrounded || player.coyoteTimer > 0){
+        player.velocity.y = -JUMP_FORCE;
+        player.isGrounded = false;
+        player.coyoteTimer = 0;
+    }
 }
 
 void rotateClockwise(void){
@@ -285,10 +462,7 @@ int main(void){
     controller_subscribeOnKeyHold(moveRight,              BUTTON_INDEX_RIGHT);
     controller_subscribeOnKeyHold(moveUp,                 BUTTON_INDEX_UP   );
     controller_subscribeOnKeyHold(moveDown,               BUTTON_INDEX_DOWN );
-
-    controller_subscribeOnKeyDown(playFootstep,  BUTTON_INDEX_X        );
-    controller_subscribeOnKeyDown(playLaser,     BUTTON_INDEX_SQUARE   );
-    controller_subscribeOnKeyDown(playFootstep2, BUTTON_INDEX_TRIANGLE );
+    controller_subscribeOnKeyDown(jump,                   BUTTON_INDEX_X    );
 
     if(false){
         controller_subscribeOnKeyHold(moveLeftNoVelocity,               BUTTON_INDEX_LEFT );
@@ -309,10 +483,10 @@ int main(void){
     activeChain->nextPacket = activeChain->data;
 
     // Init player
-    player.pos.x = 170<<12;
-    player.pos.y = 200<<12;
-    player.delta.x = 0;
-    player.delta.y = 0;
+    player.position.x = 10<<12;
+    player.position.y = 10<<12;
+    player.velocity.x = 0;
+    player.velocity.y = 0;
 
 
     printf("\n\n\nStart of main loop!\n\n\n");
@@ -325,52 +499,34 @@ int main(void){
         // Poll the controllers and run their assoicated functions
         controller_update();
 
-        // Horizontal Friction
-        if(player.delta.x > 0){
-            if(player.delta.x < FRICTION_CONSTANT){
-                player.delta.x = 0;
+        // Horizontal Friction TODO: Change depending on grounded state, etc
+        if(player.velocity.x > 0){
+            if(player.velocity.x < FRICTION_CONSTANT){
+                player.velocity.x = 0;
             } else {
-                player.delta.x -= FRICTION_CONSTANT;
+                player.velocity.x -= FRICTION_CONSTANT;
             }
-        } else if(player.delta.x < 0){
-            if(player.delta.x > -FRICTION_CONSTANT){
-                player.delta.x = 0;
+        } else if(player.velocity.x < 0){
+            if(player.velocity.x > -FRICTION_CONSTANT){
+                player.velocity.x = 0;
             } else {
-                player.delta.x += FRICTION_CONSTANT;
-            }
-        }
-        // Vertical Friction
-        if(player.delta.y > 0){
-            if(player.delta.y < FRICTION_CONSTANT){
-                player.delta.y = 0;
-            } else {
-                player.delta.y -= FRICTION_CONSTANT;
-            }
-        } else if(player.delta.y < 0){
-            if(player.delta.y > -FRICTION_CONSTANT){
-                player.delta.y = 0;
-            } else {
-                player.delta.y += FRICTION_CONSTANT;
+                player.velocity.x += FRICTION_CONSTANT;
             }
         }
 
-
-        Point2 intersectionPoint;
-        if(true){
-            endPoint.x = player.pos.x + player.delta.x;
-            endPoint.y = player.pos.y + player.delta.y;
-            BSPHandleCollision(&bspTree, player.pos, endPoint, &player.pos);
-        } else {
-            player.pos.x += player.delta.x;
-            player.pos.y += player.delta.y;
-            endPoint.x = player.pos.x + (facingVector.x * 50);
-            endPoint.y = player.pos.y + (facingVector.y * 50);
-            Vector2 wallNormal;
-            testHue = 50;
-            BSPHandleCollision(&bspTree, player.pos, endPoint, &intersectionPoint);
-            //BSPRecursiveCast2(&bspTree, 0, player.pos, endPoint, &intersectionPoint, &wallNormal);
-        }
         
+        // Gravity
+        if(!player.isGrounded){
+            player.velocity.y += GRAVITY_CONSTANT;
+            
+            if(player.velocity.y > TERMINAL_VELOCITY){
+                player.velocity.y = TERMINAL_VELOCITY;
+            }
+        }
+
+
+        move_player(&bspTree, &player);
+        //printf("Player position: %d %d | Player velocity: %d %d\n", player.position.x, player.position.y, player.velocity.x, player.velocity.y);
 
 
         ///////////////////////////
@@ -381,15 +537,23 @@ int main(void){
         printString(activeChain, &font, 100, 10, str_Buffer);
 
         // Draw Cross
-        drawCross(player.pos,        0x000000);
+        drawCross(player.position,        0x000000);
         //drawCross(endPoint, 0x000000);
         //drawCross(intersectionPoint, 0x0000FF);
-        //drawLine(player.pos, intersectionPoint, 0x0000FF);
-        //drawLine(player.pos, endPoint, 0x00FF00);
+        //drawLine(player.position, intersectionPoint, 0x0000FF);
+        //drawLine(player.position, endPoint, 0x00FF00);
 
         // Draw walls
-        for(int i = 0; i < 3; i++){
-            drawLine(lines[i].a, lines[i].b, 0x000000);
+        //for(int i = 0; i < 3; i++){
+        //    drawLine(lines[i].a, lines[i].b, 0x000000);
+        ////}
+        // Draw rectangles
+        for(int i = 0; i<numRects; i++){
+            drawRect(mapRects[i], 0x0000FF);
+        }
+        // Draw triangles
+        for(int i = 0; i<numTris; i++){
+            drawTri(mapTris[i], 0x0000FF);
         }
 
         // Update the screen colour
