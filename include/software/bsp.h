@@ -81,7 +81,7 @@ typedef struct BSPTree3 {
 	uint32_t numNodes;
 } BSPTree3;
 
-int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector2 p);
-bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector2 p1, Vector2 p2, Vector2 *intersection, Vector2 *intersectionNormal);
+int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p);
+bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3 p2, Vector3 *intersection, Vector3 *intersectionNormal);
 void Player3_move(BSPTree3 *bspTree, Player3 *player);
 

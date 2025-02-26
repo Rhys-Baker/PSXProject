@@ -21,7 +21,7 @@ typedef struct Player2{
     int coyoteTimer;
 } Player2;
 typedef struct Player3{
-    Vector2 position;
+    Vector3 position;
     Vector3 velocity;
     bool isGrounded;
     int coyoteTimer;
