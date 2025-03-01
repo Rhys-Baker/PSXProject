@@ -67,9 +67,9 @@ void rotateCurrentMatrix(int pitch, int roll, int yaw){
 		gte_loadRotationMatrix(&multiplied);
 	}
 	
-	if (yaw) {
-		s = isin(yaw);
-		c = icos(yaw);
+	if (roll) {
+		s = isin(roll);
+		c = icos(roll);
 
 		gte_setColumnVectors(
 			 c,   0, s,
@@ -80,9 +80,9 @@ void rotateCurrentMatrix(int pitch, int roll, int yaw){
 		gte_loadRotationMatrix(&multiplied);
 	}
 
-	if (roll) {
-		s = isin(roll);
-		c = icos(roll);
+	if (yaw) {
+		s = isin(yaw);
+		c = icos(yaw);
 		gte_setColumnVectors(
 			c, -s,   0,
 			s,  c,   0,

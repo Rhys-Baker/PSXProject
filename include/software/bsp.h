@@ -63,21 +63,15 @@ void Player2_move(BSPTree2 *bspTree, Player2 *player);
 // 3D BSP Tree and Collisions //
 ////////////////////////////////
 
-typedef struct BSPPlane3 {
-	Vector3 normal;
-	int32_t distance;
-} BSPPlane3;
 
 typedef struct BSPNode3 {
     Vector3 normal;
 	int32_t distance;
-    int16_t children[2];
+    int16_t children[2]; // 0 is front and 1 is back
 } BSPNode3;
 
 typedef struct BSPTree3 {
-	BSPPlane3 *planes;
 	BSPNode3 *nodes;
-	uint32_t numPlanes;
 	uint32_t numNodes;
 } BSPTree3;
 

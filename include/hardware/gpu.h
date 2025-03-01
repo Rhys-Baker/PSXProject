@@ -7,7 +7,7 @@
 
 #define DMA_MAX_CHUNK_SIZE 16
 #define CHAIN_BUFFER_SIZE 65536
-#define ORDERING_TABLE_SIZE 2048
+#define ORDERING_TABLE_SIZE 65536
 
 #define SCREEN_WIDTH     320
 #define SCREEN_HEIGHT    240
@@ -23,14 +23,6 @@ typedef struct {
     uint16_t w, h;
     uint16_t page, clut;
 } TextureInfo;
-
-typedef struct Triangle{
-    Vector2 A, B, C;
-} Triangle;
-typedef struct Rectangle{
-    Vector2 A, B, C, D;
-} Rectangle;
-
 
 
 // the X and Y of the buffer we are currently using.

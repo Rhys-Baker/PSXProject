@@ -258,7 +258,7 @@ void Player2_move(BSPTree2 *bspTree, Player2 *player){
 ////////////////////////////////
 
 static inline Vector3 slideAlongWall3(Vector3 velocity, Vector3 normal){
-    int32_t dot = Vectro3_dot(velocity, normal);
+    int32_t dot = Vector3_dot(velocity, normal);
     Vector3 proj = Vector3_scale(normal, dot);
     return Vector3_sub(velocity, proj);
 }
@@ -401,7 +401,6 @@ bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3
 void Player3_move(BSPTree3 *bspTree, Player3 *player){
     Vector3 hitPoint;
     Vector3 hitNormal;
-    Vector3 tangent;
     const int maxIterations = 5;
     int iterations = 0;
     

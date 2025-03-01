@@ -1,5 +1,6 @@
 #include "model.h"
 
+#include "assert.h"
 #include "camera.h"
 #include "cdrom.h"
 #include "filesystem.h"
@@ -113,20 +114,18 @@ void recursiveSubdivideAndRender(Tri2D *_tri, TextureInfo *texture, int zIndex, 
 
 
 
-
-
 // TODO: If texture NULL, render missing texture?
 // Error check for missing model, etc
 void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint16_t rotx, uint16_t roty, uint16_t rotz, int32_t tx, int32_t ty, int32_t tz){  
     
     // If distance is greater than 16 bits, simply don't render the object.
-    if(tx+cam->x > 32767 || tx+cam->x < -32768){
+    if(tx-cam->x > 32767 || tx-cam->x < -32768){
         return;
     }
-    if(ty+cam->y > 32767 || ty+cam->y < -32768){
+    if(ty-cam->y > 32767 || ty-cam->y < -32768){
         return;
     }
-    if(tz+cam->z > 32767 || tz+cam->z < -32768){
+    if(tz-cam->z > 32767 || tz-cam->z < -32768){
         return;
     }
 
@@ -142,50 +141,48 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
     // Rotate model
     rotateCurrentMatrix(rotx, roty, rotz);
     
-
-    for (int i = 0; i<model->numVerts; i+=3){
-        // Load the next 3 verts into the gte
-        gte_loadV0((GTEVector16 *) &model->verts[i]);
-        if(i + 1 < model->numVerts){
-            gte_loadV1((GTEVector16 *) &model->verts[i + 1]);
-        }
-        if(i + 2 < model->numVerts){
-            gte_loadV2((GTEVector16 *) &model->verts[i + 2]);
-        }
-        // Transform
-        gte_command(GTE_CMD_RTPT | GTE_SF);
-        
-        transformedVerts[i].XY = gte_getSXY0();
-        transformedVerts[i].Z  = gte_getSZ0();
-        if(i + 1 < model->numVerts){
-            transformedVerts[i + 1].XY = gte_getSXY1();
-            transformedVerts[i + 1].Z  = gte_getSZ1();
-        }
-        if(i + 2 < model->numVerts){
-            transformedVerts[i + 2].XY = gte_getSXY2();
-            transformedVerts[i + 2].Z  = gte_getSZ2();
-        }
-    }
-
+    //printf(" FirstLoop\n");
+    //for (int i = 0; i<model->numVerts; i+=3){
+    //    // Load the next 3 verts into the gte
+    //    gte_loadV0((GTEVector16 *) &model->verts[i]);
+    //    if(i + 1 < model->numVerts){
+    //        gte_loadV1((GTEVector16 *) &model->verts[i + 1]);
+    //    }
+    //    if(i + 2 < model->numVerts){
+    //        gte_loadV2((GTEVector16 *) &model->verts[i + 2]);
+    //    }
+    //    // Transform
+    //    gte_command(GTE_CMD_RTPT | GTE_SF);
+    //    
+    //    transformedVerts[i].XY = gte_getSXY0();
+    //    transformedVerts[i].Z  = gte_getSZ0();
+    //    if(i + 1 < model->numVerts){
+    //        transformedVerts[i + 1].XY = gte_getSXY1();
+    //        transformedVerts[i + 1].Z  = gte_getSZ1();
+    //    }
+    //    if(i + 2 < model->numVerts){
+    //        transformedVerts[i + 2].XY = gte_getSXY2();
+    //        transformedVerts[i + 2].Z  = gte_getSZ2();
+    //    }
+    //}
 
     Tri2D _tri2d;
     // Add every triangle to the ordering table/dma chain for rendering.
     for(int i = 0; i<model->numTris; i++){
         // Load the GTE's internal registers
-        gte_setSXY0((uint32_t) transformedVerts[model->tris[i].a].XY);
-        gte_setSZ0(transformedVerts[model->tris[i].a].Z);
-        
-        gte_setSXY1((uint32_t) transformedVerts[model->tris[i].b].XY);
-        gte_setSZ1(transformedVerts[model->tris[i].b].Z);
-        
-        gte_setSXY2((uint32_t) transformedVerts[model->tris[i].c].XY);
-        gte_setSZ2(transformedVerts[model->tris[i].c].Z);
+        //gte_setSXY0((uint32_t) transformedVerts[model->tris[i].a].XY);
+        //gte_setSZ0(transformedVerts[model->tris[i].a].Z);
+        //
+        //gte_setSXY1((uint32_t) transformedVerts[model->tris[i].b].XY);
+        //gte_setSZ1(transformedVerts[model->tris[i].b].Z);
+        //
+        //gte_setSXY2((uint32_t) transformedVerts[model->tris[i].c].XY);
+        //gte_setSZ2(transformedVerts[model->tris[i].c].Z);
 
-        //gte_loadV0((GTEVector16 *) &model->verts[model->tris[i].a]);
-        //gte_loadV1((GTEVector16 *) &model->verts[model->tris[i].b]);
-        //gte_loadV2((GTEVector16 *) &model->verts[model->tris[i].c]);
-        //gte_command(GTE_CMD_RTPT | GTE_SF);
-
+        gte_loadV0((GTEVector16 *) &model->verts[model->tris[i].a]);
+        gte_loadV1((GTEVector16 *) &model->verts[model->tris[i].b]);
+        gte_loadV2((GTEVector16 *) &model->verts[model->tris[i].c]);
+        gte_command(GTE_CMD_RTPT | GTE_SF);
         gte_command(GTE_CMD_NCLIP);
 
         // If the face is facing away from us, don't bother rendering it.
@@ -207,39 +204,17 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
             continue;
         }
         
-        if(false){
-            uint32_t XY0 = gte_getSXY0();
-            uint32_t XY1 = gte_getSXY1();
-            uint32_t XY2 = gte_getSXY2();
-
-            _tri2d.a.x = XY0 & 0xFFFF;
-            _tri2d.b.x = XY1 & 0xFFFF;
-            _tri2d.c.x = XY2 & 0xFFFF;
-            _tri2d.a.y = XY0 >> 16;
-            _tri2d.b.y = XY1 >> 16;
-            _tri2d.c.y = XY2 >> 16;
-
-            _tri2d.au = model->tris[i].au;
-            _tri2d.av = model->tris[i].av;
-            _tri2d.bu = model->tris[i].bu;
-            _tri2d.bv = model->tris[i].bv;
-            _tri2d.cu = model->tris[i].cu;
-            _tri2d.cv = model->tris[i].cv;
+        // Render a triangle at the XY coords calculated via the GTE with the texture UVs calculated above
+        dmaPtr = allocatePacket(activeChain, zIndex, 7);
+        dmaPtr[0] = 0x808080 | gp0_shadedTriangle(false, true, false);
+        dmaPtr[1] = gte_getSXY0();
+        dmaPtr[2] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].au), (uint32_t)((uint32_t)texture->v + model->tris[i].av) & 0x00FF, texture->clut);
+        dmaPtr[3] = gte_getSXY1();
+        dmaPtr[4] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].bu), (uint32_t)((uint32_t)texture->v + model->tris[i].bv) & 0x00FF, texture->page);
+        dmaPtr[5] = gte_getSXY2();
+        dmaPtr[6] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].cu), (uint32_t)((uint32_t)texture->v + model->tris[i].cv) & 0x00FF, 0);
         
-            recursiveSubdivideAndRender(&_tri2d, texture, zIndex, 5);
-        } else {
-            // Render a triangle at the XY coords calculated via the GTE with the texture UVs calculated above
-            dmaPtr = allocatePacket(activeChain, zIndex, 7);
-            dmaPtr[0] = 0x808080 | gp0_shadedTriangle(false, true, false);
-            dmaPtr[1] = gte_getSXY0();
-            dmaPtr[2] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].au), (uint32_t)((uint32_t)texture->v + model->tris[i].av) & 0x00FF, texture->clut);
-            dmaPtr[3] = gte_getSXY1();
-            dmaPtr[4] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].bu), (uint32_t)((uint32_t)texture->v + model->tris[i].bv) & 0x00FF, texture->page);
-            dmaPtr[5] = gte_getSXY2();
-            dmaPtr[6] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].cu), (uint32_t)((uint32_t)texture->v + model->tris[i].cv) & 0x00FF, 0);
-
-            numPrims++;
-        }
+        numPrims++;
     }
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
     gte_setTranslationVector(currentTx, currentTy, currentTz);
@@ -256,10 +231,9 @@ size_t model_load(const char *name, Model *model){
     uint16_t sectorBuffer[1024];
     
     modelLba = getLbaToFile(name);
-    if(!modelLba){
-        // File not found
-        return 1;
-    }
+    
+    assert(modelLba);
+
 
     startCDROMRead(
         modelLba,

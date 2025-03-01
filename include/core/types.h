@@ -13,6 +13,22 @@ typedef struct Vector3{
 } Vector3;
 
 
+typedef struct Tri2{
+    Vector2 a, b, c;
+    uint32_t z;
+} Tri2;
+typedef struct Tri3{
+    Vector3 a, b, c;
+} Tri3;
+
+typedef struct Quad2{
+    Vector2 a, b, c, d;
+    uint32_t z;
+} Quad2;
+typedef struct Quad3{
+    Vector3 a, b, c, d;
+} Quad3;
+
 #define COYOTE_TIME 10
 typedef struct Player2{
     Vector2 position;
