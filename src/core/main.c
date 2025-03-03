@@ -32,12 +32,12 @@
 
 #define MOVEMENT_SPEED 10
 
-#define ACCELERATION_CONSTANT (1<<12)
-#define MAX_SPEED (3<<12)
-#define JUMP_FORCE (10<<12)
-#define FRICTION_CONSTANT (1<<8)
-#define TERMINAL_VELOCITY (5<<12)
-#define GRAVITY_CONSTANT (1<<11)
+#define ACCELERATION_CONSTANT 1
+#define MAX_SPEED 3
+#define JUMP_FORCE 10
+#define FRICTION_CONSTANT 1
+#define TERMINAL_VELOCITY 5
+#define GRAVITY_CONSTANT 1
 
 
 // Include texture data files
@@ -49,7 +49,7 @@ extern const uint8_t filth_128Data[];
 TextureInfo *filth_128;
 
 Camera mainCamera;
-Player2 player;
+Player3 player;
 char str_Buffer[256];
 int screenColor = 0xfa823c;
 int wallColor = 0x3c82fa;
@@ -73,23 +73,22 @@ void drawCross2(Vector2 p, uint32_t colour){
     x = p.x;
     y = p.y;
 
-    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr = allocatePacket(activeChain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x-2, y-2);
     dmaPtr[2] = gp0_xy(x+2, y+2);
 
-    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr = allocatePacket(activeChain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x+2, y-2);
     dmaPtr[2] = gp0_xy(x-2, y+2);
 }
 void drawLine2(Vector2 a, Vector2 b, uint32_t colour){
-    dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 3);
+    dmaPtr = allocatePacket(activeChain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(a.x, a.y);
     dmaPtr[2] = gp0_xy(b.x, b.y);
 }
-
 void drawTri2(Tri2 tri, uint32_t colour){
     dmaPtr = allocatePacket(activeChain, tri.z, 4);
     dmaPtr[0] = colour | gp0_triangle(false, false);
@@ -97,7 +96,6 @@ void drawTri2(Tri2 tri, uint32_t colour){
     dmaPtr[2] = gp0_xy(tri.b.x, tri.b.y);
     dmaPtr[3] = gp0_xy(tri.c.x, tri.c.y);
 }
-
 void drawQuad2(Quad2 quad, uint32_t colour){    
     dmaPtr = allocatePacket(activeChain, quad.z, 5);
     dmaPtr[0] = colour | gp0_shadedQuad(false, false, false);
@@ -152,7 +150,7 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     gte_setTranslationVector(currentTx, currentTy, currentTz);
     return true;
 }
-int transformTri(Camera *cam, Tri3 tri, Tri2 *result){
+bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     uint32_t xy0, xy1, xy2;
 
     // Range check. Is it too big to be drawn?
@@ -162,7 +160,7 @@ int transformTri(Camera *cam, Tri3 tri, Tri2 *result){
         abs(cam->x - tri.c.x) > INT16_MAX || abs(cam->y - tri.c.y) > INT16_MAX || abs(cam->z - tri.c.z) > INT16_MAX
     ){
         // Out of range. Don't render
-        return 1;
+        return false;
     }
 
     // Save the current matrices so we don't clobber them.
@@ -186,7 +184,7 @@ int transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
     if(gte_getMAC0() <= 0){
-        return 2;
+        return false;
     }
     xy0 = gte_getSXY0();
     xy1 = gte_getSXY1();
@@ -196,7 +194,7 @@ int transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     int zIndex = gte_getOTZ();
 
     if(zIndex < 0 || zIndex >= ORDERING_TABLE_SIZE){
-        return 3;
+        return false;
     }
 
     // Save result
@@ -208,9 +206,9 @@ int transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     // Restore matrices.
     gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
 
-    return 0;
+    return true;
 }
-int transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
+bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     uint32_t xy0, xy1, xy2, xy3;
     uint32_t sz0, sz1, sz2, sz3;
 
@@ -222,7 +220,7 @@ int transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
         abs(cam->x - quad.d.x) > INT16_MAX || abs(cam->y - quad.d.y) > INT16_MAX || abs(cam->z - quad.d.z) > INT16_MAX
     ){
         // Out of range. Don't render
-        return 1;
+        return false;
     }
 
     // Save the current matrices so we don't clobber them.
@@ -250,7 +248,7 @@ int transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     if(gte_getMAC0() <= 0){
         // Restore matrices.
         gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
-        return 2;
+        return false;
     }
 
     xy0 = gte_getSXY0();
@@ -268,7 +266,7 @@ int transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     if(zIndex < 0 || zIndex >= ORDERING_TABLE_SIZE){
         // Restore matrices.
         gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
-        return 3;
+        return false;
     }
 
     xy1 = gte_getSXY0();
@@ -285,7 +283,7 @@ int transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     // Restore matrices.
     gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
 
-    return 0;
+    return true;
 }
 
 
@@ -348,7 +346,7 @@ BSPNode3 bspNodes[] = {
     {
         .normal = {
             .x=0,
-            .y=ONE,
+            .y=-ONE,
             .z=0
         },
         .distance = 0,
@@ -361,7 +359,7 @@ BSPNode3 bspNodes[] = {
     {
         .normal = {
             .x=0,
-            .y=-ONE,
+            .y=ONE,
             .z=0
         },
         .distance = -1024,
@@ -453,28 +451,94 @@ void lookDown(void){
 }
 
 // Functions for move controls
-void moveForward(void){
+void moveCameraForward(void){
     mainCamera.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     mainCamera.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
-void moveBackward(void){
+void moveCameraBackward(void){
     mainCamera.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     mainCamera.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
-void moveLeft(void){
+void moveCameraLeft(void){
     mainCamera.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     mainCamera.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
-void moveRight(void){
+void moveCameraRight(void){
     mainCamera.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     mainCamera.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
-
-void moveUp(void){
+void moveCameraUp(void){
     mainCamera.y -= MOVEMENT_SPEED;
 }
-void moveDown(void){
+void moveCameraDown(void){
     mainCamera.y += MOVEMENT_SPEED;
+}
+
+// Functions for move controls
+void movePlayerForward(void){
+    player.position.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+}
+void movePlayerBackward(void){
+    player.position.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+}
+void movePlayerLeft(void){
+    player.position.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+}
+void movePlayerRight(void){
+    player.position.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+}
+void movePlayerUp(void){
+    player.position.y -= MOVEMENT_SPEED;
+}
+void movePlayerDown(void){
+    player.position.y += MOVEMENT_SPEED;
+}
+
+void resetPlayer(void){
+    player.position = (Vector3){0, -512, 0};
+    player.velocity = (Vector3){0,    0, 0};
+    player.coyoteTimer = 0;
+    player.isGrounded = false;
+}
+
+
+bool controlCamera = false;
+void toggleControlSet(void){
+    controlCamera = !controlCamera;
+    if(controlCamera){
+        controller_subscribeOnKeyHold(moveCameraLeft,       BUTTON_INDEX_LEFT    );
+        controller_subscribeOnKeyHold(moveCameraRight,      BUTTON_INDEX_RIGHT   );
+        controller_subscribeOnKeyHold(moveCameraForward,    BUTTON_INDEX_UP      );
+        controller_subscribeOnKeyHold(moveCameraBackward,   BUTTON_INDEX_DOWN    );
+        controller_subscribeOnKeyHold(moveCameraUp,         BUTTON_INDEX_R2      );
+        controller_subscribeOnKeyHold(moveCameraDown,       BUTTON_INDEX_L2      );
+        controller_subscribeOnKeyHold(lookLeft,             BUTTON_INDEX_SQUARE  );
+        controller_subscribeOnKeyHold(lookRight,            BUTTON_INDEX_CIRCLE  );
+        controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
+        controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
+        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
+
+        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
+        controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
+    } else {
+        controller_subscribeOnKeyHold(movePlayerLeft,       BUTTON_INDEX_LEFT    );
+        controller_subscribeOnKeyHold(movePlayerRight,      BUTTON_INDEX_RIGHT   );
+        controller_subscribeOnKeyHold(movePlayerForward,    BUTTON_INDEX_UP      );
+        controller_subscribeOnKeyHold(movePlayerBackward,   BUTTON_INDEX_DOWN    );
+        controller_subscribeOnKeyHold(movePlayerUp,         BUTTON_INDEX_R2      );
+        controller_subscribeOnKeyHold(movePlayerDown,       BUTTON_INDEX_L2      );
+        controller_subscribeOnKeyHold(lookLeft,             BUTTON_INDEX_SQUARE  );
+        controller_subscribeOnKeyHold(lookRight,            BUTTON_INDEX_CIRCLE  );
+        controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
+        controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
+
+        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
+        controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
+    }
 }
 
 
@@ -533,23 +597,18 @@ int main(void){
     initHardware();
 
     // Run this stuff once before the main loop.
-    controller_subscribeOnKeyHold(moveLeft,       BUTTON_INDEX_LEFT    );
-    controller_subscribeOnKeyHold(moveRight,      BUTTON_INDEX_RIGHT   );
-    controller_subscribeOnKeyHold(moveForward,    BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyHold(moveBackward,   BUTTON_INDEX_DOWN    );
-    controller_subscribeOnKeyHold(moveUp,         BUTTON_INDEX_R2      );
-    controller_subscribeOnKeyHold(moveDown,       BUTTON_INDEX_L2      );
-    controller_subscribeOnKeyHold(lookLeft,       BUTTON_INDEX_L1      );
-    controller_subscribeOnKeyHold(lookRight,      BUTTON_INDEX_R1      );
+    toggleControlSet();
 
 
     // Init camera
     mainCamera.x     = 0;
-    mainCamera.y     = 0;
-    mainCamera.z     = -1000;
+    mainCamera.y     = -512;
+    mainCamera.z     = -1500;
     mainCamera.pitch = 0;
     mainCamera.roll  = 0;
     mainCamera.yaw   = 0;
+
+    resetPlayer();
 
     Model filth;
     model_load("FILTH.MDL;1", &filth);
@@ -567,6 +626,20 @@ int main(void){
         #pragma region Game logic
         // Poll the controllers and run their assoicated functions
         controller_update();
+
+        // Apply gravity if not grounded
+        //if(!player.isGrounded){
+        //    if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
+        //        player.velocity.y = TERMINAL_VELOCITY;
+        //    } else {
+        //        player.velocity.y += GRAVITY_CONSTANT;
+        //    }
+        //}
+        //// Collide with the BSP tree
+        //Player3_move(&bspTree, &player);
+        uint32_t playerColour = 0x000000;
+        playerColour = BSPTree3_pointContents(&bspTree, 0, player.position) == -1 ? 0x000000 : 0x00FF00;
+
 
 
         #pragma endregion
@@ -587,11 +660,9 @@ int main(void){
         );
         
         // Move camera into position
-        rotateCurrentMatrix(mainCamera.roll, mainCamera.yaw, mainCamera.pitch);
+        rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
         setTranslationMatrix(0, 0, 0);
         
-
-        //model_renderTextured(&filth, filth_128, &mainCamera, 0, 0, 0, 0, 0, 0);
 
         for (int i = 0; i<4; i++){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
@@ -600,14 +671,6 @@ int main(void){
         drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
         drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
         
-        //Tri3 tri;
-        //tri.a = quads[0].a;
-        //tri.b = quads[0].b;
-        //tri.c = quads[0].c;
-        //Tri2 transformedTri;
-        //int result = transformTri(&mainCamera, tri, &transformedTri);
-        //drawTri2(transformedTri, 0x00FF00);
-
         uint32_t colours[6] = {
             0x0000FF,
             0x00FF00,
@@ -619,15 +682,23 @@ int main(void){
 
         Quad2 transformedQuad;
         for(int i = 0; i<6; i++){
-            if(!transformQuad(&mainCamera, quads[i], &transformedQuad)){
+            if(transformQuad(&mainCamera, quads[i], &transformedQuad)){
                 drawQuad2(transformedQuad, colours[i]);
-            } else {
-                debug("No.");
             }
         }
+
+        // Render player
+        Vector2 transformedPlayerPos;
+        if(transformVertex(&mainCamera, player.position, &transformedPlayerPos)){
+            printf("Drawn cross at: %d %d\n", transformedPlayerPos.x, transformedPlayerPos.x);
+            drawCross2(transformedPlayerPos, playerColour);
+        }
+
         
         printf("\n");
 
+
+        sprintf(str_Buffer, "%s Mode", controlCamera ? "Camera" : "Player");
         // Text rendering
         printString(activeChain, &font, 10, 10, str_Buffer);
 
