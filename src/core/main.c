@@ -53,13 +53,14 @@ Player3 player;
 char str_Buffer[256];
 int screenColor = 0xfa823c;
 int wallColor = 0x3c82fa;
+int gteScaleFactor = 0;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
     {0, 0, 0},
-    {100, 0, 0},
-    {0, 100, 0},
-    {0, 0, 100}
+    {100<<GTE_SCALE_FACTOR, 0, 0},
+    {0, 100<<GTE_SCALE_FACTOR, 0},
+    {0, 0, 100<<GTE_SCALE_FACTOR}
 };
 Vector2 transformedGizmoPoints[4];
 
@@ -106,9 +107,9 @@ void drawQuad2(Quad2 quad, uint32_t colour){
 }
 
 bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
-    int32_t distX = abs(cam->x - point.x);
-    int32_t distY = abs(cam->y - point.y);
-    int32_t distZ = abs(cam->z - point.z);
+    int32_t distX = abs(cam->x>>GTE_SCALE_FACTOR - point.x>>GTE_SCALE_FACTOR);
+    int32_t distY = abs(cam->y>>GTE_SCALE_FACTOR - point.y>>GTE_SCALE_FACTOR);
+    int32_t distZ = abs(cam->z>>GTE_SCALE_FACTOR - point.z>>GTE_SCALE_FACTOR);
     
     if(distX > INT16_MAX || distY > INT16_MAX || distZ > INT16_MAX){
         return false;
@@ -116,16 +117,15 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     // Save the current translation vector
     int32_t currentTx, currentTy, currentTz;
     gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
-    
     // Translate model
     updateTranslationMatrix(cam->x, cam->y, cam->z);
     // Rotate model
     rotateCurrentMatrix(0, 0, 0);
 
     GTEVector16 vert;
-    vert.x = (int16_t)point.x;
-    vert.y = (int16_t)point.y;
-    vert.z = (int16_t)point.z;
+    vert.x = (int16_t)(point.x>>GTE_SCALE_FACTOR);
+    vert.y = (int16_t)(point.y>>GTE_SCALE_FACTOR);
+    vert.z = (int16_t)(point.z>>GTE_SCALE_FACTOR);
     gte_loadV0(&vert);
     gte_command(GTE_CMD_RTPS | GTE_SF);
 
@@ -151,13 +151,14 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     return true;
 }
 bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
+    // TODO: Replace AVZ3 with a Max 
     uint32_t xy0, xy1, xy2;
 
     // Range check. Is it too big to be drawn?
     if(
-        abs(cam->x - tri.a.x) > INT16_MAX || abs(cam->y - tri.a.y) > INT16_MAX || abs(cam->z - tri.a.z) > INT16_MAX ||
-        abs(cam->x - tri.b.x) > INT16_MAX || abs(cam->y - tri.b.y) > INT16_MAX || abs(cam->z - tri.b.z) > INT16_MAX ||
-        abs(cam->x - tri.c.x) > INT16_MAX || abs(cam->y - tri.c.y) > INT16_MAX || abs(cam->z - tri.c.z) > INT16_MAX
+        abs(cam->x - (tri.a.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.a.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.a.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+        abs(cam->x - (tri.b.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.b.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.b.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+        abs(cam->x - (tri.c.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.c.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.c.z>>GTE_SCALE_FACTOR)) > INT16_MAX
     ){
         // Out of range. Don't render
         return false;
@@ -173,9 +174,9 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     rotateCurrentMatrix(0, 0, 0);
 
     GTEVector16 verts[3] = {
-        {(int16_t)tri.a.x, (int16_t)tri.a.y, (int16_t)tri.a.z},
-        {(int16_t)tri.b.x, (int16_t)tri.b.y, (int16_t)tri.b.z},
-        {(int16_t)tri.c.x, (int16_t)tri.c.y, (int16_t)tri.c.z}
+        {(int16_t)(tri.a.x>>GTE_SCALE_FACTOR), (int16_t)(tri.a.y>>GTE_SCALE_FACTOR), (int16_t)(tri.a.z>>GTE_SCALE_FACTOR)},
+        {(int16_t)(tri.b.x>>GTE_SCALE_FACTOR), (int16_t)(tri.b.y>>GTE_SCALE_FACTOR), (int16_t)(tri.b.z>>GTE_SCALE_FACTOR)},
+        {(int16_t)(tri.c.x>>GTE_SCALE_FACTOR), (int16_t)(tri.c.y>>GTE_SCALE_FACTOR), (int16_t)(tri.c.z>>GTE_SCALE_FACTOR)}
     };
 
     gte_loadV0(&verts[0]);
@@ -214,10 +215,10 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 
     // Range check. Is it too big to be drawn?
     if(
-        abs(cam->x - quad.a.x) > INT16_MAX || abs(cam->y - quad.a.y) > INT16_MAX || abs(cam->z - quad.a.z) > INT16_MAX ||
-        abs(cam->x - quad.b.x) > INT16_MAX || abs(cam->y - quad.b.y) > INT16_MAX || abs(cam->z - quad.b.z) > INT16_MAX ||
-        abs(cam->x - quad.c.x) > INT16_MAX || abs(cam->y - quad.c.y) > INT16_MAX || abs(cam->z - quad.c.z) > INT16_MAX ||
-        abs(cam->x - quad.d.x) > INT16_MAX || abs(cam->y - quad.d.y) > INT16_MAX || abs(cam->z - quad.d.z) > INT16_MAX
+        abs(cam->x - (quad.a.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (quad.a.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (quad.a.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+        abs(cam->x - (quad.b.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (quad.b.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (quad.b.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+        abs(cam->x - (quad.c.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (quad.c.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (quad.c.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+        abs(cam->x - (quad.d.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (quad.d.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (quad.d.z>>GTE_SCALE_FACTOR)) > INT16_MAX
     ){
         // Out of range. Don't render
         return false;
@@ -233,11 +234,12 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     rotateCurrentMatrix(0, 0, 0);
 
     GTEVector16 verts[4] = {
-        {(int16_t)quad.a.x, (int16_t)quad.a.y, (int16_t)quad.a.z},
-        {(int16_t)quad.b.x, (int16_t)quad.b.y, (int16_t)quad.b.z},
-        {(int16_t)quad.c.x, (int16_t)quad.c.y, (int16_t)quad.c.z},
-        {(int16_t)quad.d.x, (int16_t)quad.d.y, (int16_t)quad.d.z}
+        {(int16_t)(quad.a.x>>GTE_SCALE_FACTOR), (int16_t)(quad.a.y>>GTE_SCALE_FACTOR), (int16_t)(quad.a.z>>GTE_SCALE_FACTOR)},
+        {(int16_t)(quad.b.x>>GTE_SCALE_FACTOR), (int16_t)(quad.b.y>>GTE_SCALE_FACTOR), (int16_t)(quad.b.z>>GTE_SCALE_FACTOR)},
+        {(int16_t)(quad.c.x>>GTE_SCALE_FACTOR), (int16_t)(quad.c.y>>GTE_SCALE_FACTOR), (int16_t)(quad.c.z>>GTE_SCALE_FACTOR)},
+        {(int16_t)(quad.d.x>>GTE_SCALE_FACTOR), (int16_t)(quad.d.y>>GTE_SCALE_FACTOR), (int16_t)(quad.d.z>>GTE_SCALE_FACTOR)}
     };
+    
 
     // Load the first 3 verts
     gte_loadV0(&verts[0]);
@@ -245,6 +247,7 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     gte_loadV2(&verts[2]);
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
+
     if(gte_getMAC0() <= 0){
         // Restore matrices.
         gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
@@ -286,7 +289,6 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     return true;
 }
 
-
 #pragma endregion
 
 
@@ -299,48 +301,47 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 Quad3 quads[] = {
     // Floor Quad
     {
-        {-512, 0,  512},
-        { 512, 0,  512},
-        {-512, 0, -512},
-        { 512, 0, -512}
+        {-(512<<GTE_SCALE_FACTOR), 0,  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), 0,  (512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR), 0, -(512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), 0, -(512<<GTE_SCALE_FACTOR)}
     },
     // Ceiling Quad
     {
-        {-512, -1024, -512},
-        { 512, -1024, -512},
-        {-512, -1024,  512},
-        { 512, -1024,  512}
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)}
     },
     // Left Quad
     {
-        {-512, -1024, -512},
-        {-512, -1024,  512},
-        {-512,     0, -512},
-        {-512,     0,  512},
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR),     0,                     -(512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR),     0,                      (512<<GTE_SCALE_FACTOR)},
     },
     // Right Quad
     {
-        { 512, -1024,  512},
-        { 512, -1024, -512},
-        { 512,     0,  512},
-        { 512,     0, -512},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
     },
     // Far Quad
     {
-        {-512, -1024,  512},
-        { 512, -1024,  512},
-        {-512,     0,  512},
-        { 512,     0,  512},
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
     },
     // Near Quad
     {
-        { 512, -1024, -512},
-        {-512, -1024, -512},
-        { 512,     0, -512},
-        {-512,     0, -512},
+        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
+        { (512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
+        {-(512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
     }
 };
-
 BSPNode3 bspNodes[] = {
     // Floor
     {
@@ -420,7 +421,6 @@ BSPNode3 bspNodes[] = {
         }
     }
 };
-
 BSPTree3 bspTree = {
     .nodes = bspNodes,
     .numNodes = 6
@@ -452,20 +452,20 @@ void lookDown(void){
 
 // Functions for move controls
 void moveCameraForward(void){
-    mainCamera.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    mainCamera.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    mainCamera.x -=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.z +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
 }
 void moveCameraBackward(void){
-    mainCamera.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    mainCamera.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    mainCamera.x +=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.z -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
 }
 void moveCameraLeft(void){
-    mainCamera.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    mainCamera.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    mainCamera.x -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.z += -((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
 }
 void moveCameraRight(void){
-    mainCamera.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    mainCamera.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    mainCamera.x +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.z -= -((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
 }
 void moveCameraUp(void){
     mainCamera.y -= MOVEMENT_SPEED;
@@ -476,30 +476,43 @@ void moveCameraDown(void){
 
 // Functions for move controls
 void movePlayerForward(void){
-    player.position.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.position.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.position.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
 }
 void movePlayerBackward(void){
-    player.position.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.position.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.position.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
 }
 void movePlayerLeft(void){
-    player.position.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.position.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.position.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED);
 }
 void movePlayerRight(void){
-    player.position.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.position.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.position.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.position.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED);
 }
 void movePlayerUp(void){
-    player.position.y -= MOVEMENT_SPEED;
+    player.position.y -= MOVEMENT_SPEED<<GTE_SCALE_FACTOR;
 }
 void movePlayerDown(void){
-    player.position.y += MOVEMENT_SPEED;
+    player.position.y += MOVEMENT_SPEED<<GTE_SCALE_FACTOR;
+}
+
+void incrementScaleFactor(void){
+    gteScaleFactor ++;
+    if(gteScaleFactor > 16){
+        gteScaleFactor = 16;
+    }
+}
+void decrementScaleFactor(void){
+    gteScaleFactor --;
+    if(gteScaleFactor < 0){
+        gteScaleFactor = 0;
+    }
 }
 
 void resetPlayer(void){
-    player.position = (Vector3){0, -512, 0};
+    player.position = (Vector3){0, -(512<<GTE_SCALE_FACTOR), 0};
     player.velocity = (Vector3){0,    0, 0};
     player.coyoteTimer = 0;
     player.isGrounded = false;
@@ -520,8 +533,10 @@ void toggleControlSet(void){
         controller_subscribeOnKeyHold(lookRight,            BUTTON_INDEX_CIRCLE  );
         controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
         controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
+        
         controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
-
+        controller_subscribeOnKeyDown(decrementScaleFactor, BUTTON_INDEX_L1      );
+        controller_subscribeOnKeyDown(incrementScaleFactor, BUTTON_INDEX_R1      );
         controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
         controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
     } else {
@@ -536,6 +551,9 @@ void toggleControlSet(void){
         controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
         controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
 
+        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
+        controller_subscribeOnKeyDown(decrementScaleFactor, BUTTON_INDEX_L1      );
+        controller_subscribeOnKeyDown(incrementScaleFactor, BUTTON_INDEX_R1      );
         controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
         controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
     }
@@ -558,14 +576,12 @@ void initHardware(void){
     initControllerBus();
     initCDROM();
     initFilesystem();
-    // TODO: Fill the screen with black / Add a loading screen here?
     initGPU();
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
     // Upload textures
     uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
@@ -578,10 +594,10 @@ void initHardware(void){
     clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
     activeChain->nextPacket = activeChain->data;
 
-
+    
     // TODO: Render a logo/loading screen to the framebuffer
 
-
+    
     // Manually disable display blanking after all loading is complete
     GPU_GP1 = gp1_dispBlank(false);
 }
@@ -664,6 +680,7 @@ int main(void){
         setTranslationMatrix(0, 0, 0);
         
 
+        // Render gizmo
         for (int i = 0; i<4; i++){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
         };
@@ -680,6 +697,7 @@ int main(void){
             0xFFFF00
         };
 
+        // Render world
         Quad2 transformedQuad;
         for(int i = 0; i<6; i++){
             if(transformQuad(&mainCamera, quads[i], &transformedQuad)){
@@ -688,17 +706,24 @@ int main(void){
         }
 
         // Render player
-        Vector2 transformedPlayerPos;
-        if(transformVertex(&mainCamera, player.position, &transformedPlayerPos)){
-            printf("Drawn cross at: %d %d\n", transformedPlayerPos.x, transformedPlayerPos.x);
-            drawCross2(transformedPlayerPos, playerColour);
+        Vector3 scaledPlayerPos = {
+            player.position.x,
+            player.position.y,
+            player.position.z,
+        };
+        Vector2 transformedPlayerPosB;
+        if(transformVertex(&mainCamera, scaledPlayerPos, &transformedPlayerPosB)){
+            drawCross2(transformedPlayerPosB, 0x000000);
         }
-
         
-        printf("\n");
+        
 
-
-        sprintf(str_Buffer, "%s Mode", controlCamera ? "Camera" : "Player");
+        sprintf(str_Buffer, 
+            "%s Mode\n"
+            "Scale Factor: %d\n",
+            controlCamera ? "Camera" : "Player",
+            GTE_SCALE_FACTOR
+        );
         // Text rendering
         printString(activeChain, &font, 10, 10, str_Buffer);
 
@@ -747,6 +772,9 @@ int main(void){
         activeChain->nextPacket = activeChain->data;
 
         #pragma endregion
-   }
+   
+
+        printf("\n***\n\n"); // Add a separator between frames to make it easier to read debug output
+    }
     __builtin_unreachable();
 }
