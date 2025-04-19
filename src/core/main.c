@@ -164,10 +164,9 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
         return false;
     }
 
-    // Save the current matrices so we don't clobber them.
-    Vector3 currentT;
-    gte_getTranslationVector(&currentT.x, &currentT.y, &currentT.z);
-
+    // Save the current translation vector
+    int32_t currentTx, currentTy, currentTz;
+    gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
     // Translate model
     updateTranslationMatrix(cam->x, cam->y, cam->z);
     // Rotate model
@@ -185,6 +184,7 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
     if(gte_getMAC0() <= 0){
+        gte_setTranslationVector(currentTx, currentTy, currentTz);
         return false;
     }
     xy0 = gte_getSXY0();
@@ -195,6 +195,7 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     int zIndex = gte_getOTZ();
 
     if(zIndex < 0 || zIndex >= ORDERING_TABLE_SIZE){
+        gte_setTranslationVector(currentTx, currentTy, currentTz);
         return false;
     }
 
@@ -204,9 +205,8 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     result->c = (Vector2){xy2 & 0xFFFF, xy2 >> 16};
     result->z = zIndex;
 
-    // Restore matrices.
-    gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
-
+    // Restore the translation and rotation back to the initial state as to not clobber any other models.
+    gte_setTranslationVector(currentTx, currentTy, currentTz);
     return true;
 }
 bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
@@ -297,133 +297,266 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 // BSP Tree Definition and Shape Definitions //
 ///////////////////////////////////////////////
 #pragma region BSP Tree
+BSPNode3 bspNodes[];
 
-Quad3 quads[] = {
-    // Floor Quad
-    {
-        {-(512<<GTE_SCALE_FACTOR), 0,  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), 0,  (512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR), 0, -(512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), 0, -(512<<GTE_SCALE_FACTOR)}
-    },
-    // Ceiling Quad
-    {
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)}
-    },
-    // Left Quad
-    {
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR),     0,                     -(512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR),     0,                      (512<<GTE_SCALE_FACTOR)},
-    },
-    // Right Quad
-    {
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
-    },
-    // Far Quad
-    {
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR),  (512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR),     0,  (512<<GTE_SCALE_FACTOR)},
-    },
-    // Near Quad
-    {
-        { (512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR), -(1024<<GTE_SCALE_FACTOR), -(512<<GTE_SCALE_FACTOR)},
-        { (512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
-        {-(512<<GTE_SCALE_FACTOR),     0, -(512<<GTE_SCALE_FACTOR)},
-    }
-};
+BSPTree3 bspTree = {.nodes=bspNodes, .numNodes = 12};
 BSPNode3 bspNodes[] = {
-    // Floor
-    {
-        .normal = {
-            .x=0,
-            .y=-ONE,
-            .z=0
-        },
-        .distance = 0,
-        .children = {
-            1, -2
-        }
+{
+    .normal = {
+        .x=-4096,
+        .y=0,
+        .z=0
     },
-
-    // Ceiling
-    {
-        .normal = {
-            .x=0,
-            .y=ONE,
-            .z=0
-        },
-        .distance = -1024,
-        .children = {
-            2, -2
-        }
-    },
-
-    // Left
-    {
-        .normal = {
-            .x=ONE,
-            .y=0,
-            .z=0
-        },
-        .distance = -512,
-        .children = {
-            3, -2
-        }
-    },
-
-    // Right
-    {
-        .normal = {
-            .x=-ONE,
-            .y=0,
-            .z=0
-        },
-        .distance = -512,
-        .children = {
-            4, -2
-        }
-    },
-
-    // Near
-    {
-        .normal = {
-            .x=0,
-            .y=0,
-            .z=-ONE
-        },
-        .distance = -512,
-        .children = {
-            5, -2
-        }
-    },
-
-    // Far
-    {
-        .normal = {
-            .x=0,
-            .y=0,
-            .z=ONE
-        },
-        .distance = -512,
-        .children = {
-            -1, -2
-        }
+    .distance = 589824,
+    .children = {
+        1, 2
     }
+},
+{
+    .normal = {
+        .x=-4096,
+        .y=0,
+        .z=0
+    },
+    .distance = 589824,
+    .children = {
+        -1, -2
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=0,
+        .z=-4096
+    },
+    .distance = 262144,
+    .children = {
+        3, 4
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=0,
+        .z=-4096
+    },
+    .distance = 262144,
+    .children = {
+        -1, -2
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=4096,
+        .z=0
+    },
+    .distance = 65536,
+    .children = {
+        5, 6
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=4096,
+        .z=0
+    },
+    .distance = -393216,
+    .children = {
+        -1, -2
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=-4096,
+        .z=0
+    },
+    .distance = 65536,
+    .children = {
+        7, 8
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=-4096,
+        .z=0
+    },
+    .distance = 524288,
+    .children = {
+        -1, -2
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=0,
+        .z=4096
+    },
+    .distance = 262144,
+    .children = {
+        9, 10
+    }
+},
+{
+    .normal = {
+        .x=0,
+        .y=0,
+        .z=4096
+    },
+    .distance = 262144,
+    .children = {
+        -1, -2
+    }
+},
+{
+    .normal = {
+        .x=4096,
+        .y=0,
+        .z=0
+    },
+    .distance = 589824,
+    .children = {
+        11, -2
+    }
+},
+{
+    .normal = {
+        .x=4096,
+        .y=0,
+        .z=0
+    },
+    .distance = 589824,
+    .children = {
+        -1, -2
+    }
+},
 };
-BSPTree3 bspTree = {
-    .nodes = bspNodes,
-    .numNodes = 6
+
+int numTris = 24;
+Tri3 tris[] = {
+    {
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, 16<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -16<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {-144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
+    {
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -96<<GTE_SCALE_FACTOR,  -64<<GTE_SCALE_FACTOR},
+        {144<<GTE_SCALE_FACTOR, -128<<GTE_SCALE_FACTOR,  64<<GTE_SCALE_FACTOR},
+    },
 };
 
 #pragma endregion
@@ -619,10 +752,10 @@ int main(void){
     // Init camera
     mainCamera.x     = 0;
     mainCamera.y     = -512;
-    mainCamera.z     = -1500;
+    mainCamera.z     = 1500;
     mainCamera.pitch = 0;
     mainCamera.roll  = 0;
-    mainCamera.yaw   = 0;
+    mainCamera.yaw   = 2048;
 
     resetPlayer();
 
@@ -654,8 +787,10 @@ int main(void){
         //// Collide with the BSP tree
         //Player3_move(&bspTree, &player);
         uint32_t playerColour = 0x000000;
-        playerColour = BSPTree3_pointContents(&bspTree, 0, player.position) == -1 ? 0x000000 : 0x00FF00;
+        int32_t bspResult = BSPTree3_pointContents(&bspTree, 0, player.position);
+        playerColour = bspResult == -1 ? 0x000000 : 0x00FF00;
 
+        printf("BSPResult: %d\nplayerColor = %d\n", bspResult, playerColour);
 
 
         #pragma endregion
@@ -698,10 +833,13 @@ int main(void){
         };
 
         // Render world
-        Quad2 transformedQuad;
-        for(int i = 0; i<6; i++){
-            if(transformQuad(&mainCamera, quads[i], &transformedQuad)){
-                drawQuad2(transformedQuad, colours[i]);
+        Tri2 transformedTri;
+        for(int i = 0; i<numTris; i++){
+            Vector2 a, b, c;
+            if(
+                transformTri(&mainCamera, tris[i], &transformedTri)
+            ){
+                drawTri2(transformedTri, colours[i%6]);
             }
         }
 
@@ -713,7 +851,7 @@ int main(void){
         };
         Vector2 transformedPlayerPosB;
         if(transformVertex(&mainCamera, scaledPlayerPos, &transformedPlayerPosB)){
-            drawCross2(transformedPlayerPosB, 0x000000);
+            drawCross2(transformedPlayerPosB, playerColour);
         }
         
         

@@ -67,8 +67,6 @@ void recursiveSubdivideAndRender(Tri2D *_tri, TextureInfo *texture, int zIndex, 
         dmaPtr[5] = gp0_xy(_tri->c.x, _tri->c.y);
         dmaPtr[6] = uv2;
 
-
-
         return;
     }
 
