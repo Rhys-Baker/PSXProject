@@ -17,7 +17,7 @@
 
 #include "ps1/cop0gte.h"
 
-#define GTE_SCALE_FACTOR 12
+#define GTE_SCALE_FACTOR 10
 #define ONE (1<<12)
 
 void setupGTE(int width, int height);
