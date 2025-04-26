@@ -5,6 +5,22 @@
 #include "trig.h"
 #include "types.h"
 
+
+////////////////////////
+// Integer operations //
+////////////////////////
+
+static inline int16_t  max16s(int16_t a,  int16_t b) {return ((a > b) ? a : b);}
+static inline uint16_t max16u(uint16_t a, uint16_t b){return ((a > b) ? a : b);}
+static inline int32_t  max32s(int32_t a,  int32_t b) {return ((a > b) ? a : b);}
+static inline uint32_t max32u(uint32_t a, uint32_t b){return ((a > b) ? a : b);}
+
+static inline int16_t  min16s(int16_t a,  int16_t b) {return ((a > b) ? b : a);}
+static inline uint16_t min16u(uint16_t a, uint16_t b){return ((a > b) ? b : a);}
+static inline int32_t  min32s(int32_t a,  int32_t b) {return ((a > b) ? b : a);}
+static inline uint32_t min32u(uint32_t a, uint32_t b){return ((a > b) ? b : a);}
+
+
 //////////////////////////
 // 2D Vector operations //
 //////////////////////////
