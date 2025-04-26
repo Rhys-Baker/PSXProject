@@ -6,14 +6,11 @@
 #include "filesystem.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "types.h"
 
 int numPrims = 0;
 
 int maxNumVerts = 0;
-
-typedef struct Vector2_16{
-    int16_t x, y;
-} Vector2_16;
 
 typedef struct Tri3D{
     GTEVector16 *a, *b, *c;
