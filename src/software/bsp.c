@@ -266,7 +266,6 @@ static inline Vector3 slideAlongWall3(Vector3 velocity, Vector3 normal){
 int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p){
     int32_t fdot;
     BSPNode3 *node;
-    printf("BSPTree3: %d\n", num);
     while(num >= 0){
         assert(num < bspTree->numNodes && num >= 0);
         node = &bspTree->nodes[num];

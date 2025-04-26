@@ -21,7 +21,7 @@ typedef struct{
 typedef struct {
     uint8_t u, v;
     uint16_t w, h;
-    uint16_t page, clut;
+    uint16_t page, clut; // Page and clut values for rendering
 } TextureInfo;
 
 
