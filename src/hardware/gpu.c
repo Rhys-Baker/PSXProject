@@ -194,7 +194,7 @@ void uploadTexture(
         GP0_COLOR_16BPP
     );
 
-    //info->clut = 0;
+    info->clut = 0;
 
 
     // Calculate the UV coordinates relative to the top-left corner of the texture page they are in.

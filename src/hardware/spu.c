@@ -272,7 +272,7 @@ int sound_loadSound(const char *name, Sound *sound){
     
     
     // Find the file on the filesystem
-    _vagLba = getLbaToFile(name);
+    _vagLba = getLbaToFile(name, NULL);
     assert(_vagLba); // File not found
 
     // Load the data into the sector

@@ -228,7 +228,7 @@ size_t stream_loadSong(const char *name){
     char _songVagHeaderSector[2048];
     VAGHeader _songVagHeader;
     
-    songLba = getLbaToFile(name);
+    songLba = getLbaToFile(name, NULL);
     if(!songLba){
         // File not found error.
         return 1;

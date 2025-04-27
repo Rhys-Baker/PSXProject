@@ -225,7 +225,7 @@ size_t model_load(const char *name, Model *model){
     uint32_t modelLba;
     uint16_t sectorBuffer[1024];
     
-    modelLba = getLbaToFile(name);
+    modelLba = getLbaToFile(name, NULL);
     
     assert(modelLba);
 

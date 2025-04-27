@@ -40,6 +40,19 @@ int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *d
     }
     __builtin_memcpy(directoryEntry->name, &dataSector[33], dataSector[32]);
     directoryEntry->name[dataSector[32]] = '\0';
+
+    directoryEntry->fileSize[0] = (
+        (uint32_t)(dataSector[10] << 24) |
+        (uint32_t)(dataSector[11] << 16) |
+        (uint32_t)(dataSector[12] <<  8) |
+        (uint32_t)(dataSector[13])
+    );
+    directoryEntry->fileSize[1] = (
+        (uint32_t)(dataSector[14] << 24) |
+        (uint32_t)(dataSector[15] << 16) |
+        (uint32_t)(dataSector[16] <<  8) |
+        (uint32_t)(dataSector[17])
+    );
     return 0;
 }
 
@@ -78,7 +91,7 @@ void getRootDirData(void *rootDirData){
 /// @param rootDirData Pointer to the root directory data.
 /// @param filename String containing the filename of the requested file.
 /// @return LBA to file or 0 if not found.
-uint32_t getLbaToFile(const char *filename){
+uint32_t getLbaToFile(const char *filename, uint32_t fileSize[2]){
     DirectoryEntry directoryEntry;
     uint8_t  recLen;
     int offset = 0;
@@ -91,9 +104,10 @@ uint32_t getLbaToFile(const char *filename){
            break;
         }
         offset += recLen;
-        printf(" Read file name: %s\t| %s\n", directoryEntry.name, __builtin_strcmp(directoryEntry.name, filename) ? "False" : "True");
 
         if(!__builtin_strcmp(directoryEntry.name, filename)){
+            fileSize[0] = directoryEntry.fileSize[0];
+            fileSize[1] = directoryEntry.fileSize[1];
             return directoryEntry.lba;
         }
     }

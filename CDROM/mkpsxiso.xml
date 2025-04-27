@@ -60,22 +60,23 @@
 			</dir> -->
 
 			<!-- Text files -->
-			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT"        	/>
-			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"        	/>
+			<file name="TEXT1.TXT" type="data" source="TEXT1.TXT"/>
+			<file name="TEXT2.TXT" type="data" source="TEXT2.TXT"/>
 
 			<!-- Model files -->
-			<file name="MYHEAD.MDL" type="data" source="myHeadLowPoly.mdl"	/>
-			<file name="OBAMA.MDL" type="data" source="obama.mdl"        	/>
-			<file name="FILTH.MDL" type="data" source="filth.mdl" 			/>
-			<file name="AMORPH.MDL" type="data" source="amorph.mdl" 		/>
-			<file name="CAPSULE.MDL" type="data" source="capsule.mdl" 		/>
+			<file name="MYHEAD.MDL" type="data" source="myHeadLowPoly.mdl"/>
+			<file name="OBAMA.MDL" type="data" source="obama.mdl"/>
+			<file name="FILTH.MDL" type="data" source="filth.mdl"/>
+			<file name="AMORPH.MDL" type="data" source="amorph.mdl"/>
+			<file name="CAPSULE.MDL" type="data" source="capsule.mdl"/>
+
+			<!-- Texture Files -->
+			<file name="LOGO.TIM" type="data" source="logo.tim"/>
 
 			<!-- Audio files -->
 			<file name="LASER.VAG" type="data" source="laser.vag"/>
-
 			<file name="STEP.VAG" type="data" source="step_grass_1.vag"/>
-
-			<file name="SONG.VAG"  type="data" source="SongCompiled.vag" 	/>
+			<file name="SONG.VAG"  type="data" source="SongCompiled.vag"/>
 			
 			
 			<!-- Lastly, some dummy sectors must always be placed at the -->
