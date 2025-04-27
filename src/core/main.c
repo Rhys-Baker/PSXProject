@@ -22,6 +22,7 @@
 #include "menu.h"
 #include "spu.h"
 #include "stream.h"
+#include "texture.h"
 #include "trig.h"
 #include "types.h"
 #include "util.h"
@@ -44,16 +45,19 @@
 #define PLAYER_BBOX_Z (64 * ONE)
 
 
-// Include texture data files
+// Built-in debug textures
 extern const uint8_t fontData[];
 extern const uint8_t fontPalette[];
 TextureInfo font;
+extern const uint8_t default_32Data[];
+extern const uint8_t default_32Palette[];
+TextureInfo default_32;
+
 
 extern const uint8_t filth_128Data[];
 TextureInfo filth_128;
 
-extern const uint8_t default_32Data[];
-TextureInfo default_32;
+
 
 Camera mainCamera;
 Player3 player;
@@ -172,16 +176,45 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     }
 
     // Base case: Triangle is of renderable size, so render it
-
+    
     int32_t xy0 = gp0_xy(tri.a.x, tri.a.y);
     int32_t xy1 = gp0_xy(tri.b.x, tri.b.y);
     int32_t xy2 = gp0_xy(tri.c.x, tri.c.y);
-    int32_t uv0 = gp0_uv(tri.auv.x + texinfo->u, tri.auv.y + texinfo->v, texinfo->clut);
-    int32_t uv1 = gp0_uv(tri.buv.x + texinfo->u, tri.buv.y + texinfo->v, texinfo->page);
-    int32_t uv2 = gp0_uv(tri.cuv.x + texinfo->u, tri.cuv.y + texinfo->v, 0);
+    int32_t uv0 = gp0_uv(texinfo->u + tri.auv.x, texinfo->v + tri.auv.y, texinfo->clut);
+    int32_t uv1 = gp0_uv(texinfo->u + tri.buv.x, texinfo->v + tri.buv.y, texinfo->page);
+    int32_t uv2 = gp0_uv(texinfo->u + tri.cuv.x, texinfo->v + tri.cuv.y, 0);
 
+    printf("Triangle info:\n");
+    printf(
+        " A: (%d %d) + (%d %d) = (%d %d)\n",
+        tri.auv.x, tri.auv.y,
+        texinfo->u, texinfo->v,
+        tri.auv.x + texinfo->u, tri.auv.y + texinfo->v
+    );
+    printf(
+        " B: (%d %d) + (%d %d) = (%d %d)\n",
+        tri.buv.x, tri.buv.y,
+        texinfo->u, texinfo->v,
+        tri.buv.x + texinfo->u, tri.buv.y + texinfo->v
+    );
+    printf(
+        " C: (%d %d) + (%d %d) = (%d %d)\n",
+        tri.cuv.x, tri.cuv.y,
+        texinfo->u, texinfo->v,
+        tri.cuv.x + texinfo->u, tri.cuv.y + texinfo->v
+    );
+
+    // Only supports tiling textures that are powers of 2 
+    // TODO: This assumes tiling. We might not necessarily want that. Perhaps add an
+    // Also this just BREAKS if the numbers are wrong. So don't let the numbers be wrong (must be powers of 2 >= 8)
+    
+    //uint8_t bitmask_u = 0xFF << (28-__builtin_clz(texinfo->w));
+    //uint8_t bitmask_v = 0xFF << (28-__builtin_clz(texinfo->h));
+    
     dmaPtr = allocatePacket(activeChain, tri.z, 8);
-    dmaPtr[0] = gp0_texwindow(0, 0, ~0b00011, ~0b00011);
+    //dmaPtr[0] = gp0_texwindow(0, 16, bitmask_u, bitmask_v);
+    //dmaPtr[0] = gp0_texwindow(0, 0b00100, 0b11100, 0b11100);
+    dmaPtr[0] = gp0_texwindow(0b00100, 0, 0b11100, 0b11100);
     dmaPtr[1] = 0x808080 | gp0_triangle(true, false);
     dmaPtr[2] = xy0;
     dmaPtr[3] = uv0;
@@ -415,6 +448,9 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 ///////////////////////////////////////////////
 #pragma region BSP Tree
 
+int numTextures = 0;
+char *textureNames[] = {
+};
 BSPNode3 bspNodes_hitscan[] = {
     {
         .normal = {
@@ -422,9 +458,20 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -262144,
+        .distance = -1114112,
         .children = {
-            1, 11
+            1, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 2
         }
     },
     {
@@ -433,18 +480,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 262144,
-        .children = {
-            2, 7
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1769472,
+        .distance = -983040,
         .children = {
             3, -1
         }
@@ -455,7 +491,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 2031616,
+        .distance = 851968,
         .children = {
             -1, 4
         }
@@ -466,7 +502,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 0,
+        .distance = -65536,
         .children = {
             5, -1
         }
@@ -477,574 +513,13 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2162688,
-        .children = {
-            -1, 6
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 3932160,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -262144,
-        .children = {
-            8, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            -1, 9
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -65536,
-        .children = {
-            10, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
         .distance = 65536,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -2031616,
-        .children = {
-            12, 46
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1769472,
-        .children = {
-            13, 17
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -589824,
-        .children = {
-            -1, 14
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2031616,
-        .children = {
-            -1, 15
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            16, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2162688,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            18, 42
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 720896,
-        .children = {
-            19, 31
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = 1438584,
-        .children = {
-            -1, 20
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -1989,
-            .z = 3580
-        },
-        .distance = 636541,
-        .children = {
-            -1, 21
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = -165500,
-        .children = {
-            -1, 22
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = 165500,
-        .children = {
-            23, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = -1790
-        },
-        .distance = -752637,
-        .children = {
-            -1, 24
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = 1790
-        },
-        .distance = -752637,
-        .children = {
-            -1, 25
-        }
-    },
-    {
-        .normal = {
-            .x = 3580,
-            .y = -1989,
-            .z = 0
-        },
-        .distance = -967543,
-        .children = {
-            -1, 26
-        }
-    },
-    {
-        .normal = {
-            .x = 3580,
-            .y = 1989,
-            .z = 0
-        },
-        .distance = -2240627,
-        .children = {
-            27, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = -1790
-        },
-        .distance = -2025720,
-        .children = {
-            28, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = 1790
-        },
-        .distance = -2025720,
-        .children = {
-            29, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -1438584,
-        .children = {
-            30, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 1989,
-            .z = 3580
-        },
-        .distance = -636541,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1638400,
-        .children = {
-            -1, 32
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196608,
-        .children = {
-            33, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            -1, 34
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 1114112,
-        .children = {
-            -1, 35
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2048
-        },
-        .distance = -1785771,
-        .children = {
-            36, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -1114112,
-        .children = {
-            37, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 720896,
-        .children = {
-            38, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -720896,
-        .children = {
-            -1, 39
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2048
-        },
-        .distance = -1392555,
-        .children = {
-            -1, 40
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2048
-        },
-        .distance = -1392555,
-        .children = {
-            -1, 41
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2048
-        },
-        .distance = -1785771,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -786432,
-        .children = {
-            -1, 43
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -262144,
-        .children = {
-            44, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 262144,
-        .children = {
-            -1, 45
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -65536,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1769472,
-        .children = {
-            47, 51
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -4784128,
-        .children = {
-            48, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2031616,
-        .children = {
-            -1, 49
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            50, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2162688,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 720896,
-        .children = {
-            52, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = 1438584,
-        .children = {
-            -1, 53
-        }
-    },
-    {
-        .normal = {
-            .x = 3580,
-            .y = 1989,
-            .z = 0
-        },
-        .distance = -2240627,
-        .children = {
-            54, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = -1790
-        },
-        .distance = -2025720,
-        .children = {
-            55, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = 1790
-        },
-        .distance = -2025720,
-        .children = {
-            56, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -1438584,
-        .children = {
-            -2, -1
         }
     },
 };
-BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 57};
+BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 6};
 
 BSPNode3 bspNodes_player[] = {
     {
@@ -1053,9 +528,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -393216,
+        .distance = -1114112,
         .children = {
-            1, 11
+            1, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 2
         }
     },
     {
@@ -1064,18 +550,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 393216,
-        .children = {
-            2, 7
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1638400,
+        .distance = -983040,
         .children = {
             3, -1
         }
@@ -1086,7 +561,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 2162688,
+        .distance = 851968,
         .children = {
             -1, 4
         }
@@ -1097,7 +572,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = -65536,
         .children = {
             5, -1
         }
@@ -1108,3148 +583,413 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2424832,
-        .children = {
-            -1, 6
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 4063232,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -1, 8
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 393216,
-        .children = {
-            -1, 9
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -393216,
-        .children = {
-            10, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -327680,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -2293759,
-        .children = {
-            12, 95
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            13, 18
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -1, 14
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1638400,
-        .children = {
-            15, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2162688,
-        .children = {
-            -1, 16
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            17, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2424832,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -655360,
-        .children = {
-            -1, 19
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -327680,
-        .children = {
-            20, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            21, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1572863,
-        .children = {
-            -1, 22
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 983042,
-        .children = {
-            23, 37
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = 118321,
-        .children = {
-            -1, 24
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = 1790
-        },
-        .distance = -468812,
-        .children = {
-            -1, 25
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -1989,
-            .z = 3580
-        },
-        .distance = 878428,
-        .children = {
-            -1, 26
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = 1790
-        },
-        .distance = -2309545,
-        .children = {
-            27, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -1722409,
-        .children = {
-            28, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3580,
-            .y = 1989,
-            .z = 0
-        },
-        .distance = -2482513,
-        .children = {
-            29, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = -1790
-        },
-        .distance = -468812,
-        .children = {
-            -1, 30
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2047
-        },
-        .distance = -2095892,
-        .children = {
-            31, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 1424232,
-        .children = {
-            -1, 32
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = 1722409,
-        .children = {
-            -1, 33
-        }
-    },
-    {
-        .normal = {
-            .x = 3580,
-            .y = -1989,
-            .z = 0
-        },
-        .distance = -725657,
-        .children = {
-            -1, 34
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 1989,
-            .z = 3580
-        },
-        .distance = -878428,
-        .children = {
-            35, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = 1989,
-            .z = -1790
-        },
-        .distance = -2309545,
-        .children = {
-            36, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -118322,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -1722409,
-        .children = {
-            38, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2047
-        },
-        .distance = -2095892,
-        .children = {
-            39, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 1424232,
-        .children = {
-            -1, 40
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -2162688,
-        .children = {
-            41, 92
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -1424231,
-        .children = {
-            42, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            43, 90
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -393216,
-        .children = {
-            44, 88
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1376256,
-        .children = {
-            45, 47
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 393216,
-        .children = {
-            -1, 46
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 1790,
-            .y = -1989,
-            .z = 3100
-        },
-        .distance = 118321,
-        .children = {
-            -1, 48
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = 1790
-        },
-        .distance = -468812,
-        .children = {
-            -1, 49
-        }
-    },
-    {
-        .normal = {
-            .x = 3100,
-            .y = -1989,
-            .z = -1790
-        },
-        .distance = -468812,
-        .children = {
-            -1, 50
-        }
-    },
-    {
-        .normal = {
-            .x = -1790,
-            .y = 1989,
-            .z = 3100
-        },
-        .distance = -118322,
-        .children = {
-            51, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 393216,
-        .children = {
-            52, 54
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            53, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -410777,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1507328,
-        .children = {
-            55, 61
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            56, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            57, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -410777,
-        .children = {
-            -1, 58
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2048
-        },
-        .distance = -1082435,
-        .children = {
-            -1, 59
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2048
-        },
-        .distance = -1082435,
-        .children = {
-            -1, 60
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 410777,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            62, 86
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 327680,
-        .children = {
-            63, 65
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            64, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2048
-        },
-        .distance = -1213506,
-        .children = {
-            66, 68
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            67, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 541848,
-        .children = {
-            69, 84
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2048
-        },
-        .distance = -1213506,
-        .children = {
-            70, 72
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            71, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2047,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -1293157,
-        .children = {
-            73, 82
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2047
-        },
-        .distance = -1964820,
-        .children = {
-            74, 80
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            75, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -541848,
-        .children = {
-            76, 77
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, 78
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = -2047
-        },
-        .distance = -1964820,
-        .children = {
-            79, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2047,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 1293157,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            81, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            83, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            85, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            87, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            89, -1
-        }
-    },
-    {
-        .normal = {
-            .x = -2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = 410777,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -393216,
-        .children = {
-            91, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 393216,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            93, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2048,
-            .y = 0,
-            .z = 3547
-        },
-        .distance = -1424231,
-        .children = {
-            94, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 3547,
-            .y = 0,
-            .z = 2047
-        },
-        .distance = -2095892,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -4915200,
-        .children = {
-            96, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1638400,
-        .children = {
-            97, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2162688,
-        .children = {
-            -1, 98
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            99, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2424832,
+        .distance = 65536,
         .children = {
             -1, -2
         }
     },
 };
-BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 100};
+BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 6};
 
-int numTris = 262;
+int numTris = 44;
 Tri3_texturedFlat tris[] = {
     {
-        {-262144, 0, 1769472},
-        {-262144, 0, 2031616},
-        {-262144, -2162688, 2031616},
-        {0, 81},
-        {64, 81},
-        {64, 0}
-},
-    {
-        {-262144, 0, 1769472},
-        {-262144, -2162688, 2031616},
-        {-262144, -2162688, 1769472},
-        {0, 81},
-        {64, 0},
-        {0, 0}
-},
-    {
-        {-262144, 65536, -262144},
-        {-262144, 65536, 262144},
-        {-262144, -65536, 262144},
-        {0, 32},
-        {128, 32},
-        {128, 0}
-},
-    {
-        {-262144, 65536, -262144},
-        {-262144, -65536, 262144},
-        {-262144, -65536, -262144},
-        {0, 32},
-        {128, 0},
-        {0, 0}
-},
-    {
-        {262144, -65536, 262144},
-        {-262144, -65536, 262144},
-        {-262144, 65536, 262144},
-        {128, 0},
-        {0, 0},
-        {0, 32}
-},
-    {
-        {262144, -65536, 262144},
-        {-262144, 65536, 262144},
-        {262144, 65536, 262144},
-        {128, 0},
-        {0, 32},
-        {128, 32}
-},
-    {
-        {-262144, -2162688, 1769472},
-        {3932160, -2162688, 1769472},
-        {3932160, 0, 1769472},
-        {0, 0},
-        {64, 0},
-        {64, 81}
-},
-    {
-        {-262144, -2162688, 1769472},
-        {3932160, 0, 1769472},
-        {-262144, 0, 1769472},
-        {0, 0},
-        {64, 81},
-        {0, 81}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {-262144, -2162688, 2031616},
-        {-262144, 0, 2031616},
-        {64, 0},
-        {0, 0},
-        {0, 81}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {-262144, 0, 2031616},
-        {3932160, 0, 2031616},
-        {64, 0},
-        {0, 81},
-        {64, 81}
-},
-    {
-        {3932160, 0, 1769472},
-        {3932160, 0, 2031616},
-        {-262144, 0, 2031616},
-        {64, 64},
-        {64, 0},
-        {0, 0}
-},
-    {
-        {3932160, 0, 1769472},
-        {-262144, 0, 2031616},
-        {-262144, 0, 1769472},
-        {64, 64},
-        {0, 0},
-        {0, 64}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {3932160, -2162688, 1769472},
-        {-262144, -2162688, 1769472},
-        {64, 0},
-        {64, 64},
-        {0, 64}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {-262144, -2162688, 1769472},
-        {-262144, -2162688, 2031616},
-        {64, 0},
-        {0, 64},
-        {0, 0}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {3932160, 0, 2031616},
-        {3932160, 0, 1769472},
-        {64, 0},
-        {64, 81},
-        {0, 81}
-},
-    {
-        {3932160, -2162688, 2031616},
-        {3932160, 0, 1769472},
-        {3932160, -2162688, 1769472},
-        {64, 0},
-        {0, 81},
-        {0, 0}
-},
-    {
-        {-262144, -65536, -262144},
-        {262144, -65536, -262144},
-        {262144, 65536, -262144},
-        {0, 0},
-        {128, 0},
-        {128, 32}
-},
-    {
-        {-262144, -65536, -262144},
-        {262144, 65536, -262144},
-        {-262144, 65536, -262144},
-        {0, 0},
-        {128, 32},
-        {0, 32}
-},
-    {
-        {262144, -65536, -262144},
-        {262144, -65536, 262144},
-        {262144, 65536, 262144},
-        {0, 0},
-        {128, 0},
-        {128, 32}
-},
-    {
-        {262144, -65536, -262144},
-        {262144, 65536, 262144},
-        {262144, 65536, -262144},
-        {0, 0},
-        {128, 32},
-        {0, 32}
-},
-    {
-        {-262144, 65536, 262144},
-        {-262144, 65536, -262144},
-        {262144, 65536, -262144},
-        {0, 0},
-        {0, 128},
-        {128, 128}
-},
-    {
-        {-262144, 65536, 262144},
-        {262144, 65536, -262144},
-        {262144, 65536, 262144},
-        {0, 0},
-        {128, 128},
-        {128, 0}
-},
-    {
-        {-262144, -65536, -262144},
-        {-262144, -65536, 262144},
-        {262144, -65536, 262144},
-        {0, 128},
-        {0, 0},
-        {128, 0}
-},
-    {
-        {-262144, -65536, -262144},
-        {262144, -65536, 262144},
-        {262144, -65536, -262144},
-        {0, 128},
-        {128, 0},
-        {128, 128}
-},
-    {
-        {-2031616, 65536, -262144},
-        {-2031616, 65536, 262144},
-        {-2031616, -65536, 52680},
-        {0, 32},
-        {128, 32},
-        {76, 0}
-},
-    {
-        {-2031616, 65536, -262144},
-        {-2031616, -65536, 52680},
-        {-2031616, -65536, -52680},
-        {0, 32},
-        {76, 0},
-        {51, 0}
-},
-    {
-        {-2031616, 65536, -262144},
-        {-2031616, -65536, -52680},
-        {-2031616, -65536, -113511},
-        {0, 32},
-        {51, 0},
-        {36, 0}
-},
-    {
-        {-2031616, 65536, -262144},
-        {-2031616, -65536, -113511},
-        {-2031616, -65536, -196608},
-        {0, 32},
-        {36, 0},
-        {16, 0}
-},
-    {
-        {-2031616, 65536, -262144},
-        {-2031616, -65536, -196608},
-        {-2031616, -65536, -262144},
-        {0, 32},
-        {16, 0},
-        {0, 0}
-},
-    {
-        {-2031616, 65536, 262144},
-        {-2031616, -65536, 262144},
-        {-2031616, -65536, 196608},
-        {16, 32},
-        {16, 0},
-        {0, 0}
-},
-    {
-        {-2031616, 65536, 262144},
-        {-2031616, -65536, 196608},
-        {-2031616, -65536, 113511},
-        {37, 32},
-        {21, 0},
-        {0, 0}
-},
-    {
-        {-2031616, 65536, 262144},
-        {-2031616, -65536, 113511},
-        {-2031616, -65536, 52680},
-        {52, 32},
-        {15, 0},
-        {0, 0}
-},
-    {
-        {-2031616, -720896, -52680},
-        {-2031616, -65536, -52680},
-        {-2031616, -65536, 52680},
-        {0, 0},
-        {0, 160},
-        {21, 160}
-},
-    {
-        {-2031616, -720896, -52680},
-        {-2031616, -65536, 52680},
-        {-2031616, -720896, 52680},
-        {0, 0},
-        {21, 160},
-        {21, 0}
-},
-    {
-        {-589824, -327680, 1769472},
-        {-1114112, -327680, 1769472},
-        {-1114112, -1245184, 1769472},
-        {128, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-589824, -327680, 1769472},
-        {-1114112, -1245184, 1769472},
-        {-589824, -1245184, 1769472},
-        {128, 224},
-        {0, 0},
-        {128, 0}
-},
-    {
-        {-1114112, -327680, 1769472},
-        {-2031616, -327680, 1769472},
-        {-2031616, -1245184, 1769472},
-        {224, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-1114112, -327680, 1769472},
-        {-2031616, -1245184, 1769472},
-        {-1114112, -1245184, 1769472},
-        {224, 224},
-        {0, 0},
-        {224, 0}
-},
-    {
-        {-589824, -1245184, 1769472},
-        {-1114112, -1245184, 1769472},
-        {-1114112, -2162688, 1769472},
-        {128, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-589824, -1245184, 1769472},
-        {-1114112, -2162688, 1769472},
-        {-589824, -2162688, 1769472},
-        {128, 224},
-        {0, 0},
-        {128, 0}
-},
-    {
-        {-1114112, -1245184, 1769472},
-        {-2031616, -1245184, 1769472},
-        {-2031616, -2162688, 1769472},
-        {224, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-1114112, -1245184, 1769472},
-        {-2031616, -2162688, 1769472},
-        {-1114112, -2162688, 1769472},
-        {224, 224},
-        {0, 0},
-        {224, 0}
-},
-    {
-        {-1114112, -327680, 1769472},
-        {-1114112, 0, 1769472},
-        {-2031616, 0, 1769472},
-        {224, 0},
-        {224, 80},
-        {0, 80}
-},
-    {
-        {-1114112, -327680, 1769472},
-        {-2031616, 0, 1769472},
-        {-2031616, -327680, 1769472},
-        {224, 0},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-589824, -327680, 1769472},
-        {-589824, 0, 1769472},
-        {-1114112, 0, 1769472},
-        {128, 0},
-        {128, 80},
-        {0, 80}
-},
-    {
-        {-589824, -327680, 1769472},
-        {-1114112, 0, 1769472},
-        {-1114112, -327680, 1769472},
-        {128, 0},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-589824, -327680, 2031616},
-        {-589824, -327680, 1769472},
-        {-589824, -1245184, 1769472},
-        {64, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-589824, -327680, 2031616},
-        {-589824, -1245184, 1769472},
-        {-589824, -1245184, 2031616},
-        {64, 224},
-        {0, 0},
-        {64, 0}
-},
-    {
-        {-589824, -1245184, 2031616},
-        {-589824, -1245184, 1769472},
-        {-589824, -2162688, 1769472},
-        {64, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-589824, -1245184, 2031616},
-        {-589824, -2162688, 1769472},
-        {-589824, -2162688, 2031616},
-        {64, 224},
-        {0, 0},
-        {64, 0}
-},
-    {
-        {-589824, 0, 2031616},
-        {-589824, 0, 1769472},
-        {-589824, -327680, 1769472},
-        {64, 80},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-589824, 0, 2031616},
-        {-589824, -327680, 1769472},
-        {-589824, -327680, 2031616},
-        {64, 80},
-        {0, 0},
-        {64, 0}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-589824, -327680, 2031616},
-        {-589824, -1245184, 2031616},
-        {0, 224},
-        {128, 224},
-        {128, 0}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-589824, -1245184, 2031616},
-        {-1114112, -1245184, 2031616},
-        {0, 224},
-        {128, 0},
-        {0, 0}
-},
-    {
-        {-1114112, -1245184, 2031616},
-        {-2031616, -1245184, 2031616},
-        {-2031616, -327680, 2031616},
-        {224, 0},
-        {0, 0},
-        {0, 224}
-},
-    {
-        {-1114112, -1245184, 2031616},
-        {-2031616, -327680, 2031616},
-        {-1114112, -327680, 2031616},
-        {224, 0},
-        {0, 224},
-        {224, 224}
-},
-    {
-        {-1114112, -1245184, 2031616},
-        {-589824, -1245184, 2031616},
-        {-589824, -2162688, 2031616},
-        {0, 224},
-        {128, 224},
-        {128, 0}
-},
-    {
-        {-1114112, -1245184, 2031616},
-        {-589824, -2162688, 2031616},
-        {-1114112, -2162688, 2031616},
-        {0, 224},
-        {128, 0},
-        {0, 0}
-},
-    {
-        {-1114112, -2162688, 2031616},
-        {-2031616, -2162688, 2031616},
-        {-2031616, -1245184, 2031616},
-        {224, 0},
-        {0, 0},
-        {0, 224}
-},
-    {
-        {-1114112, -2162688, 2031616},
-        {-2031616, -1245184, 2031616},
-        {-1114112, -1245184, 2031616},
-        {224, 0},
-        {0, 224},
-        {224, 224}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-2031616, -327680, 2031616},
-        {-2031616, 0, 2031616},
-        {224, 0},
-        {0, 0},
-        {0, 80}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-2031616, 0, 2031616},
-        {-1114112, 0, 2031616},
-        {224, 0},
-        {0, 80},
-        {224, 80}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-1114112, 0, 2031616},
-        {-589824, 0, 2031616},
-        {0, 0},
-        {0, 80},
-        {128, 80}
-},
-    {
-        {-1114112, -327680, 2031616},
-        {-589824, 0, 2031616},
-        {-589824, -327680, 2031616},
-        {0, 0},
-        {128, 80},
-        {128, 0}
-},
-    {
-        {-2031616, 0, 2031616},
-        {-2031616, 0, 1769472},
-        {-1114112, 0, 1769472},
-        {0, 0},
-        {0, 64},
-        {224, 64}
-},
-    {
-        {-2031616, 0, 2031616},
-        {-1114112, 0, 1769472},
-        {-1114112, 0, 2031616},
-        {0, 0},
-        {224, 64},
-        {224, 0}
-},
-    {
-        {-1114112, 0, 2031616},
-        {-1114112, 0, 1769472},
-        {-589824, 0, 1769472},
-        {0, 0},
-        {0, 64},
-        {128, 64}
-},
-    {
-        {-1114112, 0, 2031616},
-        {-589824, 0, 1769472},
-        {-589824, 0, 2031616},
-        {0, 0},
-        {128, 64},
-        {128, 0}
-},
-    {
-        {-2031616, -2162688, 1769472},
-        {-2031616, -2162688, 2031616},
-        {-1114112, -2162688, 2031616},
-        {0, 64},
-        {0, 0},
-        {224, 0}
-},
-    {
-        {-2031616, -2162688, 1769472},
-        {-1114112, -2162688, 2031616},
-        {-1114112, -2162688, 1769472},
-        {0, 64},
-        {224, 0},
-        {224, 64}
-},
-    {
-        {-1114112, -2162688, 1769472},
-        {-1114112, -2162688, 2031616},
-        {-589824, -2162688, 2031616},
-        {0, 64},
-        {0, 0},
-        {128, 0}
-},
-    {
-        {-1114112, -2162688, 1769472},
-        {-589824, -2162688, 2031616},
-        {-589824, -2162688, 1769472},
-        {0, 64},
-        {128, 0},
-        {128, 64}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-786432, -65536, 262144},
-        {-786432, -65536, -262144},
-        {0, 0},
-        {80, 0},
-        {80, 128}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-786432, -65536, -262144},
-        {-1114112, -65536, -262144},
-        {0, 0},
-        {80, 128},
-        {0, 128}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-1114112, -65536, -262144},
-        {-1638400, -65536, -52680},
-        {128, 0},
-        {128, 128},
-        {0, 76}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-1638400, -65536, -52680},
-        {-1638400, -65536, 52680},
-        {128, 0},
-        {0, 76},
-        {0, 51}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-1638400, -65536, 52680},
-        {-1638400, -65536, 113511},
-        {128, 0},
-        {0, 51},
-        {0, 36}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-1638400, -65536, 113511},
-        {-1638400, -65536, 196608},
-        {128, 0},
-        {0, 36},
-        {0, 16}
-},
-    {
-        {-1114112, -65536, 262144},
-        {-1638400, -65536, 196608},
-        {-1638400, -65536, 262144},
-        {128, 0},
-        {0, 16},
-        {0, 0}
-},
-    {
-        {-1114112, -65536, -262144},
-        {-1638400, -65536, -262144},
-        {-1638400, -65536, -196608},
-        {128, 16},
-        {0, 16},
-        {0, 0}
-},
-    {
-        {-1114112, -65536, -262144},
-        {-1638400, -65536, -196608},
-        {-1638400, -65536, -113511},
-        {128, 37},
-        {0, 21},
-        {0, 0}
-},
-    {
-        {-1114112, -65536, -262144},
-        {-1638400, -65536, -113511},
-        {-1638400, -65536, -52680},
-        {128, 52},
-        {0, 15},
-        {0, 0}
-},
-    {
-        {-1887689, -65536, 196608},
-        {-2031616, -65536, 196608},
-        {-2031616, -65536, 262144},
-        {35, 16},
-        {0, 16},
-        {0, 0}
-},
-    {
-        {-1887689, -65536, 196608},
-        {-2031616, -65536, 262144},
-        {-1638400, -65536, 262144},
-        {35, 16},
-        {0, 0},
-        {96, 0}
-},
-    {
-        {-1887689, -65536, 196608},
-        {-1638400, -65536, 262144},
-        {-1782327, -65536, 196608},
-        {0, 16},
-        {61, 0},
-        {25, 16}
-},
-    {
-        {-1638400, -65536, 262144},
-        {-1638400, -65536, 196608},
-        {-1782327, -65536, 196608},
-        {36, 0},
-        {36, 16},
-        {0, 16}
-},
-    {
-        {-1978935, -65536, 143927},
-        {-2031616, -65536, 113511},
-        {-2031616, -65536, 196608},
-        {12, 12},
-        {0, 20},
-        {0, 0}
-},
-    {
-        {-1978935, -65536, 143927},
-        {-2031616, -65536, 196608},
-        {-1887689, -65536, 196608},
-        {12, 12},
-        {0, 0},
-        {35, 0}
-},
-    {
-        {-1691081, -65536, 143927},
-        {-1782327, -65536, 196608},
-        {-1638400, -65536, 196608},
-        {23, 12},
-        {0, 0},
-        {36, 0}
-},
-    {
-        {-1691081, -65536, 143927},
-        {-1638400, -65536, 196608},
-        {-1638400, -65536, 113511},
-        {0, 12},
-        {13, 0},
-        {13, 20}
-},
-    {
-        {-1638400, -65536, -52680},
-        {-1638400, -65536, -113511},
-        {-1691081, -65536, -143927},
-        {13, 0},
-        {13, 15},
-        {0, 23}
-},
-    {
-        {-1691081, -65536, 143927},
-        {-1638400, -65536, 113511},
-        {-1638400, -65536, 52680},
-        {0, 0},
-        {13, 8},
-        {13, 23}
-},
-    {
-        {-2031616, -65536, -113511},
-        {-2031616, -65536, -52680},
-        {-1978935, -65536, -143927},
-        {0, 15},
-        {0, 0},
-        {12, 23}
-},
-    {
-        {-1691081, -65536, -143927},
-        {-1638400, -65536, -113511},
-        {-1638400, -65536, -196608},
-        {0, 8},
-        {13, 0},
-        {13, 21}
-},
-    {
-        {-1691081, -65536, -143927},
-        {-1638400, -65536, -196608},
-        {-1782327, -65536, -196608},
-        {23, 0},
-        {36, 13},
-        {0, 13}
-},
-    {
-        {-1978935, -65536, -143927},
-        {-1887689, -65536, -196608},
-        {-2031616, -65536, -196608},
-        {12, 0},
-        {35, 13},
-        {0, 13}
-},
-    {
-        {-1978935, -65536, -143927},
-        {-2031616, -65536, -196608},
-        {-2031616, -65536, -113511},
-        {12, 8},
-        {0, 21},
-        {0, 0}
-},
-    {
-        {-2031616, -65536, 52680},
-        {-2031616, -65536, 113511},
-        {-1978935, -65536, 143927},
-        {0, 23},
-        {0, 8},
-        {12, 0}
-},
-    {
-        {-1782327, -65536, -196608},
-        {-1638400, -65536, -196608},
-        {-1638400, -65536, -262144},
-        {0, 0},
-        {36, 0},
-        {36, 16}
-},
-    {
-        {-1782327, -65536, -196608},
-        {-1638400, -65536, -262144},
-        {-2031616, -65536, -262144},
-        {60, 0},
-        {96, 16},
-        {0, 16}
-},
-    {
-        {-1782327, -65536, -196608},
-        {-2031616, -65536, -262144},
-        {-1887689, -65536, -196608},
-        {60, 0},
-        {0, 16},
-        {35, 0}
-},
-    {
-        {-2031616, -65536, -262144},
-        {-2031616, -65536, -196608},
-        {-1887689, -65536, -196608},
-        {0, 16},
-        {0, 0},
-        {35, 0}
-},
-    {
-        {-1507328, -720896, 87801},
-        {-1595129, -720896, 239878},
-        {-1638400, -720896, 113511},
-        {26, 29},
-        {8, 0},
-        {0, 24}
-},
-    {
-        {-1507328, -720896, 87801},
-        {-1638400, -720896, 113511},
-        {-1638400, -720896, 52680},
-        {26, 5},
-        {0, 0},
-        {0, 12}
-},
-    {
-        {-1507328, -720896, 87801},
-        {-1638400, -720896, 52680},
-        {-1638400, -720896, -52680},
-        {26, 0},
-        {0, 7},
-        {0, 28}
-},
-    {
-        {-1507328, -720896, 87801},
-        {-1638400, -720896, -52680},
-        {-1507328, -720896, -87801},
-        {26, 0},
-        {0, 28},
-        {26, 35}
-},
-    {
-        {-1638400, -720896, -113511},
-        {-1638400, -720896, -196608},
-        {-1595129, -720896, -239878},
-        {0, 0},
-        {0, 16},
-        {8, 24}
-},
-    {
-        {-1638400, -720896, -113511},
-        {-1595129, -720896, -239878},
-        {-1507328, -720896, -87801},
-        {0, 5},
-        {8, 29},
-        {26, 0}
-},
-    {
-        {-1638400, -720896, -113511},
-        {-1507328, -720896, -87801},
-        {-1638400, -720896, -52680},
-        {0, 12},
-        {26, 7},
-        {0, 0}
-},
-    {
-        {-1638400, -720896, 196608},
-        {-1638400, -720896, 113511},
-        {-1595129, -720896, 239878},
-        {0, 8},
-        {0, 24},
-        {8, 0}
-},
-    {
-        {-1638400, -720896, 196608},
-        {-1595129, -720896, 239878},
-        {-1638400, -720896, 264860},
-        {0, 13},
-        {8, 5},
-        {0, 0}
-},
-    {
-        {-1638400, -720896, -264860},
-        {-1595129, -720896, -239878},
-        {-1638400, -720896, -196608},
-        {0, 13},
-        {8, 8},
-        {0, 0}
-},
-    {
-        {-1782327, -720896, 196608},
-        {-1638400, -720896, 196608},
-        {-1638400, -720896, 264860},
-        {0, 13},
-        {28, 13},
-        {28, 0}
-},
-    {
-        {-1782327, -720896, 196608},
-        {-1638400, -720896, 264860},
-        {-1747206, -720896, 327680},
-        {0, 25},
-        {28, 12},
-        {7, 0}
-},
-    {
-        {-1782327, -720896, 196608},
-        {-1747206, -720896, 327680},
-        {-1922809, -720896, 327680},
-        {28, 25},
-        {35, 0},
-        {0, 0}
-},
-    {
-        {-1782327, -720896, 196608},
-        {-1922809, -720896, 327680},
-        {-1887689, -720896, 196608},
-        {28, 25},
-        {0, 0},
-        {7, 25}
-},
-    {
-        {-1887689, -720896, 196608},
-        {-1922809, -720896, 327680},
-        {-2031616, -720896, 264860},
-        {28, 25},
-        {21, 0},
-        {0, 12}
-},
-    {
-        {-1887689, -720896, 196608},
-        {-2031616, -720896, 264860},
-        {-2031616, -720896, 196608},
-        {28, 13},
-        {0, 0},
-        {0, 13}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-1887689, -720896, 196608},
-        {-2031616, -720896, 196608},
-        {10, 10},
-        {28, 0},
-        {0, 0}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-2031616, -720896, 196608},
-        {-2031616, -720896, 113511},
-        {10, 10},
-        {0, 0},
-        {0, 16}
-},
-    {
-        {-1691081, -720896, 143927},
-        {-1638400, -720896, 113511},
-        {-1638400, -720896, 196608},
-        {0, 10},
-        {10, 16},
-        {10, 0}
-},
-    {
-        {-1691081, -720896, 143927},
-        {-1638400, -720896, 196608},
-        {-1782327, -720896, 196608},
-        {18, 10},
-        {28, 0},
-        {0, 0}
-},
-    {
-        {-1691081, -720896, -143927},
-        {-1638400, -720896, -113511},
-        {-1638400, -720896, -52680},
-        {0, 18},
-        {10, 12},
-        {10, 0}
-},
-    {
-        {-1638400, -720896, 52680},
-        {-1638400, -720896, 113511},
-        {-1691081, -720896, 143927},
-        {10, 18},
-        {10, 6},
-        {0, 0}
-},
-    {
-        {-1978935, -720896, -143927},
-        {-2031616, -720896, -52680},
-        {-2031616, -720896, -113511},
-        {10, 18},
-        {0, 0},
-        {0, 12}
-},
-    {
-        {-1691081, -720896, -143927},
-        {-1782327, -720896, -196608},
-        {-1638400, -720896, -196608},
-        {18, 0},
-        {0, 10},
-        {28, 10}
-},
-    {
-        {-1691081, -720896, -143927},
-        {-1638400, -720896, -196608},
-        {-1638400, -720896, -113511},
-        {0, 6},
-        {10, 16},
-        {10, 0}
-},
-    {
-        {-2031616, -720896, -196608},
-        {-1887689, -720896, -196608},
-        {-1978935, -720896, -143927},
-        {0, 10},
-        {28, 10},
-        {10, 0}
-},
-    {
-        {-2031616, -720896, -196608},
-        {-1978935, -720896, -143927},
-        {-2031616, -720896, -113511},
-        {0, 16},
-        {10, 6},
-        {0, 0}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-2031616, -720896, 113511},
-        {-2031616, -720896, 52680},
-        {10, 0},
-        {0, 6},
-        {0, 18}
-},
-    {
-        {-1887689, -720896, -196608},
-        {-2031616, -720896, -196608},
-        {-2031616, -720896, -264860},
-        {28, 0},
-        {0, 0},
-        {0, 13}
-},
-    {
-        {-1887689, -720896, -196608},
-        {-2031616, -720896, -264860},
-        {-1922809, -720896, -327680},
-        {28, 0},
-        {0, 13},
-        {21, 26}
-},
-    {
-        {-1887689, -720896, -196608},
-        {-1922809, -720896, -327680},
-        {-1747206, -720896, -327680},
-        {7, 0},
-        {0, 26},
-        {35, 26}
-},
-    {
-        {-1887689, -720896, -196608},
-        {-1747206, -720896, -327680},
-        {-1782327, -720896, -196608},
-        {0, 0},
-        {28, 26},
-        {21, 0}
-},
-    {
-        {-1782327, -720896, -196608},
-        {-1747206, -720896, -327680},
-        {-1638400, -720896, -264860},
-        {0, 0},
-        {7, 26},
-        {28, 13}
-},
-    {
-        {-1782327, -720896, -196608},
-        {-1638400, -720896, -264860},
-        {-1638400, -720896, -196608},
-        {0, 0},
-        {28, 13},
-        {28, 0}
-},
-    {
-        {-1922809, -720896, 327680},
-        {-1835008, -1310720, 0},
-        {-2031616, -827291, 196608},
-        {21, 90},
-        {39, 0},
-        {0, 73}
-},
-    {
-        {-1922809, -720896, 327680},
-        {-2031616, -827291, 196608},
-        {-2031616, -720896, 264860},
-        {21, 17},
-        {0, 0},
-        {0, 17}
-},
-    {
-        {-1835008, -1310720, 0},
-        {-1922809, -720896, 327680},
-        {-1747206, -720896, 327680},
-        {18, 0},
-        {0, 128},
-        {35, 128}
-},
-    {
-        {-1638400, -720896, 264860},
-        {-1595129, -720896, 239878},
-        {-1835008, -1310720, 0},
-        {38, 90},
-        {46, 90},
-        {0, 0}
-},
-    {
-        {-1638400, -720896, 264860},
-        {-1835008, -1310720, 0},
-        {-1747206, -720896, 327680},
-        {38, 90},
-        {0, 0},
-        {17, 90}
-},
-    {
-        {-1638400, -720896, -264860},
-        {-1747206, -720896, -327680},
-        {-1835008, -1310720, 0},
-        {38, 90},
-        {17, 90},
-        {0, 0}
-},
-    {
-        {-1638400, -720896, -264860},
-        {-1835008, -1310720, 0},
-        {-1595129, -720896, -239878},
-        {38, 90},
-        {0, 0},
-        {46, 90}
-},
-    {
-        {-1595129, -720896, -239878},
-        {-1835008, -1310720, 0},
-        {-1507328, -720896, -87801},
-        {0, 97},
-        {47, 0},
-        {29, 97}
-},
-    {
-        {-1835008, -1310720, 0},
-        {-1595129, -720896, 239878},
-        {-1507328, -720896, 87801},
-        {0, 0},
-        {46, 97},
-        {17, 97}
-},
-    {
-        {-1835008, -1310720, 0},
-        {-1507328, -720896, 87801},
-        {-1507328, -720896, -87801},
-        {18, 0},
-        {35, 128},
-        {0, 128}
-},
-    {
-        {-2031616, -956825, -52680},
-        {-2031616, -956825, 52680},
-        {-1835008, -1310720, 0},
-        {0, 77},
-        {21, 77},
-        {11, 0}
-},
-    {
-        {-2031616, -827291, 196608},
-        {-1835008, -1310720, 0},
-        {-2031616, -956825, 52680},
-        {38, 80},
-        {0, 0},
-        {10, 58}
-},
-    {
-        {-2031616, -827291, -196608},
-        {-2031616, -956825, -52680},
-        {-1835008, -1310720, 0},
-        {0, 80},
-        {28, 58},
-        {39, 0}
-},
-    {
-        {-2031616, -827291, -196608},
-        {-1835008, -1310720, 0},
-        {-1922809, -720896, -327680},
-        {0, 73},
-        {39, 0},
-        {21, 90}
-},
-    {
-        {-2031616, -827291, -196608},
-        {-1922809, -720896, -327680},
-        {-2031616, -720896, -264860},
-        {0, 0},
-        {21, 17},
-        {0, 17}
-},
-    {
-        {-1747206, -720896, -327680},
-        {-1922809, -720896, -327680},
-        {-1835008, -1310720, 0},
-        {35, 128},
-        {0, 128},
-        {18, 0}
-},
-    {
-        {-1638400, -720896, 52680},
-        {-1638400, -65536, 52680},
-        {-1638400, -65536, -52680},
-        {21, 0},
-        {21, 160},
-        {0, 160}
-},
-    {
-        {-1638400, -720896, 52680},
-        {-1638400, -65536, -52680},
-        {-1638400, -720896, -52680},
-        {21, 0},
-        {0, 160},
-        {0, 0}
-},
-    {
-        {-1887689, -65536, -196608},
-        {-1887689, -720896, -196608},
-        {-1782327, -720896, -196608},
-        {0, 160},
-        {0, 0},
-        {21, 0}
-},
-    {
-        {-1887689, -65536, -196608},
-        {-1782327, -720896, -196608},
-        {-1782327, -65536, -196608},
-        {0, 160},
-        {21, 0},
-        {21, 160}
-},
-    {
-        {-1887689, -720896, 196608},
-        {-1887689, -65536, 196608},
-        {-1782327, -65536, 196608},
-        {0, 0},
-        {0, 160},
-        {21, 160}
-},
-    {
-        {-1887689, -720896, 196608},
-        {-1782327, -65536, 196608},
-        {-1782327, -720896, 196608},
-        {0, 0},
-        {21, 160},
-        {21, 0}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-1978935, -65536, 143927},
-        {-1887689, -65536, 196608},
-        {0, 0},
-        {0, 160},
-        {19, 160}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-1887689, -65536, 196608},
-        {-1887689, -720896, 196608},
-        {0, 0},
-        {19, 160},
-        {19, 0}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-2031616, -720896, 52680},
-        {-2031616, -65536, 52680},
-        {19, 0},
-        {0, 0},
-        {0, 160}
-},
-    {
-        {-1978935, -720896, 143927},
-        {-2031616, -65536, 52680},
-        {-1978935, -65536, 143927},
-        {19, 0},
-        {0, 160},
-        {19, 160}
-},
-    {
-        {-1978935, -65536, -143927},
-        {-1978935, -720896, -143927},
-        {-1887689, -720896, -196608},
-        {0, 160},
-        {0, 0},
-        {19, 0}
-},
-    {
-        {-1978935, -65536, -143927},
-        {-1887689, -720896, -196608},
-        {-1887689, -65536, -196608},
-        {0, 160},
-        {19, 0},
-        {19, 160}
-},
-    {
-        {-1782327, -720896, -196608},
-        {-1691081, -720896, -143927},
-        {-1691081, -65536, -143927},
-        {0, 0},
-        {19, 0},
-        {19, 160}
-},
-    {
-        {-1782327, -720896, -196608},
-        {-1691081, -65536, -143927},
-        {-1782327, -65536, -196608},
-        {0, 0},
-        {19, 160},
-        {0, 160}
-},
-    {
-        {-1691081, -720896, 143927},
-        {-1782327, -720896, 196608},
-        {-1782327, -65536, 196608},
-        {19, 0},
-        {0, 0},
-        {0, 160}
-},
-    {
-        {-1691081, -720896, 143927},
-        {-1782327, -65536, 196608},
-        {-1691081, -65536, 143927},
-        {19, 0},
-        {0, 160},
-        {19, 160}
-},
-    {
-        {-1691081, -720896, -143927},
-        {-1638400, -720896, -52680},
-        {-1638400, -65536, -52680},
-        {0, 0},
-        {19, 0},
-        {19, 160}
-},
-    {
-        {-1691081, -720896, -143927},
-        {-1638400, -65536, -52680},
-        {-1691081, -65536, -143927},
-        {0, 0},
-        {19, 160},
-        {0, 160}
-},
-    {
-        {-1638400, -720896, 52680},
-        {-1691081, -720896, 143927},
-        {-1691081, -65536, 143927},
-        {0, 0},
-        {19, 0},
-        {19, 160}
-},
-    {
-        {-1638400, -720896, 52680},
-        {-1691081, -65536, 143927},
-        {-1638400, -65536, 52680},
-        {0, 0},
-        {19, 160},
-        {0, 160}
-},
-    {
-        {-2031616, -65536, -52680},
-        {-2031616, -720896, -52680},
-        {-1978935, -720896, -143927},
-        {19, 160},
-        {19, 0},
-        {0, 0}
-},
-    {
-        {-2031616, -65536, -52680},
-        {-1978935, -720896, -143927},
-        {-1978935, -65536, -143927},
-        {19, 160},
-        {0, 0},
-        {0, 160}
-},
-    {
-        {-786432, 65536, -262144},
-        {-786432, -65536, -262144},
-        {-786432, -65536, 262144},
-        {0, 32},
-        {0, 0},
-        {128, 0}
-},
-    {
-        {-786432, 65536, -262144},
-        {-786432, -65536, 262144},
-        {-786432, 65536, 262144},
-        {0, 32},
-        {128, 0},
-        {128, 32}
-},
-    {
-        {-1638400, -65536, -262144},
-        {-1114112, -65536, -262144},
-        {-1114112, 65536, -262144},
-        {0, 0},
-        {128, 0},
-        {128, 32}
-},
-    {
-        {-1638400, -65536, -262144},
-        {-1114112, 65536, -262144},
-        {-2031616, 65536, -262144},
-        {96, 0},
+        {-1114112, 65536, -65536},
+        {-1114112, -65536, -65536},
+        {-1114112, -65536, -983040},
         {224, 32},
-        {0, 32}
+        {224, 0},
+        {0, 0},
+        0
 },
     {
-        {-1638400, -65536, -262144},
-        {-2031616, 65536, -262144},
-        {-2031616, -65536, -262144},
-        {96, 0},
+        {-1114112, 65536, -65536},
+        {-1114112, -65536, -983040},
+        {-1114112, 65536, -983040},
+        {224, 32},
+        {0, 0},
         {0, 32},
-        {0, 0}
+        0
 },
     {
-        {-1114112, 65536, -262144},
-        {-1114112, -65536, -262144},
-        {-786432, -65536, -262144},
+        {-1114112, 65536, -65536},
+        {-1114112, 65536, 851968},
+        {-1114112, -65536, 851968},
+        {0, 32},
+        {224, 32},
+        {224, 0},
+        0
+},
+    {
+        {-1114112, 65536, -65536},
+        {-1114112, -65536, 851968},
+        {-1114112, -65536, -65536},
+        {0, 32},
+        {224, 0},
+        {0, 0},
+        0
+},
+    {
+        {1048576, 65536, -65536},
+        {1048576, 65536, -983040},
+        {1048576, -65536, -983040},
+        {224, 32},
         {0, 32},
         {0, 0},
-        {80, 0}
+        0
 },
     {
-        {-1114112, 65536, -262144},
-        {-786432, -65536, -262144},
-        {-786432, 65536, -262144},
+        {1048576, 65536, -65536},
+        {1048576, -65536, -983040},
+        {1048576, -65536, -65536},
+        {224, 32},
+        {0, 0},
+        {224, 0},
+        0
+},
+    {
+        {1048576, 65536, -65536},
+        {1048576, -65536, -65536},
+        {1048576, -65536, 851968},
         {0, 32},
+        {0, 0},
+        {224, 0},
+        0
+},
+    {
+        {1048576, 65536, -65536},
+        {1048576, -65536, 851968},
+        {1048576, 65536, 851968},
+        {0, 32},
+        {224, 0},
+        {224, 32},
+        0
+},
+    {
+        {720896, -65536, -983040},
+        {720896, 65536, -983040},
+        {-196608, 65536, -983040},
+        {224, 0},
+        {224, 32},
+        {0, 32},
+        0
+},
+    {
+        {720896, -65536, -983040},
+        {-196608, 65536, -983040},
+        {-196608, -65536, -983040},
+        {224, 0},
+        {0, 32},
+        {0, 0},
+        0
+},
+    {
+        {-196608, -65536, -983040},
+        {-196608, 65536, -983040},
+        {-1114112, 65536, -983040},
+        {224, 0},
+        {224, 32},
+        {0, 32},
+        0
+},
+    {
+        {-196608, -65536, -983040},
+        {-1114112, 65536, -983040},
+        {-1114112, -65536, -983040},
+        {224, 0},
+        {0, 32},
+        {0, 0},
+        0
+},
+    {
+        {720896, -65536, -983040},
+        {1048576, -65536, -983040},
+        {1048576, 65536, -983040},
+        {0, 0},
         {80, 0},
-        {80, 32}
+        {80, 32},
+        0
 },
     {
-        {-1638400, -65536, 262144},
-        {-2031616, -65536, 262144},
-        {-2031616, 65536, 262144},
-        {96, 0},
+        {720896, -65536, -983040},
+        {1048576, 65536, -983040},
+        {720896, 65536, -983040},
         {0, 0},
-        {0, 32}
-},
-    {
-        {-1638400, -65536, 262144},
-        {-2031616, 65536, 262144},
-        {-1114112, 65536, 262144},
-        {96, 0},
+        {80, 32},
         {0, 32},
-        {224, 32}
+        0
 },
     {
-        {-1638400, -65536, 262144},
-        {-1114112, 65536, 262144},
-        {-1114112, -65536, 262144},
+        {-196608, -65536, 851968},
+        {-196608, 65536, 851968},
+        {720896, 65536, 851968},
         {0, 0},
-        {128, 32},
-        {128, 0}
+        {0, 32},
+        {224, 32},
+        0
 },
     {
-        {-1114112, 65536, 262144},
-        {-786432, 65536, 262144},
-        {-786432, -65536, 262144},
+        {-196608, -65536, 851968},
+        {720896, 65536, 851968},
+        {720896, -65536, 851968},
+        {0, 0},
+        {224, 32},
+        {224, 0},
+        0
+},
+    {
+        {-196608, -65536, 851968},
+        {-1114112, -65536, 851968},
+        {-1114112, 65536, 851968},
+        {224, 0},
+        {0, 0},
+        {0, 32},
+        0
+},
+    {
+        {-196608, -65536, 851968},
+        {-1114112, 65536, 851968},
+        {-196608, 65536, 851968},
+        {224, 0},
+        {0, 32},
+        {224, 32},
+        0
+},
+    {
+        {720896, -65536, 851968},
+        {720896, 65536, 851968},
+        {1048576, 65536, 851968},
+        {0, 0},
         {0, 32},
         {80, 32},
-        {80, 0}
+        0
 },
     {
-        {-1114112, 65536, 262144},
-        {-786432, -65536, 262144},
-        {-1114112, -65536, 262144},
-        {0, 32},
+        {720896, -65536, 851968},
+        {1048576, 65536, 851968},
+        {1048576, -65536, 851968},
+        {0, 0},
+        {80, 32},
         {80, 0},
-        {0, 0}
+        0
 },
     {
-        {-1114112, 65536, -262144},
-        {-1114112, 65536, 262144},
-        {-2031616, 65536, 262144},
-        {224, 128},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-1114112, 65536, -262144},
-        {-2031616, 65536, 262144},
-        {-2031616, 65536, -262144},
-        {224, 128},
-        {0, 0},
-        {0, 128}
-},
-    {
-        {-786432, 65536, -262144},
-        {-786432, 65536, 262144},
-        {-1114112, 65536, 262144},
-        {80, 128},
+        {1048576, 65536, -65536},
+        {1048576, 65536, 851968},
+        {720896, 65536, 851968},
+        {80, 224},
         {80, 0},
-        {0, 0}
-},
-    {
-        {-786432, 65536, -262144},
-        {-1114112, 65536, 262144},
-        {-1114112, 65536, -262144},
-        {80, 128},
         {0, 0},
-        {0, 128}
+        0
 },
     {
-        {-2031616, -327680, 1769472},
-        {-2949120, -327680, 1769472},
-        {-2949120, -1245184, 1769472},
-        {224, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-2031616, -327680, 1769472},
-        {-2949120, -1245184, 1769472},
-        {-2031616, -1245184, 1769472},
-        {224, 224},
+        {1048576, 65536, -65536},
+        {720896, 65536, 851968},
+        {720896, 65536, -65536},
+        {80, 224},
         {0, 0},
-        {224, 0}
-},
-    {
-        {-3866624, -327680, 1769472},
-        {-4784128, -327680, 1769472},
-        {-4784128, -1245184, 1769472},
-        {224, 224},
         {0, 224},
-        {0, 0}
+        0
 },
     {
-        {-3866624, -327680, 1769472},
-        {-4784128, -1245184, 1769472},
-        {-3866624, -1245184, 1769472},
+        {-196608, 65536, -65536},
+        {-196608, 65536, 851968},
+        {-1114112, 65536, 851968},
+        {224, 224},
+        {224, 0},
+        {0, 0},
+        0
+},
+    {
+        {-196608, 65536, -65536},
+        {-1114112, 65536, 851968},
+        {-1114112, 65536, -65536},
         {224, 224},
         {0, 0},
-        {224, 0}
-},
-    {
-        {-2949120, -327680, 1769472},
-        {-3866624, -327680, 1769472},
-        {-3866624, -1245184, 1769472},
-        {224, 224},
         {0, 224},
-        {0, 0}
+        0
 },
     {
-        {-2949120, -327680, 1769472},
-        {-3866624, -1245184, 1769472},
-        {-2949120, -1245184, 1769472},
+        {720896, 65536, -65536},
+        {720896, 65536, 851968},
+        {-196608, 65536, 851968},
         {224, 224},
+        {224, 0},
         {0, 0},
-        {224, 0}
+        0
 },
     {
-        {-2031616, -1245184, 1769472},
-        {-2949120, -1245184, 1769472},
-        {-2949120, -2162688, 1769472},
-        {224, 224},
-        {0, 224},
-        {0, 0}
-},
-    {
-        {-2031616, -1245184, 1769472},
-        {-2949120, -2162688, 1769472},
-        {-2031616, -2162688, 1769472},
+        {720896, 65536, -65536},
+        {-196608, 65536, 851968},
+        {-196608, 65536, -65536},
         {224, 224},
         {0, 0},
-        {224, 0}
-},
-    {
-        {-3866624, -1245184, 1769472},
-        {-4784128, -1245184, 1769472},
-        {-4784128, -2162688, 1769472},
-        {224, 224},
         {0, 224},
-        {0, 0}
+        0
 },
     {
-        {-3866624, -1245184, 1769472},
-        {-4784128, -2162688, 1769472},
-        {-3866624, -2162688, 1769472},
-        {224, 224},
+        {720896, 65536, -65536},
+        {-196608, 65536, -65536},
+        {-196608, 65536, -983040},
+        {224, 0},
         {0, 0},
-        {224, 0}
-},
-    {
-        {-2949120, -1245184, 1769472},
-        {-3866624, -1245184, 1769472},
-        {-3866624, -2162688, 1769472},
-        {224, 224},
         {0, 224},
-        {0, 0}
+        0
 },
     {
-        {-2949120, -1245184, 1769472},
-        {-3866624, -2162688, 1769472},
-        {-2949120, -2162688, 1769472},
-        {224, 224},
-        {0, 0},
-        {224, 0}
-},
-    {
-        {-2949120, -327680, 1769472},
-        {-2949120, 0, 1769472},
-        {-3866624, 0, 1769472},
+        {720896, 65536, -65536},
+        {-196608, 65536, -983040},
+        {720896, 65536, -983040},
         {224, 0},
-        {224, 80},
-        {0, 80}
-},
-    {
-        {-2949120, -327680, 1769472},
-        {-3866624, 0, 1769472},
-        {-3866624, -327680, 1769472},
-        {224, 0},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-3866624, -327680, 1769472},
-        {-3866624, 0, 1769472},
-        {-4784128, 0, 1769472},
-        {224, 0},
-        {224, 80},
-        {0, 80}
-},
-    {
-        {-3866624, -327680, 1769472},
-        {-4784128, 0, 1769472},
-        {-4784128, -327680, 1769472},
-        {224, 0},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-2031616, -327680, 1769472},
-        {-2031616, 0, 1769472},
-        {-2949120, 0, 1769472},
-        {224, 0},
-        {224, 80},
-        {0, 80}
-},
-    {
-        {-2031616, -327680, 1769472},
-        {-2949120, 0, 1769472},
-        {-2949120, -327680, 1769472},
-        {224, 0},
-        {0, 80},
-        {0, 0}
-},
-    {
-        {-4784128, -327680, 1769472},
-        {-4784128, -327680, 2031616},
-        {-4784128, -1245184, 2031616},
-        {0, 224},
-        {64, 224},
-        {64, 0}
-},
-    {
-        {-4784128, -327680, 1769472},
-        {-4784128, -1245184, 2031616},
-        {-4784128, -1245184, 1769472},
-        {0, 224},
-        {64, 0},
-        {0, 0}
-},
-    {
-        {-4784128, -1245184, 1769472},
-        {-4784128, -1245184, 2031616},
-        {-4784128, -2162688, 2031616},
-        {0, 224},
-        {64, 224},
-        {64, 0}
-},
-    {
-        {-4784128, -1245184, 1769472},
-        {-4784128, -2162688, 2031616},
-        {-4784128, -2162688, 1769472},
-        {0, 224},
-        {64, 0},
-        {0, 0}
-},
-    {
-        {-4784128, 0, 1769472},
-        {-4784128, 0, 2031616},
-        {-4784128, -327680, 2031616},
-        {0, 80},
-        {64, 80},
-        {64, 0}
-},
-    {
-        {-4784128, 0, 1769472},
-        {-4784128, -327680, 2031616},
-        {-4784128, -327680, 1769472},
-        {0, 80},
-        {64, 0},
-        {0, 0}
-},
-    {
-        {-2949120, -327680, 2031616},
-        {-2031616, -327680, 2031616},
-        {-2031616, -1245184, 2031616},
         {0, 224},
         {224, 224},
-        {224, 0}
+        0
 },
     {
-        {-2949120, -327680, 2031616},
-        {-2031616, -1245184, 2031616},
-        {-2949120, -1245184, 2031616},
-        {0, 224},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-3866624, -1245184, 2031616},
-        {-4784128, -1245184, 2031616},
-        {-4784128, -327680, 2031616},
+        {-196608, 65536, -65536},
+        {-1114112, 65536, -65536},
+        {-1114112, 65536, -983040},
         {224, 0},
         {0, 0},
-        {0, 224}
-},
-    {
-        {-3866624, -1245184, 2031616},
-        {-4784128, -327680, 2031616},
-        {-3866624, -327680, 2031616},
-        {224, 0},
         {0, 224},
-        {224, 224}
+        0
 },
     {
-        {-3866624, -327680, 2031616},
-        {-2949120, -327680, 2031616},
-        {-2949120, -1245184, 2031616},
+        {-196608, 65536, -65536},
+        {-1114112, 65536, -983040},
+        {-196608, 65536, -983040},
+        {224, 0},
         {0, 224},
         {224, 224},
-        {224, 0}
+        0
 },
     {
-        {-3866624, -327680, 2031616},
-        {-2949120, -1245184, 2031616},
-        {-3866624, -1245184, 2031616},
+        {1048576, 65536, -65536},
+        {720896, 65536, -65536},
+        {720896, 65536, -983040},
+        {80, 0},
+        {0, 0},
         {0, 224},
-        {224, 0},
-        {0, 0}
+        0
 },
     {
-        {-2949120, -1245184, 2031616},
-        {-2031616, -1245184, 2031616},
-        {-2031616, -2162688, 2031616},
+        {1048576, 65536, -65536},
+        {720896, 65536, -983040},
+        {1048576, 65536, -983040},
+        {80, 0},
         {0, 224},
+        {80, 224},
+        0
+},
+    {
+        {1048576, -65536, -65536},
+        {720896, -65536, -65536},
+        {720896, -65536, 851968},
+        {80, 224},
+        {0, 224},
+        {0, 0},
+        0
+},
+    {
+        {1048576, -65536, -65536},
+        {720896, -65536, 851968},
+        {1048576, -65536, 851968},
+        {80, 224},
+        {0, 0},
+        {80, 0},
+        0
+},
+    {
+        {-196608, -65536, -65536},
+        {-1114112, -65536, -65536},
+        {-1114112, -65536, 851968},
         {224, 224},
-        {224, 0}
-},
-    {
-        {-2949120, -1245184, 2031616},
-        {-2031616, -2162688, 2031616},
-        {-2949120, -2162688, 2031616},
         {0, 224},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-3866624, -2162688, 2031616},
-        {-4784128, -2162688, 2031616},
-        {-4784128, -1245184, 2031616},
-        {224, 0},
         {0, 0},
-        {0, 224}
+        0
 },
     {
-        {-3866624, -2162688, 2031616},
-        {-4784128, -1245184, 2031616},
-        {-3866624, -1245184, 2031616},
-        {224, 0},
-        {0, 224},
-        {224, 224}
-},
-    {
-        {-3866624, -1245184, 2031616},
-        {-2949120, -1245184, 2031616},
-        {-2949120, -2162688, 2031616},
-        {0, 224},
+        {-196608, -65536, -65536},
+        {-1114112, -65536, 851968},
+        {-196608, -65536, 851968},
         {224, 224},
-        {224, 0}
+        {0, 0},
+        {224, 0},
+        0
 },
     {
-        {-3866624, -1245184, 2031616},
-        {-2949120, -2162688, 2031616},
-        {-3866624, -2162688, 2031616},
+        {720896, -65536, -65536},
+        {-196608, -65536, -65536},
+        {-196608, -65536, 851968},
+        {224, 224},
         {0, 224},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-3866624, -327680, 2031616},
-        {-3866624, 0, 2031616},
-        {-2949120, 0, 2031616},
         {0, 0},
-        {0, 80},
-        {224, 80}
+        0
 },
     {
-        {-3866624, -327680, 2031616},
-        {-2949120, 0, 2031616},
-        {-2949120, -327680, 2031616},
+        {720896, -65536, -65536},
+        {-196608, -65536, 851968},
+        {720896, -65536, 851968},
+        {224, 224},
         {0, 0},
-        {224, 80},
-        {224, 0}
+        {224, 0},
+        0
 },
     {
-        {-3866624, -327680, 2031616},
-        {-4784128, -327680, 2031616},
-        {-4784128, 0, 2031616},
+        {720896, -65536, -65536},
+        {720896, -65536, -983040},
+        {-196608, -65536, -983040},
         {224, 0},
+        {224, 224},
+        {0, 224},
+        0
+},
+    {
+        {720896, -65536, -65536},
+        {-196608, -65536, -983040},
+        {-196608, -65536, -65536},
+        {224, 0},
+        {0, 224},
         {0, 0},
-        {0, 80}
+        0
 },
     {
-        {-3866624, -327680, 2031616},
-        {-4784128, 0, 2031616},
-        {-3866624, 0, 2031616},
+        {-196608, -65536, -65536},
+        {-196608, -65536, -983040},
+        {-1114112, -65536, -983040},
         {224, 0},
-        {0, 80},
-        {224, 80}
+        {224, 224},
+        {0, 224},
+        0
 },
     {
-        {-2949120, -327680, 2031616},
-        {-2949120, 0, 2031616},
-        {-2031616, 0, 2031616},
+        {-196608, -65536, -65536},
+        {-1114112, -65536, -983040},
+        {-1114112, -65536, -65536},
+        {224, 0},
+        {0, 224},
         {0, 0},
-        {0, 80},
-        {224, 80}
+        0
 },
     {
-        {-2949120, -327680, 2031616},
-        {-2031616, 0, 2031616},
-        {-2031616, -327680, 2031616},
+        {1048576, -65536, -65536},
+        {1048576, -65536, -983040},
+        {720896, -65536, -983040},
+        {80, 0},
+        {80, 224},
+        {0, 224},
+        0
+},
+    {
+        {1048576, -65536, -65536},
+        {720896, -65536, -983040},
+        {720896, -65536, -65536},
+        {80, 0},
+        {0, 224},
         {0, 0},
-        {224, 80},
-        {224, 0}
-},
-    {
-        {-2949120, 0, 1769472},
-        {-2949120, 0, 2031616},
-        {-3866624, 0, 2031616},
-        {224, 64},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-2949120, 0, 1769472},
-        {-3866624, 0, 2031616},
-        {-3866624, 0, 1769472},
-        {224, 64},
-        {0, 0},
-        {0, 64}
-},
-    {
-        {-3866624, 0, 1769472},
-        {-3866624, 0, 2031616},
-        {-4784128, 0, 2031616},
-        {224, 64},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-3866624, 0, 1769472},
-        {-4784128, 0, 2031616},
-        {-4784128, 0, 1769472},
-        {224, 64},
-        {0, 0},
-        {0, 64}
-},
-    {
-        {-2031616, 0, 1769472},
-        {-2031616, 0, 2031616},
-        {-2949120, 0, 2031616},
-        {224, 64},
-        {224, 0},
-        {0, 0}
-},
-    {
-        {-2031616, 0, 1769472},
-        {-2949120, 0, 2031616},
-        {-2949120, 0, 1769472},
-        {224, 64},
-        {0, 0},
-        {0, 64}
-},
-    {
-        {-2949120, -2162688, 2031616},
-        {-2949120, -2162688, 1769472},
-        {-3866624, -2162688, 1769472},
-        {224, 0},
-        {224, 64},
-        {0, 64}
-},
-    {
-        {-2949120, -2162688, 2031616},
-        {-3866624, -2162688, 1769472},
-        {-3866624, -2162688, 2031616},
-        {224, 0},
-        {0, 64},
-        {0, 0}
-},
-    {
-        {-3866624, -2162688, 2031616},
-        {-3866624, -2162688, 1769472},
-        {-4784128, -2162688, 1769472},
-        {224, 0},
-        {224, 64},
-        {0, 64}
-},
-    {
-        {-3866624, -2162688, 2031616},
-        {-4784128, -2162688, 1769472},
-        {-4784128, -2162688, 2031616},
-        {224, 0},
-        {0, 64},
-        {0, 0}
-},
-    {
-        {-2031616, -2162688, 2031616},
-        {-2031616, -2162688, 1769472},
-        {-2949120, -2162688, 1769472},
-        {224, 0},
-        {224, 64},
-        {0, 64}
-},
-    {
-        {-2031616, -2162688, 2031616},
-        {-2949120, -2162688, 1769472},
-        {-2949120, -2162688, 2031616},
-        {224, 0},
-        {0, 64},
-        {0, 0}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2074886, -720896, -239878},
-        {-2031616, -720896, -113511},
-        {0, 0},
-        {17, 29},
-        {25, 5}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2031616, -720896, -113511},
-        {-2031616, -720896, -52680},
-        {0, 7},
-        {25, 12},
-        {25, 0}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2031616, -720896, -52680},
-        {-2031616, -720896, 52680},
-        {0, 28},
-        {25, 21},
-        {25, 0}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2031616, -720896, 52680},
-        {-2162688, -720896, 87801},
-        {0, 35},
-        {25, 7},
-        {0, 0}
-},
-    {
-        {-2031616, -720896, 113511},
-        {-2031616, -720896, 196608},
-        {-2074886, -720896, 239878},
-        {8, 24},
-        {8, 8},
-        {0, 0}
-},
-    {
-        {-2031616, -720896, 113511},
-        {-2074886, -720896, 239878},
-        {-2162688, -720896, 87801},
-        {25, 24},
-        {17, 0},
-        {0, 29}
-},
-    {
-        {-2031616, -720896, 113511},
-        {-2162688, -720896, 87801},
-        {-2031616, -720896, 52680},
-        {25, 0},
-        {0, 5},
-        {25, 12}
-},
-    {
-        {-2031616, -720896, -196608},
-        {-2031616, -720896, -113511},
-        {-2074886, -720896, -239878},
-        {8, 16},
-        {8, 0},
-        {0, 24}
-},
-    {
-        {-2031616, -720896, -196608},
-        {-2074886, -720896, -239878},
-        {-2031616, -720896, -264860},
-        {8, 0},
-        {0, 8},
-        {8, 13}
-},
-    {
-        {-2074886, -720896, 239878},
-        {-2031616, -720896, 196608},
-        {-2031616, -720896, 264860},
-        {0, 5},
-        {8, 13},
-        {8, 0}
-},
-    {
-        {-2074886, -720896, 239878},
-        {-2031616, -720896, 264860},
-        {-2031616, -827291, 196608},
-        {0, 17},
-        {8, 17},
-        {8, 0}
-},
-    {
-        {-2162688, -720896, 87801},
-        {-2031616, -956825, 52680},
-        {-2031616, -956825, -52680},
-        {28, 51},
-        {21, 0},
-        {0, 0}
-},
-    {
-        {-2162688, -720896, 87801},
-        {-2031616, -956825, -52680},
-        {-2162688, -720896, -87801},
-        {35, 51},
-        {7, 0},
-        {0, 51}
-},
-    {
-        {-2162688, -720896, 87801},
-        {-2074886, -720896, 239878},
-        {-2031616, -827291, 196608},
-        {0, 17},
-        {29, 17},
-        {21, 0}
-},
-    {
-        {-2162688, -720896, 87801},
-        {-2031616, -827291, 196608},
-        {-2031616, -956825, 52680},
-        {7, 39},
-        {28, 22},
-        {0, 0}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2031616, -956825, -52680},
-        {-2031616, -827291, -196608},
-        {21, 39},
-        {28, 0},
-        {0, 22}
-},
-    {
-        {-2162688, -720896, -87801},
-        {-2031616, -827291, -196608},
-        {-2074886, -720896, -239878},
-        {29, 17},
-        {8, 0},
-        {0, 17}
-},
-    {
-        {-2031616, -720896, -264860},
-        {-2074886, -720896, -239878},
-        {-2031616, -827291, -196608},
-        {8, 17},
-        {0, 17},
-        {8, 0}
+        0
 },
 };
-
 
 
 #pragma endregion
@@ -4419,10 +1159,11 @@ void initHardware(void){
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
     // Upload textures
-    uploadIndexedTexture(&font, fontData, SCREEN_WIDTH, 0, FONT_WIDTH, FONT_HEIGHT, 
-        fontPalette, SCREEN_WIDTH, FONT_HEIGHT, GP0_COLOR_4BPP);
-    uploadTexture(&default_32, default_32Data, SCREEN_WIDTH+64, 0, 32, 32); // Default checkerboard pink and black pattern for missing textures
-    
+    uploadIndexedTexture(&font, fontData, 960, 0, FONT_WIDTH, FONT_HEIGHT, 
+        fontPalette, 960, FONT_HEIGHT, GP0_COLOR_4BPP);
+    //uploadIndexedTexture(&default_32, default_32Data, 960-64, 128, 32, 32,
+    //    default_32Palette, SCREEN_WIDTH, 128+32, GP0_COLOR_8BPP);
+    uploadTexture(&default_32, default_32Data, SCREEN_WIDTH+32, 0, 32, 32);
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
@@ -4455,11 +1196,28 @@ void main(void){
 
     // Run this stuff once before the main loop.
     toggleControlSet();
-    
+    // Creates a new list and initialises with nulls
     Model filth;
     model_load("FILTH.MDL;1", &filth);
     uploadTexture(&filth_128, filth_128Data, SCREEN_WIDTH, 256, 128, 128);
 
+    // Load all the necessary textures from disc
+    printf("Loading textures from disc...\n");
+    for(int i = 0; i<numTextures; i++){
+        printf(" Need to load texture %s\n", textureNames[i]);
+    }
+
+    TextureInfo logo;
+    printf("Attempting to load logo from tim\n");
+    int _err = texture_loadTIM("LOGO.TIM;1", &logo);
+    if(_err){
+        printf(" Error code: %d\n", _err);
+        while(true){
+            __asm__("");
+        }
+    };
+    printf("Loaded.\n");
+    
 
     // Init camera
     mainCamera.x     = 0;
@@ -4471,7 +1229,6 @@ void main(void){
 
     resetPlayer();
     
-
     //printf("Min: %d\n", min32s(1, min32s(2, 3)));
     //printf("Max: %d\n", max32s(1, max32s(2, 3)));
     //while (true) {
@@ -4532,7 +1289,6 @@ void main(void){
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
         setTranslationMatrix(0, 0, 0);
         
-
         // Render gizmo
         for (int i = 0; i<4; i++){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
@@ -4556,22 +1312,11 @@ void main(void){
             if(
                 transformTri_texturedFlat(&mainCamera, tris[i], &transformedTri)
             ){
+                
                 drawTri2_texturedFlat(transformedTri, &default_32, 5);
             }
         }
-
-        //Tri2 transformedTri;
-        //for(int i = 0; i<numTris; i++){
-        //    Tri3 tri3;
-        //    tri3.a = tris[i].a;tri3.b = tris[i].b;tri3.c = tris[i].c;
-        //    if(
-        //        transformTri(&mainCamera, tri3, &transformedTri)
-        //    ){
-        //        drawTri2(transformedTri, colours[i%6]);
-        //    }
-        //}
         
-
 
 
 
@@ -4688,6 +1433,6 @@ void main(void){
         #pragma endregion
    
 
-        debug("\n***\n\n"); // Add a separator between frames to make it easier to read debug output
+        //debug("\n***\n\n"); // Add a separator between frames to make it easier to read debug output
     }
 }
