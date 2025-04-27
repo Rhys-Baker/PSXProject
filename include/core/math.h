@@ -54,6 +54,16 @@ static inline int32_t Vector2_cross(Vector2 a, Vector2 b) {
     return ((a.x * b.y) >> 12) - ((a.y * b.x) >> 12);
 }
 
+static inline uint8_t shiftAndMergeLeft_8(uint8_t dest, uint8_t src, uint8_t num_bits) {
+    return (dest << num_bits) | (src >> (8 - num_bits));
+}
+static inline uint16_t shiftAndMergeLeft_16(uint16_t dest, uint16_t src, uint16_t num_bits) {
+    return (dest << num_bits) | (src >> (16 - num_bits));
+}
+static inline uint32_t shiftAndMergeLeft_32(uint32_t dest, uint32_t src, uint32_t num_bits) {
+    return (dest << num_bits) | (src >> (32 - num_bits));
+}
+
 
 //////////////////////////
 // 3D Vector operations //
