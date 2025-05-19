@@ -72,6 +72,30 @@
 
 			<!-- Texture Files -->
 			<file name="LOGO.TIM" type="data" source="logo.tim"/>
+			<file name="MISSING.TIM" type="data" source="Textures/MISSING.TIM" />
+			<file name="SAVE.TIM" type="data" source="Textures/SAVE.TIM" />
+
+			<file name="01DOOR.TIM" type="data" source="Textures/01DOOR.TIM" />
+			
+			<file name="01F0.TIM" type="data" source="Textures/01F0.TIM" />
+			<file name="01F1.TIM" type="data" source="Textures/01F1.TIM" />
+			<file name="01F2.TIM" type="data" source="Textures/01F2.TIM" />
+			<file name="01F3.TIM" type="data" source="Textures/01F3.TIM" />
+			<file name="01F4.TIM" type="data" source="Textures/01F4.TIM" />
+			<file name="01F5.TIM" type="data" source="Textures/01F5.TIM" />
+			<file name="01F6.TIM" type="data" source="Textures/01F6.TIM" />
+			<file name="01F7.TIM" type="data" source="Textures/01F7.TIM" />
+			<file name="01F8.TIM" type="data" source="Textures/01F8.TIM" />
+
+			<file name="01L0.TIM" type="data" source="Textures/01L0.TIM" />
+			<file name="01L1.TIM" type="data" source="Textures/01L1.TIM" />
+			<file name="01L2.TIM" type="data" source="Textures/01L2.TIM" />
+			<file name="01L3.TIM" type="data" source="Textures/01L3.TIM" />
+			<file name="01L4.TIM" type="data" source="Textures/01L4.TIM" />
+
+			
+			
+			
 
 			<!-- Audio files -->
 			<file name="LASER.VAG" type="data" source="laser.vag"/>
