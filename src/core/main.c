@@ -40,9 +40,10 @@
 #define TERMINAL_VELOCITY 5
 #define GRAVITY_CONSTANT 1
 
-#define PLAYER_BBOX_X (64 * ONE)
-#define PLAYER_BBOX_Y (128 * ONE)
-#define PLAYER_BBOX_Z (64 * ONE)
+#define UNIT_SIZE 16 // Define unit sizes
+#define PLAYER_BBOX_X (1 * UNIT_SIZE * ONE)
+#define PLAYER_BBOX_Y (4 * UNIT_SIZE * ONE)
+#define PLAYER_BBOX_Z (1 * UNIT_SIZE * ONE)
 
 
 // Built-in debug textures
@@ -62,10 +63,12 @@ TextureInfo filth_128;
 Camera mainCamera;
 Player3 player;
 char str_Buffer[256];
-int screenColor = 0xfa823c;
+//int screenColor = 0xfa823c;
+int screenColor = 0x000000;
 int wallColor = 0x3c82fa;
 int gteScaleFactor = 0;
-int delayFactor = 0;
+int debugVariable = 0;
+bool drawOutlines = true;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -176,7 +179,6 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     }
 
     // Base case: Triangle is of renderable size, so render it
-    
     int32_t xy0 = gp0_xy(tri.a.x, tri.a.y);
     int32_t xy1 = gp0_xy(tri.b.x, tri.b.y);
     int32_t xy2 = gp0_xy(tri.c.x, tri.c.y);
@@ -184,37 +186,17 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     int32_t uv1 = gp0_uv(texinfo->u + tri.buv.x, texinfo->v + tri.buv.y, texinfo->page);
     int32_t uv2 = gp0_uv(texinfo->u + tri.cuv.x, texinfo->v + tri.cuv.y, 0);
 
-    printf("Triangle info:\n");
-    printf(
-        " A: (%d %d) + (%d %d) = (%d %d)\n",
-        tri.auv.x, tri.auv.y,
-        texinfo->u, texinfo->v,
-        tri.auv.x + texinfo->u, tri.auv.y + texinfo->v
-    );
-    printf(
-        " B: (%d %d) + (%d %d) = (%d %d)\n",
-        tri.buv.x, tri.buv.y,
-        texinfo->u, texinfo->v,
-        tri.buv.x + texinfo->u, tri.buv.y + texinfo->v
-    );
-    printf(
-        " C: (%d %d) + (%d %d) = (%d %d)\n",
-        tri.cuv.x, tri.cuv.y,
-        texinfo->u, texinfo->v,
-        tri.cuv.x + texinfo->u, tri.cuv.y + texinfo->v
-    );
-
     // Only supports tiling textures that are powers of 2 
     // TODO: This assumes tiling. We might not necessarily want that. Perhaps add an
     // Also this just BREAKS if the numbers are wrong. So don't let the numbers be wrong (must be powers of 2 >= 8)
     
-    //uint8_t bitmask_u = 0xFF << (28-__builtin_clz(texinfo->w));
-    //uint8_t bitmask_v = 0xFF << (28-__builtin_clz(texinfo->h));
-    
+    uint8_t bitmask_u = 0xFF << (31-__builtin_clz(texinfo->w));
+    uint8_t bitmask_v = 0xFF << (31-__builtin_clz(texinfo->h));
+
     dmaPtr = allocatePacket(activeChain, tri.z, 8);
-    //dmaPtr[0] = gp0_texwindow(0, 16, bitmask_u, bitmask_v);
-    //dmaPtr[0] = gp0_texwindow(0, 0b00100, 0b11100, 0b11100);
-    dmaPtr[0] = gp0_texwindow(0b00100, 0, 0b11100, 0b11100);
+    dmaPtr[0] = gp0_texwindow(texinfo->u>>3, texinfo->v>>3, bitmask_u>>3, bitmask_v>>3);
+    //dmaPtr[0] = gp0_texwindow(0, 4, 0b11100, 0b11100);
+    //printf("%d %d\n", texinfo->u, bitmask_u);
     dmaPtr[1] = 0x808080 | gp0_triangle(true, false);
     dmaPtr[2] = xy0;
     dmaPtr[3] = uv0;
@@ -222,7 +204,12 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     dmaPtr[5] = uv1;
     dmaPtr[6] = xy2;
     dmaPtr[7] = uv2;
-    
+
+    if(drawOutlines){
+        drawLine2((Vector2){tri.a.x, tri.a.y},(Vector2){tri.b.x, tri.b.y}, 0xFFFFFF); // AB
+        drawLine2((Vector2){tri.b.x, tri.b.y},(Vector2){tri.c.x, tri.c.y}, 0xFFFFFF); // BC
+        drawLine2((Vector2){tri.c.x, tri.c.y},(Vector2){tri.a.x, tri.a.y}, 0xFFFFFF); // CA
+    }
 
 }
 void drawQuad2(Quad2 quad, uint32_t colour){    
@@ -243,8 +230,9 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
         return false;
     }
     // Save the current translation vector
-    int32_t currentTx, currentTy, currentTz;
-    gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
+    int32_t currentTx = gte_getControlReg(GTE_TRX);
+    int32_t currentTy = gte_getControlReg(GTE_TRY);
+    int32_t currentTz = gte_getControlReg(GTE_TRZ);
     // Translate model
     updateTranslationMatrix(cam->x, cam->y, cam->z);
     // Rotate model
@@ -257,8 +245,8 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     gte_loadV0(&vert);
     gte_command(GTE_CMD_RTPS | GTE_SF);
 
-    //gte_command(GTE_CMD_AVSZ3 | GTE_SF);
-    int zIndex = gte_getOTZ();
+    // A single point means we can read the Z index from the SZ3 register rather than averaging them
+    int zIndex = gte_getDataReg(GTE_SZ3);
     
     // Don't render things too far away.
     if(zIndex >= ORDERING_TABLE_SIZE){
@@ -266,7 +254,7 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     }
     
     // Get the XY coordinate of the transformed cross
-    uint32_t XY0 = gte_getSXY2();
+    uint32_t XY0 = gte_getDataReg(GTE_SXY2);
     Vector2 transformedCross;
     transformedCross.x = XY0 & 0xFFFF;
     transformedCross.y = XY0 >> 16;
@@ -275,13 +263,12 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     result->y = transformedCross.y;
 
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
-    gte_setTranslationVector(currentTx, currentTy, currentTz);
+    gte_setControlReg(GTE_TRX, currentTx);
+    gte_setControlReg(GTE_TRY, currentTy);
+    gte_setControlReg(GTE_TRZ, currentTz);
     return true;
 }
 bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
-    // TODO: Replace AVZ3 with a Max 
-    uint32_t xy0, xy1, xy2;
-
     // Range check. Is it too big to be drawn?
     if(
         abs(cam->x - (tri.a.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.a.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.a.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
@@ -289,12 +276,14 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
         abs(cam->x - (tri.c.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.c.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.c.z>>GTE_SCALE_FACTOR)) > INT16_MAX
     ){
         // Out of range. Don't render
+        //printf("Out of range. (too large)\n");
         return false;
     }
 
     // Save the current translation vector
-    int32_t currentTx, currentTy, currentTz;
-    gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
+    uint32_t currentTx = gte_getControlReg(GTE_TRX);
+    uint32_t currentTy = gte_getControlReg(GTE_TRY);
+    uint32_t currentTz = gte_getControlReg(GTE_TRZ);
     // Translate model
     updateTranslationMatrix(cam->x, cam->y, cam->z);
     // Rotate model
@@ -311,22 +300,47 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     gte_loadV2(&verts[2]);
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
-    if(gte_getMAC0() <= 0){
-        gte_setTranslationVector(currentTx, currentTy, currentTz);
+    int MAC0 = gte_getDataReg(GTE_MAC0);
+    uint32_t flags = gte_getControlReg(GTE_FLAG);
+    bool clip = flags & GTE_FLAG_DIVIDE_OVERFLOW;
+    
+    //printf("%s | ", clip ? "True" : "False");
+    //printf("0x%08x & 0x%08x = 0x%08x | ", flags, GTE_FLAG_DIVIDE_OVERFLOW, flags & GTE_FLAG_DIVIDE_OVERFLOW);
+
+    if(MAC0 <= 0){
+        gte_setControlReg(GTE_TRX, currentTx);
+        gte_setControlReg(GTE_TRY, currentTy);
+        gte_setControlReg(GTE_TRZ, currentTz);
+        //printf("MAC0 (%d) <= 0\n", MAC0);
         return false;
     }
-    xy0 = gte_getSXY0();
-    xy1 = gte_getSXY1();
-    xy2 = gte_getSXY2();
+    if(clip){
+        gte_setControlReg(GTE_TRX, currentTx);
+        gte_setControlReg(GTE_TRY, currentTy);
+        gte_setControlReg(GTE_TRZ, currentTz);
+        //printf("Clip is set\n");
+        return false;
+    }
+    uint32_t xy0 = gte_getDataReg(GTE_SXY0);
+    uint32_t xy1 = gte_getDataReg(GTE_SXY1);
+    uint32_t xy2 = gte_getDataReg(GTE_SXY2);
+
 
     gte_command(GTE_CMD_AVSZ3 | GTE_SF);
-    int zIndex = gte_getOTZ();
+    int zIndex = gte_getDataReg(GTE_OTZ);
+    //int sz0 = gte_getDataReg(GTE_SZ0);
+    //int sz1 = gte_getDataReg(GTE_SZ1);
+    //int sz2 = gte_getDataReg(GTE_SZ2);
+    //int zIndex = max(max(sz0, sz1), sz2);
 
     if(zIndex < 1 || zIndex >= ORDERING_TABLE_SIZE){
-        gte_setTranslationVector(currentTx, currentTy, currentTz);
+        gte_setControlReg(GTE_TRX, currentTx);
+        gte_setControlReg(GTE_TRY, currentTy);
+        gte_setControlReg(GTE_TRZ, currentTz);
+        //printf("Invalid Z index: %d\n", zIndex);
         return false;
     }
-
+    
     // Save result
     result->a = (Vector2_16){xy0 & 0xFFFF, xy0 >> 16};
     result->b = (Vector2_16){xy1 & 0xFFFF, xy1 >> 16};
@@ -334,7 +348,11 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     result->z = zIndex;
 
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
-    gte_setTranslationVector(currentTx, currentTy, currentTz);
+    gte_setControlReg(GTE_TRX, currentTx);
+    gte_setControlReg(GTE_TRY, currentTy);
+    gte_setControlReg(GTE_TRZ, currentTz);
+    //printf("Valid triangle. (Z: %d, MAC0: %d)\n", zIndex, MAC0);
+
     return true;
 }
 bool transformTri_texturedFlat(Camera *cam, Tri3_texturedFlat tri, Tri2_texturedFlat *result){
@@ -375,8 +393,9 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     }
 
     // Save the current matrices so we don't clobber them.
-    Vector3 currentT;
-    gte_getTranslationVector(&currentT.x, &currentT.y, &currentT.z);
+    int32_t currentTx = gte_getControlReg(GTE_TRX);
+    int32_t currentTy = gte_getControlReg(GTE_TRY);
+    int32_t currentTz = gte_getControlReg(GTE_TRZ);
 
     // Translate model
     updateTranslationMatrix(cam->x, cam->y, cam->z);
@@ -398,33 +417,37 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
 
-    if(gte_getMAC0() <= 0){
+    if(gte_getDataReg(GTE_MAC0) <= 0){
         // Restore matrices.
-        gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
+        gte_setControlReg(GTE_TRX, currentTx);
+        gte_setControlReg(GTE_TRY, currentTy);
+        gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
 
-    xy0 = gte_getSXY0();
+    xy0 = gte_getDataReg(GTE_SXY0);
     
     // Load the last vert    
     gte_loadV0(&verts[3]);
     gte_command(GTE_CMD_RTPS | GTE_SF);
 
-    sz0 = gte_getSZ0();
-    sz1 = gte_getSZ1();
-    sz2 = gte_getSZ2();
-    sz3 = gte_getSZ3();
+    sz0 = gte_getDataReg(GTE_SZ0);
+    sz1 = gte_getDataReg(GTE_SZ1);
+    sz2 = gte_getDataReg(GTE_SZ2);
+    sz3 = gte_getDataReg(GTE_SZ3);
     int zIndex = max(max(sz0, sz1),max(sz2, sz3));
 
     if(zIndex < 0 || zIndex >= ORDERING_TABLE_SIZE){
         // Restore matrices.
-        gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
+        gte_setControlReg(GTE_TRX, currentTx);
+        gte_setControlReg(GTE_TRY, currentTy);
+        gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
 
-    xy1 = gte_getSXY0();
-    xy2 = gte_getSXY1();
-    xy3 = gte_getSXY2();
+    xy1 = gte_getDataReg(GTE_SXY0);
+    xy2 = gte_getDataReg(GTE_SXY1);
+    xy3 = gte_getDataReg(GTE_SXY2);
     
     // Save result
     result->a = (Vector2){xy0 & 0xFFFF, xy0 >> 16};
@@ -434,7 +457,9 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     result->z = zIndex;
 
     // Restore matrices.
-    gte_setTranslationVector(currentT.x, currentT.y, currentT.z);
+    gte_setControlReg(GTE_TRX, currentTx);
+    gte_setControlReg(GTE_TRY, currentTy);
+    gte_setControlReg(GTE_TRZ, currentTz);
 
     return true;
 }
@@ -446,10 +471,145 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 ///////////////////////////////////////////////
 // BSP Tree Definition and Shape Definitions //
 ///////////////////////////////////////////////
-#pragma region BSP Tree
-
-int numTextures = 0;
-char *textureNames[] = {
+#pragma region BSPTree
+int numTextures = 17;
+BSPTextureInfo bspTextureInfo[] = {
+    {
+        "01F7.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F1.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "SAVE.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F5.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01L3.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01L4.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01L1.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F6.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01DOOR.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01L0.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F2.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "MISSING.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F0.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F8.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F4.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01L2.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
+    {
+        "01F3.TIM;1",
+        {
+            0, 0,
+            0, 0,
+            0, 0
+        }
+    },
 };
 BSPNode3 bspNodes_hitscan[] = {
     {
@@ -458,9 +618,20 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 0,
         .children = {
-            1, -1
+            1, 10
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 0,
+        .children = {
+            2, 6
         }
     },
     {
@@ -469,9 +640,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = 327680,
         .children = {
-            -1, 2
+            -1, 3
         }
     },
     {
@@ -480,18 +651,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -983040,
-        .children = {
-            3, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 851968,
+        .distance = 327680,
         .children = {
             -1, 4
         }
@@ -518,8 +678,151 @@ BSPNode3 bspNodes_hitscan[] = {
             -1, -2
         }
     },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -1, 7
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -327680,
+        .children = {
+            8, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -65536,
+        .children = {
+            9, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 65536,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 0,
+        .children = {
+            11, 15
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            12, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 327680,
+        .children = {
+            -1, 13
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -65536,
+        .children = {
+            14, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 65536,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            16, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -327680,
+        .children = {
+            17, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -65536,
+        .children = {
+            18, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 65536,
+        .children = {
+            -1, -2
+        }
+    },
 };
-BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 6};
+BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 19};
 
 BSPNode3 bspNodes_player[] = {
     {
@@ -528,9 +831,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -131072,
         .children = {
-            1, -1
+            1, 10
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 131072,
+        .children = {
+            2, 6
         }
     },
     {
@@ -539,9 +853,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = 458752,
         .children = {
-            -1, 2
+            -1, 3
         }
     },
     {
@@ -550,18 +864,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -983040,
-        .children = {
-            3, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 851968,
+        .distance = 458752,
         .children = {
             -1, 4
         }
@@ -572,7 +875,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -65536,
+        .distance = -327680,
         .children = {
             5, -1
         }
@@ -583,418 +886,571 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = 327680,
         .children = {
             -1, -2
         }
     },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 458752,
+        .children = {
+            -1, 7
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -458752,
+        .children = {
+            8, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            9, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -458752,
+        .children = {
+            11, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            12, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -1, 13
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -131072,
+        .children = {
+            14, 16
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 131072,
+        .children = {
+            15, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 458752,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -458752,
+        .children = {
+            -2, -1
+        }
+    },
 };
-BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 6};
+BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 17};
 
-int numTris = 44;
+int numTris = 48;
 Tri3_texturedFlat tris[] = {
     {
-        {-1114112, 65536, -65536},
-        {-1114112, -65536, -65536},
-        {-1114112, -65536, -983040},
-        {224, 32},
-        {224, 0},
-        {0, 0},
-        0
-},
+        {-327680, 65536, 327680},
+        {-327680, -65536, 0},
+        {-327680, 65536, 0},
+        {63, 15},
+        {0, 240},
+        {0, 15},
+        11
+    },
     {
-        {-1114112, 65536, -65536},
-        {-1114112, -65536, -983040},
-        {-1114112, 65536, -983040},
-        {224, 32},
-        {0, 0},
-        {0, 32},
-        0
-},
+        {-327680, 65536, 327680},
+        {-327680, -65536, 327680},
+        {-327680, -65536, 0},
+        {63, 15},
+        {63, 240},
+        {0, 240},
+        11
+    },
     {
-        {-1114112, 65536, -65536},
-        {-1114112, 65536, 851968},
-        {-1114112, -65536, 851968},
-        {0, 32},
-        {224, 32},
-        {224, 0},
-        0
-},
+        {0, -65536, 0},
+        {-327680, 65536, 0},
+        {-327680, -65536, 0},
+        {255, 240},
+        {176, 15},
+        {176, 240},
+        11
+    },
     {
-        {-1114112, 65536, -65536},
-        {-1114112, -65536, 851968},
-        {-1114112, -65536, -65536},
-        {0, 32},
-        {224, 0},
-        {0, 0},
-        0
-},
+        {0, -65536, 0},
+        {0, 65536, 0},
+        {-327680, 65536, 0},
+        {255, 240},
+        {255, 15},
+        {176, 15},
+        11
+    },
     {
-        {1048576, 65536, -65536},
-        {1048576, 65536, -983040},
-        {1048576, -65536, -983040},
-        {224, 32},
-        {0, 32},
-        {0, 0},
-        0
-},
+        {0, 65536, 0},
+        {-327680, 65536, 327680},
+        {-327680, 65536, 0},
+        {255, 255},
+        {176, 176},
+        {176, 255},
+        11
+    },
     {
-        {1048576, 65536, -65536},
-        {1048576, -65536, -983040},
-        {1048576, -65536, -65536},
-        {224, 32},
-        {0, 0},
-        {224, 0},
-        0
-},
+        {0, 65536, 0},
+        {0, 65536, 327680},
+        {-327680, 65536, 327680},
+        {255, 255},
+        {255, 176},
+        {176, 176},
+        11
+    },
     {
-        {1048576, 65536, -65536},
-        {1048576, -65536, -65536},
-        {1048576, -65536, 851968},
-        {0, 32},
-        {0, 0},
-        {224, 0},
-        0
-},
-    {
-        {1048576, 65536, -65536},
-        {1048576, -65536, 851968},
-        {1048576, 65536, 851968},
-        {0, 32},
-        {224, 0},
-        {224, 32},
-        0
-},
-    {
-        {720896, -65536, -983040},
-        {720896, 65536, -983040},
-        {-196608, 65536, -983040},
-        {224, 0},
-        {224, 32},
-        {0, 32},
-        0
-},
-    {
-        {720896, -65536, -983040},
-        {-196608, 65536, -983040},
-        {-196608, -65536, -983040},
-        {224, 0},
-        {0, 32},
-        {0, 0},
-        0
-},
-    {
-        {-196608, -65536, -983040},
-        {-196608, 65536, -983040},
-        {-1114112, 65536, -983040},
-        {224, 0},
-        {224, 32},
-        {0, 32},
-        0
-},
-    {
-        {-196608, -65536, -983040},
-        {-1114112, 65536, -983040},
-        {-1114112, -65536, -983040},
-        {224, 0},
-        {0, 32},
-        {0, 0},
-        0
-},
-    {
-        {720896, -65536, -983040},
-        {1048576, -65536, -983040},
-        {1048576, 65536, -983040},
-        {0, 0},
-        {80, 0},
-        {80, 32},
-        0
-},
-    {
-        {720896, -65536, -983040},
-        {1048576, 65536, -983040},
-        {720896, 65536, -983040},
-        {0, 0},
-        {80, 32},
-        {0, 32},
-        0
-},
-    {
-        {-196608, -65536, 851968},
-        {-196608, 65536, 851968},
-        {720896, 65536, 851968},
-        {0, 0},
-        {0, 32},
-        {224, 32},
-        0
-},
-    {
-        {-196608, -65536, 851968},
-        {720896, 65536, 851968},
-        {720896, -65536, 851968},
-        {0, 0},
-        {224, 32},
-        {224, 0},
-        0
-},
-    {
-        {-196608, -65536, 851968},
-        {-1114112, -65536, 851968},
-        {-1114112, 65536, 851968},
-        {224, 0},
-        {0, 0},
-        {0, 32},
-        0
-},
-    {
-        {-196608, -65536, 851968},
-        {-1114112, 65536, 851968},
-        {-196608, 65536, 851968},
-        {224, 0},
-        {0, 32},
-        {224, 32},
-        0
-},
-    {
-        {720896, -65536, 851968},
-        {720896, 65536, 851968},
-        {1048576, 65536, 851968},
-        {0, 0},
-        {0, 32},
-        {80, 32},
-        0
-},
-    {
-        {720896, -65536, 851968},
-        {1048576, 65536, 851968},
-        {1048576, -65536, 851968},
-        {0, 0},
-        {80, 32},
-        {80, 0},
-        0
-},
-    {
-        {1048576, 65536, -65536},
-        {1048576, 65536, 851968},
-        {720896, 65536, 851968},
-        {80, 224},
-        {80, 0},
-        {0, 0},
-        0
-},
-    {
-        {1048576, 65536, -65536},
-        {720896, 65536, 851968},
-        {720896, 65536, -65536},
-        {80, 224},
-        {0, 0},
-        {0, 224},
-        0
-},
-    {
-        {-196608, 65536, -65536},
-        {-196608, 65536, 851968},
-        {-1114112, 65536, 851968},
+        {0, -65536, 327680},
+        {-327680, -65536, 0},
+        {-327680, -65536, 327680},
+        {255, 224},
+        {224, 255},
         {224, 224},
-        {224, 0},
-        {0, 0},
-        0
-},
+        12
+    },
     {
-        {-196608, 65536, -65536},
-        {-1114112, 65536, 851968},
-        {-1114112, 65536, -65536},
+        {0, -65536, 327680},
+        {0, -65536, 0},
+        {-327680, -65536, 0},
+        {255, 224},
+        {255, 255},
+        {224, 255},
+        12
+    },
+    {
+        {0, 65536, 327680},
+        {-327680, -65536, 327680},
+        {-327680, 65536, 327680},
+        {255, 15},
+        {176, 240},
+        {176, 15},
+        11
+    },
+    {
+        {0, 65536, 327680},
+        {0, -65536, 327680},
+        {-327680, -65536, 327680},
+        {255, 15},
+        {255, 240},
+        {176, 240},
+        11
+    },
+    {
+        {0, -65536, 327680},
+        {0, 65536, 0},
+        {0, -65536, 0},
+        {79, 240},
+        {0, 15},
+        {0, 240},
+        11
+    },
+    {
+        {0, -65536, 327680},
+        {0, 65536, 327680},
+        {0, 65536, 0},
+        {79, 240},
+        {79, 15},
+        {0, 15},
+        11
+    },
+    {
+        {0, 65536, 327680},
+        {0, -65536, 0},
+        {0, 65536, 0},
+        {79, 15},
+        {0, 240},
+        {0, 15},
+        11
+    },
+    {
+        {0, 65536, 327680},
+        {0, -65536, 327680},
+        {0, -65536, 0},
+        {79, 15},
+        {79, 240},
+        {0, 240},
+        11
+    },
+    {
+        {327680, -65536, 0},
+        {0, 65536, 0},
+        {0, -65536, 0},
+        {79, 240},
+        {0, 15},
+        {0, 240},
+        11
+    },
+    {
+        {327680, -65536, 0},
+        {327680, 65536, 0},
+        {0, 65536, 0},
+        {79, 240},
+        {79, 15},
+        {0, 15},
+        11
+    },
+    {
+        {327680, 65536, 0},
+        {0, 65536, 327680},
+        {0, 65536, 0},
+        {79, 255},
+        {0, 176},
+        {0, 255},
+        11
+    },
+    {
+        {327680, 65536, 0},
+        {327680, 65536, 327680},
+        {0, 65536, 327680},
+        {79, 255},
+        {79, 176},
+        {0, 176},
+        11
+    },
+    {
+        {327680, -65536, 327680},
+        {0, -65536, 0},
+        {0, -65536, 327680},
         {224, 224},
-        {0, 0},
-        {0, 224},
-        0
-},
+        {255, 255},
+        {224, 255},
+        12
+    },
     {
-        {720896, 65536, -65536},
-        {720896, 65536, 851968},
-        {-196608, 65536, 851968},
+        {327680, -65536, 327680},
+        {327680, -65536, 0},
+        {0, -65536, 0},
         {224, 224},
-        {224, 0},
-        {0, 0},
-        0
-},
+        {255, 224},
+        {255, 255},
+        12
+    },
     {
-        {720896, 65536, -65536},
-        {-196608, 65536, 851968},
-        {-196608, 65536, -65536},
+        {327680, 65536, 327680},
+        {0, -65536, 327680},
+        {0, 65536, 327680},
+        {79, 15},
+        {0, 240},
+        {0, 15},
+        11
+    },
+    {
+        {327680, 65536, 327680},
+        {327680, -65536, 327680},
+        {0, -65536, 327680},
+        {79, 15},
+        {79, 240},
+        {0, 240},
+        11
+    },
+    {
+        {327680, -65536, 327680},
+        {327680, 65536, 0},
+        {327680, -65536, 0},
+        {79, 240},
+        {0, 15},
+        {0, 240},
+        11
+    },
+    {
+        {327680, -65536, 327680},
+        {327680, 65536, 327680},
+        {327680, 65536, 0},
+        {79, 240},
+        {79, 15},
+        {0, 15},
+        11
+    },
+    {
+        {-327680, 65536, 0},
+        {-327680, -65536, -327680},
+        {-327680, 65536, -327680},
+        {255, 15},
+        {176, 240},
+        {176, 15},
+        11
+    },
+    {
+        {-327680, 65536, 0},
+        {-327680, -65536, 0},
+        {-327680, -65536, -327680},
+        {255, 15},
+        {255, 240},
+        {176, 240},
+        11
+    },
+    {
+        {0, -65536, -327680},
+        {-327680, 65536, -327680},
+        {-327680, -65536, -327680},
+        {255, 240},
+        {176, 15},
+        {176, 240},
+        11
+    },
+    {
+        {0, -65536, -327680},
+        {0, 65536, -327680},
+        {-327680, 65536, -327680},
+        {255, 240},
+        {255, 15},
+        {176, 15},
+        11
+    },
+    {
+        {0, 65536, -327680},
+        {-327680, 65536, 0},
+        {-327680, 65536, -327680},
+        {255, 79},
+        {176, 0},
+        {176, 79},
+        11
+    },
+    {
+        {0, 65536, -327680},
+        {0, 65536, 0},
+        {-327680, 65536, 0},
+        {255, 79},
+        {255, 0},
+        {176, 0},
+        11
+    },
+    {
+        {0, -65536, 0},
+        {-327680, -65536, -327680},
+        {-327680, -65536, 0},
+        {255, 255},
         {224, 224},
-        {0, 0},
-        {0, 224},
-        0
-},
+        {255, 224},
+        12
+    },
     {
-        {720896, 65536, -65536},
-        {-196608, 65536, -65536},
-        {-196608, 65536, -983040},
-        {224, 0},
-        {0, 0},
-        {0, 224},
-        0
-},
-    {
-        {720896, 65536, -65536},
-        {-196608, 65536, -983040},
-        {720896, 65536, -983040},
-        {224, 0},
-        {0, 224},
+        {0, -65536, 0},
+        {0, -65536, -327680},
+        {-327680, -65536, -327680},
+        {255, 255},
+        {224, 255},
         {224, 224},
-        0
-},
+        12
+    },
     {
-        {-196608, 65536, -65536},
-        {-1114112, 65536, -65536},
-        {-1114112, 65536, -983040},
-        {224, 0},
+        {0, 65536, 0},
+        {-327680, -65536, 0},
+        {-327680, 65536, 0},
+        {255, 15},
+        {176, 240},
+        {176, 15},
+        11
+    },
+    {
+        {0, 65536, 0},
+        {0, -65536, 0},
+        {-327680, -65536, 0},
+        {255, 15},
+        {255, 240},
+        {176, 240},
+        11
+    },
+    {
+        {0, -65536, 0},
+        {0, 65536, -327680},
+        {0, -65536, -327680},
+        {255, 240},
+        {176, 15},
+        {176, 240},
+        11
+    },
+    {
+        {0, -65536, 0},
+        {0, 65536, 0},
+        {0, 65536, -327680},
+        {255, 240},
+        {255, 15},
+        {176, 15},
+        11
+    },
+    {
+        {0, 65536, 0},
+        {0, -65536, -327680},
+        {0, 65536, -327680},
+        {255, 15},
+        {176, 240},
+        {176, 15},
+        11
+    },
+    {
+        {0, 65536, 0},
+        {0, -65536, 0},
+        {0, -65536, -327680},
+        {255, 15},
+        {255, 240},
+        {176, 240},
+        11
+    },
+    {
+        {327680, -65536, -327680},
+        {0, 65536, -327680},
+        {0, -65536, -327680},
+        {79, 240},
+        {0, 15},
+        {0, 240},
+        11
+    },
+    {
+        {327680, -65536, -327680},
+        {327680, 65536, -327680},
+        {0, 65536, -327680},
+        {79, 240},
+        {79, 15},
+        {0, 15},
+        11
+    },
+    {
+        {327680, 65536, -327680},
+        {0, 65536, 0},
+        {0, 65536, -327680},
+        {79, 79},
         {0, 0},
-        {0, 224},
-        0
-},
+        {0, 79},
+        11
+    },
     {
-        {-196608, 65536, -65536},
-        {-1114112, 65536, -983040},
-        {-196608, 65536, -983040},
-        {224, 0},
-        {0, 224},
+        {327680, 65536, -327680},
+        {327680, 65536, 0},
+        {0, 65536, 0},
+        {79, 79},
+        {79, 0},
+        {0, 0},
+        11
+    },
+    {
+        {327680, -65536, 0},
+        {0, -65536, -327680},
+        {0, -65536, 0},
+        {224, 255},
+        {255, 224},
+        {255, 255},
+        12
+    },
+    {
+        {327680, -65536, 0},
+        {327680, -65536, -327680},
+        {0, -65536, -327680},
+        {224, 255},
         {224, 224},
-        0
-},
+        {255, 224},
+        12
+    },
     {
-        {1048576, 65536, -65536},
-        {720896, 65536, -65536},
-        {720896, 65536, -983040},
-        {80, 0},
-        {0, 0},
-        {0, 224},
-        0
-},
+        {327680, 65536, 0},
+        {0, -65536, 0},
+        {0, 65536, 0},
+        {79, 15},
+        {0, 240},
+        {0, 15},
+        11
+    },
     {
-        {1048576, 65536, -65536},
-        {720896, 65536, -983040},
-        {1048576, 65536, -983040},
-        {80, 0},
-        {0, 224},
-        {80, 224},
-        0
-},
+        {327680, 65536, 0},
+        {327680, -65536, 0},
+        {0, -65536, 0},
+        {79, 15},
+        {79, 240},
+        {0, 240},
+        11
+    },
     {
-        {1048576, -65536, -65536},
-        {720896, -65536, -65536},
-        {720896, -65536, 851968},
-        {80, 224},
-        {0, 224},
-        {0, 0},
-        0
-},
+        {327680, -65536, 0},
+        {327680, 65536, -327680},
+        {327680, -65536, -327680},
+        {255, 240},
+        {176, 15},
+        {176, 240},
+        11
+    },
     {
-        {1048576, -65536, -65536},
-        {720896, -65536, 851968},
-        {1048576, -65536, 851968},
-        {80, 224},
-        {0, 0},
-        {80, 0},
-        0
-},
-    {
-        {-196608, -65536, -65536},
-        {-1114112, -65536, -65536},
-        {-1114112, -65536, 851968},
-        {224, 224},
-        {0, 224},
-        {0, 0},
-        0
-},
-    {
-        {-196608, -65536, -65536},
-        {-1114112, -65536, 851968},
-        {-196608, -65536, 851968},
-        {224, 224},
-        {0, 0},
-        {224, 0},
-        0
-},
-    {
-        {720896, -65536, -65536},
-        {-196608, -65536, -65536},
-        {-196608, -65536, 851968},
-        {224, 224},
-        {0, 224},
-        {0, 0},
-        0
-},
-    {
-        {720896, -65536, -65536},
-        {-196608, -65536, 851968},
-        {720896, -65536, 851968},
-        {224, 224},
-        {0, 0},
-        {224, 0},
-        0
-},
-    {
-        {720896, -65536, -65536},
-        {720896, -65536, -983040},
-        {-196608, -65536, -983040},
-        {224, 0},
-        {224, 224},
-        {0, 224},
-        0
-},
-    {
-        {720896, -65536, -65536},
-        {-196608, -65536, -983040},
-        {-196608, -65536, -65536},
-        {224, 0},
-        {0, 224},
-        {0, 0},
-        0
-},
-    {
-        {-196608, -65536, -65536},
-        {-196608, -65536, -983040},
-        {-1114112, -65536, -983040},
-        {224, 0},
-        {224, 224},
-        {0, 224},
-        0
-},
-    {
-        {-196608, -65536, -65536},
-        {-1114112, -65536, -983040},
-        {-1114112, -65536, -65536},
-        {224, 0},
-        {0, 224},
-        {0, 0},
-        0
-},
-    {
-        {1048576, -65536, -65536},
-        {1048576, -65536, -983040},
-        {720896, -65536, -983040},
-        {80, 0},
-        {80, 224},
-        {0, 224},
-        0
-},
-    {
-        {1048576, -65536, -65536},
-        {720896, -65536, -983040},
-        {720896, -65536, -65536},
-        {80, 0},
-        {0, 224},
-        {0, 0},
-        0
-},
+        {327680, -65536, 0},
+        {327680, 65536, 0},
+        {327680, 65536, -327680},
+        {255, 240},
+        {255, 15},
+        {176, 15},
+        11
+    },
 };
-
-
 #pragma endregion
-
-
 
 //////////////////////////
 // Controller Functions //
@@ -1070,22 +1526,16 @@ void incrementScaleFactor(void){
         gteScaleFactor = 255;
     }
 }
-void decrementScaleFactor(void){
-    gteScaleFactor --;
-    if(gteScaleFactor < 0){
-        gteScaleFactor = 0;
+void incrementDebugVariable(void){
+    debugVariable ++;
+    if(debugVariable > 255){
+        debugVariable = 255;
     }
 }
-void incrementDelayFactor(void){
-    delayFactor ++;
-    if(delayFactor > 255){
-        delayFactor = 255;
-    }
-}
-void decrementDelayFactor(void){
-    delayFactor --;
-    if(delayFactor < 0){
-        delayFactor = 0;
+void decrementDebugVariable(void){
+    debugVariable --;
+    if(debugVariable < 0){
+        debugVariable = 0;
     }
 }
 
@@ -1097,44 +1547,46 @@ void resetPlayer(void){
     player.isGrounded = false;
 }
 
+void toggleOutlines(void){
+    drawOutlines = !drawOutlines;
+}
+
 
 bool controlCamera = false;
 void toggleControlSet(void){
     controlCamera = !controlCamera;
     if(controlCamera){
-        controller_subscribeOnKeyHold(moveCameraLeft,       BUTTON_INDEX_LEFT    );
-        controller_subscribeOnKeyHold(moveCameraRight,      BUTTON_INDEX_RIGHT   );
-        controller_subscribeOnKeyHold(moveCameraForward,    BUTTON_INDEX_UP      );
-        controller_subscribeOnKeyHold(moveCameraBackward,   BUTTON_INDEX_DOWN    );
-        controller_subscribeOnKeyHold(moveCameraUp,         BUTTON_INDEX_R2      );
-        controller_subscribeOnKeyHold(moveCameraDown,       BUTTON_INDEX_L2      );
-        controller_subscribeOnKeyHold(lookLeft,             BUTTON_INDEX_SQUARE  );
-        controller_subscribeOnKeyHold(lookRight,            BUTTON_INDEX_CIRCLE  );
-        controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
-        controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
+        controller_subscribeOnKeyHold(moveCameraLeft,         BUTTON_INDEX_LEFT    );
+        controller_subscribeOnKeyHold(moveCameraRight,        BUTTON_INDEX_RIGHT   );
+        controller_subscribeOnKeyHold(moveCameraForward,      BUTTON_INDEX_UP      );
+        controller_subscribeOnKeyHold(moveCameraBackward,     BUTTON_INDEX_DOWN    );
+        controller_subscribeOnKeyHold(moveCameraUp,           BUTTON_INDEX_R2      );
+        controller_subscribeOnKeyHold(moveCameraDown,         BUTTON_INDEX_L2      );
+        controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
+        controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
+        controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
+        controller_subscribeOnKeyHold(lookDown,               BUTTON_INDEX_X       );
         
-        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(decrementDelayFactor, BUTTON_INDEX_L1      );
-        controller_subscribeOnKeyDown(incrementDelayFactor, BUTTON_INDEX_R1      );
-        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
+        controller_subscribeOnKeyDown(decrementDebugVariable, BUTTON_INDEX_L1      );
+        controller_subscribeOnKeyDown(incrementDebugVariable, BUTTON_INDEX_R1      );
+        controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
+        controller_subscribeOnKeyDown(toggleControlSet,       BUTTON_INDEX_START   );
     } else {
-        controller_subscribeOnKeyHold(movePlayerLeft,       BUTTON_INDEX_LEFT    );
-        controller_subscribeOnKeyHold(movePlayerRight,      BUTTON_INDEX_RIGHT   );
-        controller_subscribeOnKeyHold(movePlayerForward,    BUTTON_INDEX_UP      );
-        controller_subscribeOnKeyHold(movePlayerBackward,   BUTTON_INDEX_DOWN    );
-        controller_subscribeOnKeyHold(movePlayerUp,         BUTTON_INDEX_R2      );
-        controller_subscribeOnKeyHold(movePlayerDown,       BUTTON_INDEX_L2      );
-        controller_subscribeOnKeyHold(lookLeft,             BUTTON_INDEX_SQUARE  );
-        controller_subscribeOnKeyHold(lookRight,            BUTTON_INDEX_CIRCLE  );
-        controller_subscribeOnKeyHold(lookUp,               BUTTON_INDEX_TRIANGLE);
-        controller_subscribeOnKeyHold(lookDown,             BUTTON_INDEX_X       );
+        controller_subscribeOnKeyHold(movePlayerLeft,         BUTTON_INDEX_LEFT    );
+        controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
+        controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
+        controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
+        controller_subscribeOnKeyHold(movePlayerUp,           BUTTON_INDEX_R2      );
+        controller_subscribeOnKeyHold(movePlayerDown,         BUTTON_INDEX_L2      );
+        controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
+        controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
+        controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
+        controller_subscribeOnKeyHold(lookDown,               BUTTON_INDEX_X       );
 
-        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(decrementDelayFactor, BUTTON_INDEX_L1      );
-        controller_subscribeOnKeyDown(incrementDelayFactor, BUTTON_INDEX_R1      );
-        controller_subscribeOnKeyDown(resetPlayer,          BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(toggleControlSet,     BUTTON_INDEX_START   );
+        controller_subscribeOnKeyDown(decrementDebugVariable, BUTTON_INDEX_L1      );
+        controller_subscribeOnKeyDown(incrementDebugVariable, BUTTON_INDEX_R1      );
+        controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
+        controller_subscribeOnKeyDown(toggleControlSet,       BUTTON_INDEX_START   );
     }
 }
 
@@ -1163,7 +1615,7 @@ void initHardware(void){
         fontPalette, 960, FONT_HEIGHT, GP0_COLOR_4BPP);
     //uploadIndexedTexture(&default_32, default_32Data, 960-64, 128, 32, 32,
     //    default_32Palette, SCREEN_WIDTH, 128+32, GP0_COLOR_8BPP);
-    uploadTexture(&default_32, default_32Data, SCREEN_WIDTH+32, 0, 32, 32);
+    //uploadTexture(&default_32, default_32Data, SCREEN_WIDTH+32, 0, 32, 32);
     // Initalise the transformed verts list
     // TODO: Look into whether this is actually useful or not
     transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
@@ -1204,19 +1656,39 @@ void main(void){
     // Load all the necessary textures from disc
     printf("Loading textures from disc...\n");
     for(int i = 0; i<numTextures; i++){
-        printf(" Need to load texture %s\n", textureNames[i]);
+        printf(" %d | Need to load texture %s\n", i, bspTextureInfo[i].name);
+        int bytesLoaded = texture_loadTIM(bspTextureInfo[i].name, &bspTextureInfo[i].textureInfo);
+        if(bytesLoaded >= 0){
+            printf("Loaded %d bytes\n", bytesLoaded);
+        } else {
+            printf("Error loading texture: %d", bytesLoaded);
+        }
     }
 
-    TextureInfo logo;
-    printf("Attempting to load logo from tim\n");
-    int _err = texture_loadTIM("LOGO.TIM;1", &logo);
-    if(_err){
-        printf(" Error code: %d\n", _err);
-        while(true){
-            __asm__("");
-        }
-    };
-    printf("Loaded.\n");
+    int t = 4;
+
+    printf("Texinfo: %d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.w, bspTextureInfo[t].textureInfo.h);
+    
+    uint8_t bitmask_u = 0xFF << (31-__builtin_clz(bspTextureInfo[t].textureInfo.w));
+    uint8_t bitmask_v = 0xFF << (31-__builtin_clz(bspTextureInfo[t].textureInfo.h));
+    printf("texwindow(%d, %d, %d, %d)\n",
+        bspTextureInfo[t].textureInfo.u>>3,
+        bspTextureInfo[t].textureInfo.v>>3,
+        bitmask_u,
+        bitmask_v
+    );
+    printf("(%d, %d, %x, %x)\n",
+        bspTextureInfo[t].textureInfo.u,
+        bspTextureInfo[t].textureInfo.v,
+        bitmask_u,
+        bitmask_v
+    );
+    printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.w, bspTextureInfo[t].textureInfo.h);
+    printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.w, __builtin_clz(bspTextureInfo[t].textureInfo.w), 31-__builtin_clz(bspTextureInfo[t].textureInfo.w), bitmask_u);
+    printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.h, __builtin_clz(bspTextureInfo[t].textureInfo.h), 31-__builtin_clz(bspTextureInfo[t].textureInfo.h), bitmask_v);
+    printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.u>>3, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.v>>3);
+
+
     
 
     // Init camera
@@ -1244,6 +1716,7 @@ void main(void){
         ///////////////////////////
         //debug("Game Logic\n");
         #pragma region Game logic
+        printf("Game Logic\n");
         // Poll the controllers and run their assoicated functions
         controller_update();
 
@@ -1266,18 +1739,12 @@ void main(void){
 
 
 
-        for (int i = 0; i<256 * delayFactor; i++){
-            printf("%d ", i);
-        }
-        printf("\n");
-
-
         ///////////////////////////
         //       Rendering       //
         ///////////////////////////
         //debug("Rendering\n");
         #pragma region Rendering
-
+        printf("Rendering\n");
         // Set matrices to default
         gte_setRotationMatrix(
             ONE, 0, 0,
@@ -1308,81 +1775,35 @@ void main(void){
 
         // Render world
         Tri2_texturedFlat transformedTri;
+        TextureInfo *texinfo;
         for(int i = 0; i<numTris; i++){
+            int32_t ti = tris[i].textureIndex;
+            if(ti == -1){
+                continue; // Don't render empty brushes. TODO: Fix this elsewhere.
+            }
+            if(ti > numTextures){
+                printf(
+                    "Texture index %d is out of range! (numTextures: %d)\n",
+                    ti, numTextures
+                );
+                continue;
+            }
             if(
                 transformTri_texturedFlat(&mainCamera, tris[i], &transformedTri)
             ){
-                
-                drawTri2_texturedFlat(transformedTri, &default_32, 5);
+                // Assume texture is loaded otherwise.
+                // Ideally, if the correct texture isn't loaded, then the "missing"
+                // texture will take its place in the texinfo field.
+                drawTri2_texturedFlat(transformedTri, &bspTextureInfo[ti].textureInfo, 5);
             }
         }
-        
 
-
-
-        Vector3 playerPoints[] = {
-            {
-                player.position.x - PLAYER_BBOX_X / 2,
-                player.position.y - PLAYER_BBOX_Y / 2,
-                player.position.z - PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x + PLAYER_BBOX_X / 2,
-                player.position.y - PLAYER_BBOX_Y / 2,
-                player.position.z - PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x - PLAYER_BBOX_X / 2,
-                player.position.y + PLAYER_BBOX_Y / 2,
-                player.position.z - PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x + PLAYER_BBOX_X / 2,
-                player.position.y + PLAYER_BBOX_Y / 2,
-                player.position.z - PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x - PLAYER_BBOX_X / 2,
-                player.position.y - PLAYER_BBOX_Y / 2,
-                player.position.z + PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x + PLAYER_BBOX_X / 2,
-                player.position.y - PLAYER_BBOX_Y / 2,
-                player.position.z + PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x - PLAYER_BBOX_X / 2,
-                player.position.y + PLAYER_BBOX_Y / 2,
-                player.position.z + PLAYER_BBOX_Z / 2
-            },
-            {
-                player.position.x + PLAYER_BBOX_X / 2,
-                player.position.y + PLAYER_BBOX_Y / 2,
-                player.position.z + PLAYER_BBOX_Z / 2
-            }
-        };
-        Vector2 transformedPlayerPoints[4];
-        bool pointTransformed[4];
-
-        for (int i = 0; i<8; i++){
-            pointTransformed[i] = transformVertex(&mainCamera, playerPoints[i], &transformedPlayerPoints[i]);
-        }
-        
-        for (int i = 0; i<8; i++){
-            drawCross2(transformedPlayerPoints[i], playerColour);
-        }
-        for (int i = 1; i<7; i++){
-            drawLine2(transformedPlayerPoints[i-1], transformedPlayerPoints[i], playerColour);
-            drawLine2(transformedPlayerPoints[i], transformedPlayerPoints[i+1], playerColour);
-            drawLine2(transformedPlayerPoints[i+1], transformedPlayerPoints[i-1], playerColour);
-        }
 
         sprintf(str_Buffer, 
             "%s Mode\n"
-            "Delay Factor: %d\n",
+            "Debug Variable: %d\n",
             controlCamera ? "Camera" : "Player",
-            delayFactor
+            debugVariable
         );
         // Text rendering
         printString(activeChain, &font, 10, 10, str_Buffer);
@@ -1402,6 +1823,7 @@ void main(void){
         ///////////////////////////
         //debug("Framebuffer Logic\n");
         #pragma region Framebuffer Logic
+        printf("Framebuffer\n");
 
         // Set the framebuffer offset.
         dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE - 1, 4);
