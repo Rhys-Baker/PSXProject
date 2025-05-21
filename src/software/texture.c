@@ -38,7 +38,7 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
 
     textureLba = getLbaToFile(name, fileSize);
     if(!textureLba){
-        return 1; // Texture not found. TODO: Replace with better error handling
+        return -1; // Texture not found. TODO: Replace with better error handling
     }
 
     // Allocate a file buffer
@@ -54,18 +54,17 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
         true
     );
 
-    printf("Start file: %d\n", fileOffset);
     // Begin parsing the header
     uint8_t fileId = fileBuffer[fileOffset++];
     if(fileId != 0x10){
         free(fileBuffer);
-        return 2; // Invalid header
+        return -2; // Invalid header
     }
 
     uint8_t version = fileBuffer[fileOffset++];
     if(version != 0x00){
         free(fileBuffer);
-        return 3; // Invalid version
+        return -3; // Invalid version
     }
 
     fileOffset += 2; // Skip the reserved
@@ -81,41 +80,18 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
         ((uint32_t)fileBuffer[fileOffset ++] <<  8) |
         ((uint32_t)fileBuffer[fileOffset ++] << 16) |
         ((uint32_t)fileBuffer[fileOffset ++] << 24);
-    printf("Flags: 0x%08x\n", rawFlags);
 
     flags.type =  rawFlags & 0x7;
     flags.hasClut = (rawFlags >> 3) & 0x1;
     flags.reserved = (rawFlags >> 4);
 
-    printf("End of header: %d\n", fileOffset);
     
     if(flags.type > 3){
         free(fileBuffer);
-        return 4; // Invalid type
+        return -4; // Invalid type
     }
 
     if(flags.hasClut){
-        printf("Start of CLUT: %d\n", fileOffset);
-        printf("0x%8x\n0x%8x\n0x%8x\n",
-            (
-                (uint32_t)(fileBuffer[fileOffset+0] << 24)|
-                (uint32_t)(fileBuffer[fileOffset+1] << 16)|
-                (uint32_t)(fileBuffer[fileOffset+2] <<  8)|
-                (uint32_t)(fileBuffer[fileOffset+3])
-            ),
-            (
-                (uint32_t)(fileBuffer[fileOffset+4] << 24)|
-                (uint32_t)(fileBuffer[fileOffset+5] << 16)|
-                (uint32_t)(fileBuffer[fileOffset+6] <<  8)|
-                (uint32_t)(fileBuffer[fileOffset+7])
-            ),
-            (
-                (uint32_t)(fileBuffer[fileOffset+ 8] << 24)|
-                (uint32_t)(fileBuffer[fileOffset+ 9] << 16)|
-                (uint32_t)(fileBuffer[fileOffset+10] <<  8)|
-                (uint32_t)(fileBuffer[fileOffset+11])
-            )
-        );
         // CLUT data section
         clut_size = (
             (uint32_t)(fileBuffer[fileOffset ++]      )|
@@ -146,27 +122,6 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
     }
     
 
-    printf("Start of texture: %d\n", fileOffset);
-    printf("0x%8x\n0x%8x\n0x%8x\n",
-        (
-            (uint32_t)(fileBuffer[fileOffset+0] << 24)|
-            (uint32_t)(fileBuffer[fileOffset+1] << 16)|
-            (uint32_t)(fileBuffer[fileOffset+2] <<  8)|
-            (uint32_t)(fileBuffer[fileOffset+3])
-        ),
-        (
-            (uint32_t)(fileBuffer[fileOffset+4] << 24)|
-            (uint32_t)(fileBuffer[fileOffset+5] << 16)|
-            (uint32_t)(fileBuffer[fileOffset+6] <<  8)|
-            (uint32_t)(fileBuffer[fileOffset+7])
-        ),
-        (
-            (uint32_t)(fileBuffer[fileOffset+ 8] << 24)|
-            (uint32_t)(fileBuffer[fileOffset+ 9] << 16)|
-            (uint32_t)(fileBuffer[fileOffset+10] <<  8)|
-            (uint32_t)(fileBuffer[fileOffset+11])
-        )
-    );
     // Pixel data section
     texture_size = (
         (uint32_t)(fileBuffer[fileOffset ++]      )|
@@ -192,21 +147,18 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
     );
 
     texture_data = &fileBuffer[fileOffset];
-    
-    printf(" Texture Info\n");
-    printf(" ->Size: %d\n", texture_size);
-    printf(" ->flags.type: %d\n", flags.type);
-    printf(" ->flags.hasClut: %s\n", flags.hasClut ? "Yes" : "No");
-    printf(" ->flags.reserved: %d\n", flags.reserved);
-    printf(" ->X: %d; Y: %d\n", texture_u, texture_v);
-    printf(" ->W: %d; H: %d\n", texture_w, texture_h);
 
-    if(flags.hasClut){
-        // Upload the texture into VRAM and wait.
-        sendVRAMData(texture_data, texture_u, texture_v, texture_w, texture_h);
-        waitForDMADone();
-        sendVRAMData(clut_data, clut_u, clut_v, clut_w, clut_h);
-        waitForDMADone();
+    // TODO: Is there a neater way to do this? Maybe.
+    if(flags.type == 0){
+        uploadIndexedTexture(
+            texinfo, texture_data, texture_u, texture_v, texture_w*4, texture_h,
+            clut_data, clut_u, clut_v, GP0_COLOR_4BPP
+        );
+    } else if(flags.type == 1){
+        uploadIndexedTexture(
+            texinfo, texture_data, texture_u, texture_v, texture_w*2, texture_h,
+            clut_data, clut_u, clut_v, GP0_COLOR_8BPP
+        );
     } else {
         uploadTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w, texture_h
@@ -216,5 +168,5 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
 
     // Upload texture to VRAM
     free(fileBuffer);
-    return 0;
+    return clut_size + texture_size;
 }
