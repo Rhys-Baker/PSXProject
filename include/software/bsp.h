@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "gpu.h"
 #include "types.h"
 
 #define FIXED_EPSILON (1<<7) // 4096 * 0.03125 == 128
@@ -74,6 +75,11 @@ typedef struct BSPTree3 {
 	BSPNode3 *nodes;
 	uint32_t numNodes;
 } BSPTree3;
+
+typedef struct BSPTextureInfo {
+	char *name;
+	TextureInfo textureInfo;
+} BSPTextureInfo;
 
 int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p);
 bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3 p2, Vector3 *intersection, Vector3 *intersectionNormal);

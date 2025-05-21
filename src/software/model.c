@@ -125,8 +125,9 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
     }
 
     // Save the current translation vector
-    int32_t currentTx, currentTy, currentTz;
-    gte_getTranslationVector(&currentTx, &currentTy, &currentTz);
+    int32_t currentTx = gte_getControlReg(GTE_TRX);
+    int32_t currentTy = gte_getControlReg(GTE_TRY);
+    int32_t currentTz = gte_getControlReg(GTE_TRZ);
     // Save the Current Rotation Matrix
     GTEMatrix crm;
     gte_storeRotationMatrix(&crm);
@@ -181,13 +182,13 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
         gte_command(GTE_CMD_NCLIP);
 
         // If the face is facing away from us, don't bother rendering it.
-        if(gte_getMAC0() <= 0){
+        if(gte_getDataReg(GTE_MAC0) <= 0){
             continue;
         }
 
         // Calculate the average Z value of all 3 verts.
         gte_command(GTE_CMD_AVSZ3 | GTE_SF);
-        int zIndex = gte_getOTZ();
+        int zIndex = gte_getDataReg(GTE_OTZ);
 
         // If too close/behind camera, don't render
         if(zIndex <= 3){
@@ -202,17 +203,19 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
         // Render a triangle at the XY coords calculated via the GTE with the texture UVs calculated above
         dmaPtr = allocatePacket(activeChain, zIndex, 7);
         dmaPtr[0] = 0x808080 | gp0_shadedTriangle(false, true, false);
-        dmaPtr[1] = gte_getSXY0();
+        dmaPtr[1] = gte_getDataReg(GTE_SXY0);
         dmaPtr[2] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].au), (uint32_t)((uint32_t)texture->v + model->tris[i].av) & 0x00FF, texture->clut);
-        dmaPtr[3] = gte_getSXY1();
+        dmaPtr[3] = gte_getDataReg(GTE_SXY1);
         dmaPtr[4] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].bu), (uint32_t)((uint32_t)texture->v + model->tris[i].bv) & 0x00FF, texture->page);
-        dmaPtr[5] = gte_getSXY2();
+        dmaPtr[5] = gte_getDataReg(GTE_SXY2);
         dmaPtr[6] = gp0_uv((uint32_t)((uint32_t)texture->u + model->tris[i].cu), (uint32_t)((uint32_t)texture->v + model->tris[i].cv) & 0x00FF, 0);
         
         numPrims++;
     }
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
-    gte_setTranslationVector(currentTx, currentTy, currentTz);
+    gte_setControlReg(GTE_TRX, currentTx);
+    gte_setControlReg(GTE_TRX, currentTy);
+    gte_setControlReg(GTE_TRX, currentTz);
     gte_setRotationMatrix(
         crm.values[0][0], crm.values[0][1], crm.values[0][2],
         crm.values[1][0], crm.values[1][1], crm.values[1][2],

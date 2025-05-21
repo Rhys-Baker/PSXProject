@@ -36,14 +36,14 @@ typedef struct Tri2_texturedFlat {
     Vector2_16 a, b, c;
     uint32_t z;
     Vector2 auv, buv, cuv;
-    uint32_t textureIndex;
+    int32_t textureIndex;
 } Tri2_texturedFlat;
 typedef struct Tri2_texturedShaded {
     Vector2_16 a, b, c;
     uint32_t z;
     Vector2 auv, buv, cuv;
     uint32_t acol, bcol, ccol;
-    uint32_t textureIndex;
+    int32_t textureIndex;
 } Tri2_texturedShaded;
 
 typedef struct Tri3{
@@ -60,11 +60,13 @@ typedef struct Tri3_shaded{
 typedef struct Tri3_texturedFlat {
     Vector3 a, b, c;
     Vector2 auv, buv, cuv;
+    int32_t textureIndex;
 } Tri3_texturedFlat;
 typedef struct Tri3_texturedShaded {
     Vector3 a, b, c;
     Vector2 uva, uvb, uvc;
     uint32_t acol, bcol, ccol;
+    int32_t textureIndex;
 } Tri3_texturedShaded;
 
 
