@@ -162,7 +162,6 @@ void model_renderTextured(Model *model, TextureInfo *texture, Camera *cam, uint1
     //    }
     //}
 
-    Tri2D _tri2d;
     // Add every triangle to the ordering table/dma chain for rendering.
     for(int i = 0; i<model->numTris; i++){
         // Load the GTE's internal registers

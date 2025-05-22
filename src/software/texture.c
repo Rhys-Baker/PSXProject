@@ -18,12 +18,12 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
     uint32_t fileOffset = 0;
     uint32_t numSectors;
 
-    uint8_t *clut_data;
+    uint8_t *clut_data = NULL;
     uint32_t clut_size = 0;
     uint16_t clut_u = 0;
     uint16_t clut_v = 0;
-    uint16_t clut_w = 0;
-    uint16_t clut_h = 0;
+    //uint16_t clut_w = 0;
+    //uint16_t clut_h = 0;
 
     uint8_t *texture_data;
     uint32_t texture_size = 0;
@@ -76,10 +76,11 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
     } flags;
     
     uint32_t rawFlags = 
-        ((uint32_t)fileBuffer[fileOffset ++]      ) |
-        ((uint32_t)fileBuffer[fileOffset ++] <<  8) |
-        ((uint32_t)fileBuffer[fileOffset ++] << 16) |
-        ((uint32_t)fileBuffer[fileOffset ++] << 24);
+        ((uint32_t)fileBuffer[fileOffset  ]      ) |
+        ((uint32_t)fileBuffer[fileOffset+1] <<  8) |
+        ((uint32_t)fileBuffer[fileOffset+2] << 16) |
+        ((uint32_t)fileBuffer[fileOffset+3] << 24);
+    fileOffset += 4;
 
     flags.type =  rawFlags & 0x7;
     flags.hasClut = (rawFlags >> 3) & 0x1;
@@ -94,28 +95,30 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
     if(flags.hasClut){
         // CLUT data section
         clut_size = (
-            (uint32_t)(fileBuffer[fileOffset ++]      )|
-            (uint32_t)(fileBuffer[fileOffset ++] <<  8)|
-            (uint32_t)(fileBuffer[fileOffset ++] << 16)|
-            (uint32_t)(fileBuffer[fileOffset ++] << 24)
+            (uint32_t)(fileBuffer[fileOffset  ]      )|
+            (uint32_t)(fileBuffer[fileOffset+1] <<  8)|
+            (uint32_t)(fileBuffer[fileOffset+2] << 16)|
+            (uint32_t)(fileBuffer[fileOffset+3] << 24)
         );
+        fileOffset += 4;
         
         clut_u = (
-            (uint16_t)(fileBuffer[fileOffset ++]      )|
-            (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+            (uint16_t)(fileBuffer[fileOffset  ]      )|
+            (uint16_t)(fileBuffer[fileOffset+1] <<  8)
         );
         clut_v = (
-            (uint16_t)(fileBuffer[fileOffset ++]      )|
-            (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+            (uint16_t)(fileBuffer[fileOffset+2]      )|
+            (uint16_t)(fileBuffer[fileOffset+3] <<  8)
         );
-        clut_w = (
-            (uint16_t)(fileBuffer[fileOffset ++]      )|
-            (uint16_t)(fileBuffer[fileOffset ++] <<  8)
-        );
-        clut_h = (
-            (uint16_t)(fileBuffer[fileOffset ++]      )|
-            (uint16_t)(fileBuffer[fileOffset ++] <<  8)
-        );
+        //clut_w = (
+        //    (uint16_t)(fileBuffer[fileOffset+4]      )|
+        //    (uint16_t)(fileBuffer[fileOffset+5] <<  8)
+        //);
+        //clut_h = (
+        //    (uint16_t)(fileBuffer[fileOffset+6]      )|
+        //    (uint16_t)(fileBuffer[fileOffset+7] <<  8)
+        //);
+        fileOffset += 8;
         
         clut_data = &fileBuffer[fileOffset];
         fileOffset+=clut_size-0x0c;
@@ -124,42 +127,48 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
 
     // Pixel data section
     texture_size = (
-        (uint32_t)(fileBuffer[fileOffset ++]      )|
-        (uint32_t)(fileBuffer[fileOffset ++] <<  8)|
-        (uint32_t)(fileBuffer[fileOffset ++] << 16)|
-        (uint32_t)(fileBuffer[fileOffset ++] << 24)
+        (uint32_t)(fileBuffer[fileOffset  ]      )|
+        (uint32_t)(fileBuffer[fileOffset+1] <<  8)|
+        (uint32_t)(fileBuffer[fileOffset+2] << 16)|
+        (uint32_t)(fileBuffer[fileOffset+3] << 24)
     );
+    fileOffset += 4;
+
     texture_u = (
-        (uint16_t)(fileBuffer[fileOffset ++]      )|
-        (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+        (uint16_t)(fileBuffer[fileOffset  ]      )|
+        (uint16_t)(fileBuffer[fileOffset+1] <<  8)
     );
     texture_v = (
-        (uint16_t)(fileBuffer[fileOffset ++]      )|
-        (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+        (uint16_t)(fileBuffer[fileOffset+2]      )|
+        (uint16_t)(fileBuffer[fileOffset+3] <<  8)
     );
     texture_w = (
-        (uint16_t)(fileBuffer[fileOffset ++]      )|
-        (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+        (uint16_t)(fileBuffer[fileOffset+4]      )|
+        (uint16_t)(fileBuffer[fileOffset+5] <<  8)
     );
     texture_h = (
-        (uint16_t)(fileBuffer[fileOffset ++]      )|
-        (uint16_t)(fileBuffer[fileOffset ++] <<  8)
+        (uint16_t)(fileBuffer[fileOffset+6]      )|
+        (uint16_t)(fileBuffer[fileOffset+7] <<  8)
     );
+    fileOffset += 8;
 
     texture_data = &fileBuffer[fileOffset];
 
     // TODO: Is there a neater way to do this? Maybe.
     if(flags.type == 0){
+        printf("4bpp\n");
         uploadIndexedTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w*4, texture_h,
             clut_data, clut_u, clut_v, GP0_COLOR_4BPP
         );
     } else if(flags.type == 1){
+        printf("8bpp\n");
         uploadIndexedTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w*2, texture_h,
             clut_data, clut_u, clut_v, GP0_COLOR_8BPP
         );
     } else {
+        printf("16bpp\n");
         uploadTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w, texture_h
         );
