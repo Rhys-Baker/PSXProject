@@ -60,16 +60,16 @@ void multiplyCurrentMatrixByVectors(GTEMatrix *output) {
 
 
 
-void rotateCurrentMatrix(int yaw, int pitch, int roll) {
+void rotateCurrentMatrix(int pitch, int yaw, int roll) {
 	static GTEMatrix multiplied;
 	int s, c;
 
 	// For each axis, compute the rotation matrix then "combine" it with the
 	// GTE's current matrix by multiplying the two and writing the result back
 	// to the GTE's registers.
-	if (pitch) {
-		s = isin(pitch);
-		c = icos(pitch);
+	if (yaw) {
+		s = isin(yaw);
+		c = icos(yaw);
 
 		   gte_setColumnVectors(
 			c, -s,   0,
@@ -80,9 +80,9 @@ void rotateCurrentMatrix(int yaw, int pitch, int roll) {
 		gte_loadRotationMatrix(&multiplied);
 	}
 
-	if (yaw) {
-		s = isin(yaw);
-		c = icos(yaw);
+	if (pitch) {
+		s = isin(pitch);
+		c = icos(pitch);
 
 		gte_setColumnVectors(
 			ONE, 0,  0,
