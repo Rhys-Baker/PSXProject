@@ -60,16 +60,16 @@ void multiplyCurrentMatrixByVectors(GTEMatrix *output) {
 
 
 
-void rotateCurrentMatrix(int pitch, int yaw, int roll) {
+void rotateCurrentMatrix(int pitch, int roll, int yaw) {
 	static GTEMatrix multiplied;
 	int s, c;
 
 	// For each axis, compute the rotation matrix then "combine" it with the
 	// GTE's current matrix by multiplying the two and writing the result back
 	// to the GTE's registers.
-	if (yaw) {
-		s = isin(yaw);
-		c = icos(yaw);
+	if (roll) {
+		s = isin(roll);
+		c = icos(roll);
 
 		   gte_setColumnVectors(
 			c, -s,   0,
@@ -93,15 +93,14 @@ void rotateCurrentMatrix(int pitch, int yaw, int roll) {
 		gte_loadRotationMatrix(&multiplied);
 	}
 
-
-	if (roll) {
-		s = isin(roll);
-		c = icos(roll);
+	if (yaw) {
+		s = isin(yaw);
+		c = icos(yaw);
 
 		gte_setColumnVectors(
-			c,   0, s,
+			c,   0, -s,
 			0, ONE, 0,
-		   -s,   0, c
+		   s,   0, c
 	   	);
 		multiplyCurrentMatrixByVectors(&multiplied);
 		gte_loadRotationMatrix(&multiplied);
@@ -113,11 +112,9 @@ void setTranslationMatrix(int32_t x, int32_t y, int32_t z){
     int32_t ty = -y;
     int32_t tz = -z;
 
-    #define GTE_SET(reg, input) \
-     __asm__ volatile("mtc2 %0, $%1\n" :: "r"(input), "i"(reg))
-    GTE_SET(GTE_IR1, tx);
-    GTE_SET(GTE_IR2, ty);
-    GTE_SET(GTE_IR3, tz);
+    gte_setDataReg(GTE_IR1, tx);
+	gte_setDataReg(GTE_IR2, ty);
+	gte_setDataReg(GTE_IR3, tz);
 	gte_command(GTE_CMD_MVMVA | GTE_SF | GTE_MX_RT | GTE_V_IR | GTE_CV_NONE);
     
 	tx = gte_getDataReg(GTE_IR1);
@@ -133,11 +130,9 @@ void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
     int32_t ty = -y;
     int32_t tz = -z;
 
-    #define GTE_SET(reg, input) \
-     __asm__ volatile("mtc2 %0, $%1\n" :: "r"(input), "i"(reg))
-    GTE_SET(GTE_IR1, tx);
-    GTE_SET(GTE_IR2, ty);
-    GTE_SET(GTE_IR3, tz);
+    gte_setDataReg(GTE_IR1, tx);
+	gte_setDataReg(GTE_IR2, ty);
+	gte_setDataReg(GTE_IR3, tz);
 	gte_command(GTE_CMD_MVMVA | GTE_SF | GTE_MX_RT | GTE_V_IR | GTE_CV_NONE);
     
 	tx = gte_getDataReg(GTE_IR1);

@@ -65,7 +65,17 @@ int screenColor = 0x000000;
 int wallColor = 0x3c82fa;
 int gteScaleFactor = 0;
 bool drawOutlines = false;
+bool drawTextures = true;
 int cameraHeight = 0;
+
+uint32_t colours[] = {
+    0x0000FF,
+    0x00FF00,
+    0xFF0000,
+    0x00FFFF,
+    0xFF00FF,
+    0xFFFF00
+};
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -109,6 +119,7 @@ void drawTri2(Tri2 tri, uint32_t colour){
     dmaPtr[2] = gp0_xy(tri.b.x, tri.b.y);
     dmaPtr[3] = gp0_xy(tri.c.x, tri.c.y);
 }
+int colourIndex = 0;
 void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_recursion){
 
     int32_t maxX = max32s(tri.a.x, max32s(tri.b.x, tri.c.x));
@@ -190,17 +201,25 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     uint8_t bitmask_u = 0xFF << (31-__builtin_clz(texinfo->w));
     uint8_t bitmask_v = 0xFF << (31-__builtin_clz(texinfo->h));
 
-    dmaPtr = allocatePacket(activeChain, tri.z, 8);
-    dmaPtr[0] = gp0_texwindow(texinfo->u>>3, texinfo->v>>3, bitmask_u>>3, bitmask_v>>3);
-    //dmaPtr[0] = gp0_texwindow(0, 4, 0b11100, 0b11100);
-    //printf("%d %d\n", texinfo->u, bitmask_u);
-    dmaPtr[1] = 0x808080 | gp0_triangle(true, false);
-    dmaPtr[2] = xy0;
-    dmaPtr[3] = uv0;
-    dmaPtr[4] = xy1;
-    dmaPtr[5] = uv1;
-    dmaPtr[6] = xy2;
-    dmaPtr[7] = uv2;
+    if(drawTextures){
+        dmaPtr = allocatePacket(activeChain, tri.z, 8);
+        dmaPtr[0] = gp0_texwindow(texinfo->u>>3, texinfo->v>>3, bitmask_u>>3, bitmask_v>>3);
+        //dmaPtr[0] = gp0_texwindow(0, 4, 0b11100, 0b11100);
+        //printf("%d %d\n", texinfo->u, bitmask_u);
+        dmaPtr[1] = 0x808080 | gp0_triangle(true, false);
+        dmaPtr[2] = xy0;
+        dmaPtr[3] = uv0;
+        dmaPtr[4] = xy1;
+        dmaPtr[5] = uv1;
+        dmaPtr[6] = xy2;
+        dmaPtr[7] = uv2;
+    } else {
+        dmaPtr = allocatePacket(activeChain, tri.z, 4);
+        dmaPtr[0] = colours[(colourIndex) % 6] | gp0_triangle(false, false);
+        dmaPtr[1] = xy0;
+        dmaPtr[2] = xy1;
+        dmaPtr[3] = xy2;
+    }
 
     if(drawOutlines){
         drawLine2((Vector2){tri.a.x, tri.a.y},(Vector2){tri.b.x, tri.b.y}, 0xFFFFFF); // AB
@@ -227,18 +246,27 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
         return false;
     }
     // Save the current translation vector
-    int32_t currentTx = gte_getControlReg(GTE_TRX);
-    int32_t currentTy = gte_getControlReg(GTE_TRY);
-    int32_t currentTz = gte_getControlReg(GTE_TRZ);
-    // Translate model
-    updateTranslationMatrix(cam->x, cam->y, cam->z);
+    //int32_t currentTx = gte_getControlReg(GTE_TRX);
+    //int32_t currentTy = gte_getControlReg(GTE_TRY);
+    //int32_t currentTz = gte_getControlReg(GTE_TRZ);
+    
     // Rotate model
-    rotateCurrentMatrix(0, 0, 0);
+    //rotateCurrentMatrix(0, 0, 0);
+    // Translate model
+    //updateTranslationMatrix(cam->x, cam->y, cam->z);
+    
 
     GTEVector16 vert;
     vert.x = (int16_t)(point.x>>GTE_SCALE_FACTOR);
     vert.y = (int16_t)(point.y>>GTE_SCALE_FACTOR);
     vert.z = (int16_t)(point.z>>GTE_SCALE_FACTOR);
+
+    int32_t debugTRX = gte_getControlReg(GTE_TRX);
+    int32_t debugTRY = gte_getControlReg(GTE_TRY);
+    int32_t debugTRZ = gte_getControlReg(GTE_TRZ);
+
+    printf("%d %d %d\n", debugTRX, debugTRY, debugTRZ);
+
     gte_loadV0(&vert);
     gte_command(GTE_CMD_RTPS | GTE_SF);
 
@@ -263,16 +291,12 @@ bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
     result->y = transformedCross.y;
 
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
-    gte_setControlReg(GTE_TRX, currentTx);
-    gte_setControlReg(GTE_TRY, currentTy);
-    gte_setControlReg(GTE_TRZ, currentTz);
+    //gte_setControlReg(GTE_TRX, currentTx);
+    //gte_setControlReg(GTE_TRY, currentTy);
+    //gte_setControlReg(GTE_TRZ, currentTz);
     return true;
 }
 bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
-    uint32_t currentTx;
-    uint32_t currentTy;
-    uint32_t currentTz;
-
     // Range check. Is it too big to be drawn?
 
     // This range check was supposed to speed things up but honestly, I think it is so much worse than just doing it on the GTE
@@ -287,16 +311,7 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     //    // Out of range. Don't render
     //    return false;
     //}
-
-    // Save the current translation vector
-    currentTx = gte_getControlReg(GTE_TRX);
-    currentTy = gte_getControlReg(GTE_TRY);
-    currentTz = gte_getControlReg(GTE_TRZ);
-
-    // Translate model
-    updateTranslationMatrix(cam->x, cam->y, cam->z);
-    // Rotate model
-    rotateCurrentMatrix(0, 0, 0);
+    
 
     GTEVector16 verts[3] = {
         {(int16_t)(tri.a.x>>GTE_SCALE_FACTOR), (int16_t)(tri.a.y>>GTE_SCALE_FACTOR), (int16_t)(tri.a.z>>GTE_SCALE_FACTOR)},
@@ -322,18 +337,12 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     
 
     //if(MAC0 <= -1024){
-    //    gte_setControlReg(GTE_TRX, currentTx);
-    //    gte_setControlReg(GTE_TRY, currentTy);
-    //    gte_setControlReg(GTE_TRZ, currentTz);
     //    return false;
     //}
 
     
 
     if(clip){
-        gte_setControlReg(GTE_TRX, currentTx);
-        gte_setControlReg(GTE_TRY, currentTy);
-        gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
     uint32_t xy0 = gte_getDataReg(GTE_SXY0);
@@ -345,9 +354,6 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     int zIndex = gte_getDataReg(GTE_OTZ);
 
     if(zIndex < 1 || zIndex >= ORDERING_TABLE_SIZE){
-        gte_setControlReg(GTE_TRX, currentTx);
-        gte_setControlReg(GTE_TRY, currentTy);
-        gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
     
@@ -359,9 +365,6 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     result->z = zIndex;
 
     // Restore the translation and rotation back to the initial state as to not clobber any other models.
-    gte_setControlReg(GTE_TRX, currentTx);
-    gte_setControlReg(GTE_TRY, currentTy);
-    gte_setControlReg(GTE_TRZ, currentTz);
 
     return true;
 }
@@ -33787,10 +33790,10 @@ Tri3_texturedFlat tris[] = {
 
 // Functions for look controls
 void lookLeft(void){
-    mainCamera.yaw += 16;
+    mainCamera.yaw = ((mainCamera.yaw - 16) % ONE + ONE) % ONE;
 }
 void lookRight(void){
-    mainCamera.yaw -= 16;
+    mainCamera.yaw = ((mainCamera.yaw + 16) % ONE + ONE) % ONE;
 }
 void lookUp(void){
     mainCamera.pitch -= 16;
@@ -33841,20 +33844,20 @@ void moveCameraDown(void){
 // Maybe create a movement vector similar to what Source does?
 // Functions for move controls
 void movePlayerForward(void){
-    player.velocity.x = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.x =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     player.velocity.z =  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerBackward(void){
-    player.velocity.x =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.x = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
     player.velocity.z = -(icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerLeft(void){
     player.velocity.x = -(icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.velocity.z = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerRight(void){
     player.velocity.x =  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
-    player.velocity.z =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 
 void playerJump(void){
@@ -33875,6 +33878,9 @@ void resetPlayer(void){
 
 void toggleOutlines(void){
     drawOutlines = !drawOutlines;
+}
+void toggleTextures(void){
+    drawTextures = !drawTextures;
 }
 
 #pragma endregion
@@ -33946,6 +33952,7 @@ void main(void){
     controller_subscribeOnKeyHold(moveCameraDown,         BUTTON_INDEX_L1      );
     controller_subscribeOnKeyHold(moveCameraUp,           BUTTON_INDEX_R1      );
     controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
+    controller_subscribeOnKeyDown(toggleTextures,         BUTTON_INDEX_START   );
 
 
     // Load all the necessary textures from disc
@@ -34001,7 +34008,7 @@ void main(void){
     //while (true) {
     //    __asm__("");
     //}
-
+    GTEMatrix rotMat;
     debug("Start of main loop\n");
     // Main loop. Runs every frame, forever
     for(;;){
@@ -34065,12 +34072,39 @@ void main(void){
             0, ONE, 0,
             0, 0, ONE
         );
-        
-        // Move camera into position
-        setTranslationMatrix(0, 0, 0);
         rotateCurrentMatrix(mainCamera.pitch, mainCamera.roll, mainCamera.yaw);
+
+        
+        //gte_storeRotationMatrix(&rotMat);
+
+        // Move camera into position
+        //gte_setControlReg(
+        //    GTE_TRX,
+        //    -(mainCamera.x * rotMat.values[0][0] +
+        //      mainCamera.y * rotMat.values[0][1] +
+        //      mainCamera.z * rotMat.values[0][2])
+        //);
+        //gte_setControlReg(
+        //    GTE_TRY,
+        //    -(mainCamera.x * rotMat.values[1][0] +
+        //      mainCamera.y * rotMat.values[1][1] +
+        //      mainCamera.z * rotMat.values[1][2])
+        //);
+        //gte_setControlReg(
+        //    GTE_TRZ,
+        //    -(mainCamera.x * rotMat.values[2][0] +
+        //      mainCamera.y * rotMat.values[2][1] +
+        //      mainCamera.z * rotMat.values[2][2])
+        //);
+
+        setTranslationMatrix(mainCamera.x, mainCamera.y, mainCamera.z);
+        gte_storeRotationMatrix(&rotMat);
         
 
+
+        
+        
+        
         // Render gizmo
         for (int i = 0; i<4; i++){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
@@ -34087,10 +34121,11 @@ void main(void){
         // This even happens when subdividing the wall.
         // Is it possible that the issue has to do with the MAC value?
         // Perhaps we are being too strict
-
+        
         // Render world
         Tri2_texturedFlat transformedTri;
         for(int i = 0; i<numTris; i++){
+            colourIndex = i;
             int32_t ti = tris[i].textureIndex;
             if(ti == -1){
                 continue; // Don't render empty brushes. TODO: Fix this elsewhere.
@@ -34115,7 +34150,12 @@ void main(void){
         // Crosshair
         drawCross2((Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
 
-        sprintf(str_Buffer, "Controls:\n D-Pad: Move\n Face Buttons: Look\n Select: Show wireframe\n R2: Jump\n\nCamera Offset: %d", cameraHeight);
+        sprintf(str_Buffer, "Rotation Matrix:\n %d %d %d\n %d %d %d\n %d %d %d\n\nTranslation Vector:\n %d %d %d",
+            rotMat.values[0][0], rotMat.values[0][1], rotMat.values[0][2],
+            rotMat.values[1][0], rotMat.values[1][1], rotMat.values[1][2],
+            rotMat.values[2][0], rotMat.values[2][1], rotMat.values[2][2],
+            gte_getControlReg(GTE_TRX), gte_getControlReg(GTE_TRY), gte_getControlReg(GTE_TRZ)
+        );
         printString(activeChain, &font, 10, 10, str_Buffer);
         
         // Draw a plain background
