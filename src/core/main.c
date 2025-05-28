@@ -34098,11 +34098,7 @@ void main(void){
         //);
 
         setTranslationMatrix(mainCamera.x, mainCamera.y, mainCamera.z);
-        gte_storeRotationMatrix(&rotMat);
-        
-
-
-        
+        gte_storeRotationMatrix(&rotMat);        
         
         
         // Render gizmo
