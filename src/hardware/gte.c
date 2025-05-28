@@ -21,7 +21,7 @@ void setupGTE(int width, int height) {
 	// focal length), which affects the field of view.
 	int focalLength = (width < height) ? width : height;
 
-	gte_setControlReg(GTE_H, focalLength / 2);
+	gte_setControlReg(GTE_H, focalLength / 3);
 
 	// Set the scaling factor for Z averaging. For each polygon drawn, the GTE
 	// will sum the transformed Z coordinates of its vertices multiplied by this
