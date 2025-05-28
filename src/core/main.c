@@ -31,14 +31,14 @@
 #include "system.h"
 #pragma endregion
 
-#define MOVEMENT_SPEED 10
+#define MOVEMENT_SPEED (10<<12)
 
-#define ACCELERATION_CONSTANT 1
-#define MAX_SPEED 3
-#define JUMP_FORCE 10
-#define FRICTION_CONSTANT 1
-#define TERMINAL_VELOCITY 5
-#define GRAVITY_CONSTANT 1
+#define ACCELERATION_CONSTANT (1<<12)
+#define MAX_SPEED (3<<12)
+#define JUMP_FORCE (10<<12)
+#define FRICTION_CONSTANT (1<<12)
+#define TERMINAL_VELOCITY (5<<12)
+#define GRAVITY_CONSTANT (1<<10)
 
 #define UNIT_SIZE 16 // Define unit sizes
 #define PLAYER_BBOX_X (1 * UNIT_SIZE * ONE)
@@ -55,9 +55,6 @@ extern const uint8_t default_32Palette[];
 TextureInfo default_32;
 
 
-extern const uint8_t filth_128Data[];
-TextureInfo filth_128;
-
 
 
 Camera mainCamera;
@@ -67,8 +64,7 @@ char str_Buffer[256];
 int screenColor = 0x000000;
 int wallColor = 0x3c82fa;
 int gteScaleFactor = 0;
-int debugVariable = 0;
-bool drawOutlines = true;
+bool drawOutlines = false;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -277,14 +273,18 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
     uint32_t currentTz;
 
     // Range check. Is it too big to be drawn?
-    if(
-        abs(cam->x - (tri.a.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.a.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.a.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
-        abs(cam->x - (tri.b.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.b.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.b.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
-        abs(cam->x - (tri.c.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.c.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.c.z>>GTE_SCALE_FACTOR)) > INT16_MAX
-    ){
-        // Out of range. Don't render
-        return false;
-    }
+
+    // This range check was supposed to speed things up but honestly, I think it is so much worse than just doing it on the GTE
+    // We do still need to check if the triangle is too far away, otherwise large maps will loop and loop in on themselves.
+    // But we can sort that out later once the maps start getting that big.
+    //if(
+    //    abs(cam->x - (tri.a.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.a.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.a.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+    //    abs(cam->x - (tri.b.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.b.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.b.z>>GTE_SCALE_FACTOR)) > INT16_MAX ||
+    //    abs(cam->x - (tri.c.x>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->y - (tri.c.y>>GTE_SCALE_FACTOR)) > INT16_MAX || abs(cam->z - (tri.c.z>>GTE_SCALE_FACTOR)) > INT16_MAX
+    //){
+    //    // Out of range. Don't render
+    //    return false;
+    //}
 
     // Save the current translation vector
     currentTx = gte_getControlReg(GTE_TRX);
@@ -325,6 +325,9 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
         gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
+
+    
+
     if(clip){
         gte_setControlReg(GTE_TRX, currentTx);
         gte_setControlReg(GTE_TRY, currentTy);
@@ -345,6 +348,7 @@ bool transformTri(Camera *cam, Tri3 tri, Tri2 *result){
         gte_setControlReg(GTE_TRZ, currentTz);
         return false;
     }
+    
     
     // Save result
     result->a = (Vector2_16){xy0 & 0xFFFF, xy0 >> 16};
@@ -630,7 +634,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            1, 315
+            1, 323
         }
     },
     {
@@ -641,7 +645,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            2, 152
+            2, 150
         }
     },
     {
@@ -652,7 +656,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2293760,
         .children = {
-            3, 58
+            3, 56
         }
     },
     {
@@ -674,7 +678,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            5, 50
+            5, 49
         }
     },
     {
@@ -685,7 +689,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3604480,
         .children = {
-            6, 27
+            6, 26
         }
     },
     {
@@ -696,7 +700,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            7, 16
+            7, 15
         }
     },
     {
@@ -707,7 +711,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            8, 11
+            8, 10
         }
     },
     {
@@ -716,20 +720,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = 1114112,
         .children = {
             -1, 9
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 950272,
-        .children = {
-            -1, 10
         }
     },
     {
@@ -751,7 +744,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 12
+            -1, 11
         }
     },
     {
@@ -762,7 +755,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            13, 15
+            12, 14
         }
     },
     {
@@ -773,7 +766,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 14
+            -2, 13
         }
     },
     {
@@ -806,7 +799,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3932160,
         .children = {
-            17, 22
+            16, 21
         }
     },
     {
@@ -817,7 +810,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 18
+            -1, 17
         }
     },
     {
@@ -828,7 +821,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            19, 21
+            18, 20
         }
     },
     {
@@ -839,7 +832,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 20
+            -2, 19
         }
     },
     {
@@ -872,7 +865,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 23
+            -1, 22
         }
     },
     {
@@ -883,7 +876,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            24, 26
+            23, 25
         }
     },
     {
@@ -894,7 +887,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 25
+            -2, 24
         }
     },
     {
@@ -927,7 +920,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2949120,
         .children = {
-            28, 39
+            27, 38
         }
     },
     {
@@ -938,7 +931,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3276800,
         .children = {
-            29, 34
+            28, 33
         }
     },
     {
@@ -949,7 +942,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 30
+            -1, 29
         }
     },
     {
@@ -960,7 +953,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            31, 33
+            30, 32
         }
     },
     {
@@ -971,7 +964,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 32
+            -2, 31
         }
     },
     {
@@ -1004,7 +997,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 35
+            -1, 34
         }
     },
     {
@@ -1015,7 +1008,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            36, 38
+            35, 37
         }
     },
     {
@@ -1026,7 +1019,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 37
+            -2, 36
         }
     },
     {
@@ -1059,7 +1052,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2621440,
         .children = {
-            40, 45
+            39, 44
         }
     },
     {
@@ -1070,7 +1063,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 41
+            -1, 40
         }
     },
     {
@@ -1081,7 +1074,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            42, 44
+            41, 43
         }
     },
     {
@@ -1092,7 +1085,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 43
+            -2, 42
         }
     },
     {
@@ -1125,7 +1118,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 46
+            -1, 45
         }
     },
     {
@@ -1136,7 +1129,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            47, 49
+            46, 48
         }
     },
     {
@@ -1147,7 +1140,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 48
+            -2, 47
         }
     },
     {
@@ -1180,7 +1173,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            51, 56
+            50, 54
         }
     },
     {
@@ -1191,7 +1184,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3604480,
         .children = {
-            52, -2
+            51, -2
         }
     },
     {
@@ -1202,7 +1195,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            53, -2
+            52, -2
         }
     },
     {
@@ -1213,18 +1206,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            54, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 950272,
-        .children = {
-            -1, 55
+            53, -2
         }
     },
     {
@@ -1246,7 +1228,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            57, -1
+            55, -1
         }
     },
     {
@@ -1268,7 +1250,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            59, 115
+            57, 113
         }
     },
     {
@@ -1279,7 +1261,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            60, 71
+            58, 69
         }
     },
     {
@@ -1290,7 +1272,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1015808,
         .children = {
-            61, 66
+            59, 64
         }
     },
     {
@@ -1301,7 +1283,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 360448,
         .children = {
-            -1, 62
+            -1, 60
         }
     },
     {
@@ -1312,7 +1294,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1343488,
         .children = {
-            -1, 63
+            -1, 61
         }
     },
     {
@@ -1323,7 +1305,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            64, -2
+            62, -2
         }
     },
     {
@@ -1334,7 +1316,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            65, -2
+            63, -2
         }
     },
     {
@@ -1356,7 +1338,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 360448,
         .children = {
-            -1, 67
+            -1, 65
         }
     },
     {
@@ -1367,7 +1349,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 688128,
         .children = {
-            68, -1
+            66, -1
         }
     },
     {
@@ -1378,7 +1360,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            69, -2
+            67, -2
         }
     },
     {
@@ -1389,7 +1371,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            70, -2
+            68, -2
         }
     },
     {
@@ -1411,7 +1393,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            72, 75
+            70, 73
         }
     },
     {
@@ -1422,7 +1404,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1048576,
         .children = {
-            -1, 73
+            -1, 71
         }
     },
     {
@@ -1433,7 +1415,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            74, -1
+            72, -1
         }
     },
     {
@@ -1455,7 +1437,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            76, 95
+            74, 93
         }
     },
     {
@@ -1466,7 +1448,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            77, 86
+            75, 84
         }
     },
     {
@@ -1477,7 +1459,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            78, 82
+            76, 80
         }
     },
     {
@@ -1488,7 +1470,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            79, 81
+            77, 79
         }
     },
     {
@@ -1499,7 +1481,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 80
+            -2, 78
         }
     },
     {
@@ -1532,7 +1514,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            83, 85
+            81, 83
         }
     },
     {
@@ -1543,7 +1525,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 84
+            -2, 82
         }
     },
     {
@@ -1576,7 +1558,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            87, 91
+            85, 89
         }
     },
     {
@@ -1587,7 +1569,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            88, 90
+            86, 88
         }
     },
     {
@@ -1598,7 +1580,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 89
+            -2, 87
         }
     },
     {
@@ -1631,7 +1613,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            92, 94
+            90, 92
         }
     },
     {
@@ -1642,7 +1624,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 93
+            -2, 91
         }
     },
     {
@@ -1675,7 +1657,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            96, 105
+            94, 103
         }
     },
     {
@@ -1686,7 +1668,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            97, 101
+            95, 99
         }
     },
     {
@@ -1697,7 +1679,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            98, 100
+            96, 98
         }
     },
     {
@@ -1708,7 +1690,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 99
+            -2, 97
         }
     },
     {
@@ -1741,7 +1723,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            102, 104
+            100, 102
         }
     },
     {
@@ -1752,7 +1734,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 103
+            -2, 101
         }
     },
     {
@@ -1785,7 +1767,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            106, 110
+            104, 108
         }
     },
     {
@@ -1796,7 +1778,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            107, 109
+            105, 107
         }
     },
     {
@@ -1807,7 +1789,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 108
+            -2, 106
         }
     },
     {
@@ -1840,7 +1822,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            111, 113
+            109, 111
         }
     },
     {
@@ -1851,7 +1833,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -131072,
         .children = {
-            112, -1
+            110, -1
         }
     },
     {
@@ -1873,7 +1855,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            -1, 114
+            -1, 112
         }
     },
     {
@@ -1895,7 +1877,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            116, 140
+            114, 138
         }
     },
     {
@@ -1906,7 +1888,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 688128,
         .children = {
-            117, 130
+            115, 128
         }
     },
     {
@@ -1917,7 +1899,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1343488,
         .children = {
-            118, 122
+            116, 120
         }
     },
     {
@@ -1928,7 +1910,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1376256,
         .children = {
-            -1, 119
+            -1, 117
         }
     },
     {
@@ -1939,7 +1921,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            120, -2
+            118, -2
         }
     },
     {
@@ -1950,7 +1932,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            121, -2
+            119, -2
         }
     },
     {
@@ -1972,7 +1954,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 229376,
         .children = {
-            123, 125
+            121, 123
         }
     },
     {
@@ -1983,7 +1965,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2260992,
         .children = {
-            124, -1
+            122, -1
         }
     },
     {
@@ -2005,7 +1987,29 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1146880,
         .children = {
-            126, 128
+            124, 126
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2293760,
+        .children = {
+            125, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2326528,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -2033,34 +2037,12 @@ BSPNode3 bspNodes_hitscan[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2293760,
-        .children = {
-            129, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2326528,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = -4096,
             .z = 0
         },
         .distance = 655360,
         .children = {
-            131, 134
+            129, 132
         }
     },
     {
@@ -2071,7 +2053,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            132, -2
+            130, -2
         }
     },
     {
@@ -2082,7 +2064,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            133, -2
+            131, -2
         }
     },
     {
@@ -2104,7 +2086,29 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 458752,
         .children = {
-            135, 137
+            133, 135
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 229376,
+        .children = {
+            -1, 134
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -2126,29 +2130,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1015808,
         .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 229376,
-        .children = {
-            -1, 138
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1015808,
-        .children = {
-            -1, 139
+            -1, 137
         }
     },
     {
@@ -2170,7 +2152,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            141, 144
+            139, 142
         }
     },
     {
@@ -2181,7 +2163,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            142, 143
+            140, 141
         }
     },
     {
@@ -2214,7 +2196,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            145, 148
+            143, 146
         }
     },
     {
@@ -2225,7 +2207,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            146, -1
+            144, -1
         }
     },
     {
@@ -2236,7 +2218,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            -2, 147
+            -2, 145
         }
     },
     {
@@ -2258,7 +2240,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            149, 151
+            147, 149
         }
     },
     {
@@ -2269,7 +2251,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 229376,
         .children = {
-            150, -1
+            148, -1
         }
     },
     {
@@ -2302,7 +2284,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2293760,
         .children = {
-            153, 245
+            151, 247
         }
     },
     {
@@ -2313,7 +2295,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1048576,
         .children = {
-            154, 167
+            152, 169
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1114112,
+        .children = {
+            -1, 153
         }
     },
     {
@@ -2324,18 +2317,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            155, 161
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, 156
+            154, 161
         }
     },
     {
@@ -2346,7 +2328,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            -1, 157
+            155, 157
         }
     },
     {
@@ -2355,7 +2337,29 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3276800,
+        .distance = 4587520,
+        .children = {
+            156, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3604480,
         .children = {
             158, -2
         }
@@ -2366,7 +2370,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3932160,
+        .distance = 4259840,
         .children = {
             159, -2
         }
@@ -2377,7 +2381,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4259840,
+        .distance = 4587520,
         .children = {
             160, -2
         }
@@ -2388,20 +2392,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4587520,
+        .distance = 4653056,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, 162
         }
     },
     {
@@ -2412,7 +2405,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            163, -1
+            162, 166
         }
     },
     {
@@ -2421,20 +2414,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3276800,
+        .distance = 3604480,
         .children = {
-            164, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3932160,
-        .children = {
-            165, -2
+            163, -2
         }
     },
     {
@@ -2445,7 +2427,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            166, -2
+            164, -2
         }
     },
     {
@@ -2455,6 +2437,17 @@ BSPNode3 bspNodes_hitscan[] = {
             .z = 0
         },
         .distance = 4587520,
+        .children = {
+            165, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2467,29 +2460,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            168, 239
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3604480,
-        .children = {
-            169, 200
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4259840,
-        .children = {
-            170, 181
+            167, -1
         }
     },
     {
@@ -2500,7 +2471,62 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            171, 172
+            168, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -983040,
+        .children = {
+            170, 241
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3604480,
+        .children = {
+            171, 202
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4259840,
+        .children = {
+            172, 183
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            173, 174
         }
     },
     {
@@ -2522,7 +2548,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            173, 176
+            175, 178
         }
     },
     {
@@ -2533,7 +2559,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            174, -1
+            176, -1
         }
     },
     {
@@ -2544,7 +2570,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 175
+            -2, 177
         }
     },
     {
@@ -2566,7 +2592,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            177, -1
+            179, -1
         }
     },
     {
@@ -2577,7 +2603,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            178, 179
+            180, 181
         }
     },
     {
@@ -2599,7 +2625,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 180
+            -2, 182
         }
     },
     {
@@ -2621,7 +2647,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3932160,
         .children = {
-            182, 191
+            184, 193
         }
     },
     {
@@ -2632,7 +2658,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            183, 186
+            185, 188
         }
     },
     {
@@ -2643,7 +2669,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            184, -1
+            186, -1
         }
     },
     {
@@ -2654,7 +2680,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 185
+            -2, 187
         }
     },
     {
@@ -2676,7 +2702,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            187, -1
+            189, -1
         }
     },
     {
@@ -2687,7 +2713,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            188, 189
+            190, 191
         }
     },
     {
@@ -2709,7 +2735,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 190
+            -2, 192
         }
     },
     {
@@ -2731,7 +2757,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            192, 195
+            194, 197
         }
     },
     {
@@ -2742,7 +2768,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            193, -1
+            195, -1
         }
     },
     {
@@ -2753,7 +2779,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 194
+            -2, 196
         }
     },
     {
@@ -2775,7 +2801,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            196, -1
+            198, -1
         }
     },
     {
@@ -2786,7 +2812,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            197, 198
+            199, 200
         }
     },
     {
@@ -2808,7 +2834,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 199
+            -2, 201
         }
     },
     {
@@ -2830,7 +2856,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2949120,
         .children = {
-            201, 220
+            203, 222
         }
     },
     {
@@ -2841,7 +2867,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3276800,
         .children = {
-            202, 211
+            204, 213
         }
     },
     {
@@ -2852,7 +2878,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            203, 206
+            205, 208
         }
     },
     {
@@ -2863,7 +2889,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            204, -1
+            206, -1
         }
     },
     {
@@ -2874,7 +2900,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 205
+            -2, 207
         }
     },
     {
@@ -2896,7 +2922,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            207, -1
+            209, -1
         }
     },
     {
@@ -2907,7 +2933,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            208, 209
+            210, 211
         }
     },
     {
@@ -2929,7 +2955,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 210
+            -2, 212
         }
     },
     {
@@ -2951,7 +2977,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            212, 215
+            214, 217
         }
     },
     {
@@ -2962,7 +2988,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            213, -1
+            215, -1
         }
     },
     {
@@ -2973,7 +2999,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 214
+            -2, 216
         }
     },
     {
@@ -2995,7 +3021,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            216, -1
+            218, -1
         }
     },
     {
@@ -3006,7 +3032,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            217, 218
+            219, 220
         }
     },
     {
@@ -3028,7 +3054,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 219
+            -2, 221
         }
     },
     {
@@ -3050,7 +3076,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2621440,
         .children = {
-            221, 230
+            223, 232
         }
     },
     {
@@ -3061,7 +3087,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            222, 225
+            224, 227
         }
     },
     {
@@ -3072,7 +3098,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            223, -1
+            225, -1
         }
     },
     {
@@ -3083,7 +3109,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 224
+            -2, 226
         }
     },
     {
@@ -3105,7 +3131,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            226, -1
+            228, -1
         }
     },
     {
@@ -3116,7 +3142,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            227, 228
+            229, 230
         }
     },
     {
@@ -3138,7 +3164,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 229
+            -2, 231
         }
     },
     {
@@ -3160,7 +3186,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            231, 234
+            233, 236
         }
     },
     {
@@ -3171,7 +3197,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            232, -1
+            234, -1
         }
     },
     {
@@ -3182,7 +3208,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1092476,
         .children = {
-            -2, 233
+            -2, 235
         }
     },
     {
@@ -3204,7 +3230,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            235, -1
+            237, -1
         }
     },
     {
@@ -3215,7 +3241,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            236, 237
+            238, 239
         }
     },
     {
@@ -3237,7 +3263,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 238
+            -2, 240
         }
     },
     {
@@ -3259,7 +3285,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            -1, 240
+            -1, 242
         }
     },
     {
@@ -3270,7 +3296,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1048576,
         .children = {
-            241, -1
+            243, -1
         }
     },
     {
@@ -3281,7 +3307,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3276800,
         .children = {
-            242, -2
+            244, -2
         }
     },
     {
@@ -3292,7 +3318,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3932160,
         .children = {
-            243, -2
+            245, -2
         }
     },
     {
@@ -3303,7 +3329,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            244, -2
+            246, -2
         }
     },
     {
@@ -3319,156 +3345,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1048576,
-        .children = {
-            246, 258
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 0,
-        .children = {
-            247, 252
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, 248
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 327680,
-        .children = {
-            -1, 249
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 983040,
-        .children = {
-            -2, 250
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -2, 251
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
         .distance = 0,
         .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, 253
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            254, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1310720,
-        .children = {
-            -2, 255
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 655360,
-        .children = {
-            -2, 256
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -2, 257
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            259, 294
+            248, 300
         }
     },
     {
@@ -3479,7 +3362,150 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            260, 292
+            249, 298
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -327680,
+        .children = {
+            250, 262
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 0,
+        .children = {
+            251, 260
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 327680,
+        .children = {
+            252, 258
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = 1092476,
+        .children = {
+            253, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4095,
+            .y = 0,
+            .z = -1
+        },
+        .distance = 1113907,
+        .children = {
+            -1, 254
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            255, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1638400,
+        .children = {
+            256, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1966080,
+        .children = {
+            257, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            259, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1114112,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            261, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1114112,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -3490,18 +3516,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            261, 265
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 1092476,
-        .children = {
-            262, 264
+            263, 271
         }
     },
     {
@@ -3512,7 +3527,73 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            -2, 263
+            264, 269
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1092476,
+        .children = {
+            265, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4095,
+            .y = 0,
+            .z = 1
+        },
+        .distance = 1113907,
+        .children = {
+            -1, 266
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1310720,
+        .children = {
+            267, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1966080,
+        .children = {
+            268, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 270
         }
     },
     {
@@ -3528,24 +3609,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 1092476,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
         .distance = 327680,
         .children = {
-            266, -1
+            272, -1
         }
     },
     {
@@ -3556,7 +3626,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            267, 285
+            273, 291
         }
     },
     {
@@ -3567,7 +3637,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            268, 277
+            274, 283
         }
     },
     {
@@ -3578,7 +3648,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            269, 273
+            275, 279
         }
     },
     {
@@ -3589,7 +3659,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            270, 271
+            276, 277
         }
     },
     {
@@ -3611,7 +3681,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 272
+            -2, 278
         }
     },
     {
@@ -3633,7 +3703,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            274, 275
+            280, 281
         }
     },
     {
@@ -3655,7 +3725,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 276
+            -2, 282
         }
     },
     {
@@ -3677,7 +3747,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            278, 282
+            284, 288
         }
     },
     {
@@ -3688,7 +3758,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            279, 280
+            285, 286
         }
     },
     {
@@ -3710,7 +3780,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 281
+            -2, 287
         }
     },
     {
@@ -3732,7 +3802,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 283
+            -2, 289
         }
     },
     {
@@ -3743,7 +3813,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            -1, 284
+            -1, 290
         }
     },
     {
@@ -3765,7 +3835,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1158523,
         .children = {
-            -2, 286
+            -2, 292
         }
     },
     {
@@ -3776,7 +3846,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            -1, 287
+            -1, 293
         }
     },
     {
@@ -3787,7 +3857,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            288, 291
+            294, 297
         }
     },
     {
@@ -3798,7 +3868,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            289, 290
+            295, 296
         }
     },
     {
@@ -3842,7 +3912,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            -1, 293
+            -1, 299
         }
     },
     {
@@ -3864,7 +3934,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -131072,
         .children = {
-            295, -1
+            301, -1
         }
     },
     {
@@ -3875,7 +3945,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            296, 308
+            302, 316
         }
     },
     {
@@ -3886,7 +3956,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            297, 304
+            303, 312
         }
     },
     {
@@ -3897,7 +3967,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            298, 301
+            304, 308
         }
     },
     {
@@ -3908,7 +3978,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            299, 300
+            305, 306
         }
     },
     {
@@ -3920,6 +3990,17 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = 1092476,
         .children = {
             -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 307
         }
     },
     {
@@ -3941,7 +4022,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            302, 303
+            309, 311
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 310
         }
     },
     {
@@ -3974,7 +4066,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            -2, 305
+            -2, 313
         }
     },
     {
@@ -3985,7 +4077,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -2, 306
+            -2, 314
         }
     },
     {
@@ -3996,7 +4088,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            -2, 307
+            -2, 315
         }
     },
     {
@@ -4018,7 +4110,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            309, 312
+            317, 320
         }
     },
     {
@@ -4029,7 +4121,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -2, 310
+            -2, 318
         }
     },
     {
@@ -4040,7 +4132,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            -2, 311
+            -2, 319
         }
     },
     {
@@ -4062,7 +4154,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -2, 313
+            -2, 321
         }
     },
     {
@@ -4073,7 +4165,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            -2, 314
+            -2, 322
         }
     },
     {
@@ -4095,7 +4187,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            316, 466
+            324, 475
         }
     },
     {
@@ -4106,7 +4198,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2293760,
         .children = {
-            317, 372
+            325, 378
         }
     },
     {
@@ -4117,7 +4209,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -1, 318
+            -1, 326
         }
     },
     {
@@ -4128,7 +4220,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            319, 327
+            327, 334
         }
     },
     {
@@ -4139,7 +4231,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            320, 325
+            328, 332
         }
     },
     {
@@ -4150,7 +4242,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3604480,
         .children = {
-            321, -2
+            329, -2
         }
     },
     {
@@ -4161,7 +4253,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            322, -2
+            330, -2
         }
     },
     {
@@ -4172,18 +4264,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            323, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 950272,
-        .children = {
-            -1, 324
+            331, -2
         }
     },
     {
@@ -4205,7 +4286,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            326, -1
+            333, -1
         }
     },
     {
@@ -4227,7 +4308,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3604480,
         .children = {
-            328, 349
+            335, 355
         }
     },
     {
@@ -4238,7 +4319,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            329, 338
+            336, 344
         }
     },
     {
@@ -4249,7 +4330,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            330, 333
+            337, 339
         }
     },
     {
@@ -4258,20 +4339,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1048576,
+        .distance = -1114112,
         .children = {
-            331, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 950272,
-        .children = {
-            -1, 332
+            338, -1
         }
     },
     {
@@ -4283,72 +4353,6 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = 4653056,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -983040,
-        .children = {
-            334, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 917504,
-        .children = {
-            335, 337
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -1158523,
-        .children = {
-            336, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 3663,
-            .y = 0,
-            .z = 1831
-        },
-        .distance = -175851,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -1158523,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3932160,
-        .children = {
-            339, 344
         }
     },
     {
@@ -4408,13 +4412,24 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3932160,
+        .children = {
+            345, 350
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
         .distance = -983040,
         .children = {
-            345, -1
+            346, -1
         }
     },
     {
@@ -4425,7 +4440,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            346, 348
+            347, 349
         }
     },
     {
@@ -4436,7 +4451,62 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            347, -2
+            348, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 3663,
+            .y = 0,
+            .z = 1831
+        },
+        .distance = -175851,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1158523,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            351, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 917504,
+        .children = {
+            352, 354
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1158523,
+        .children = {
+            353, -2
         }
     },
     {
@@ -4469,7 +4539,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2949120,
         .children = {
-            350, 361
+            356, 367
         }
     },
     {
@@ -4480,7 +4550,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3276800,
         .children = {
-            351, 356
+            357, 362
         }
     },
     {
@@ -4491,7 +4561,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            352, -1
+            358, -1
         }
     },
     {
@@ -4502,7 +4572,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            353, 355
+            359, 361
         }
     },
     {
@@ -4513,7 +4583,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            354, -2
+            360, -2
         }
     },
     {
@@ -4536,72 +4606,6 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = -1158523,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -983040,
-        .children = {
-            357, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 917504,
-        .children = {
-            358, 360
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -1158523,
-        .children = {
-            359, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 3663,
-            .y = 0,
-            .z = 1831
-        },
-        .distance = -175851,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -1158523,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2621440,
-        .children = {
-            362, 367
         }
     },
     {
@@ -4661,13 +4665,24 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2621440,
+        .children = {
+            368, 373
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
         .distance = -983040,
         .children = {
-            368, -1
+            369, -1
         }
     },
     {
@@ -4678,7 +4693,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            369, 371
+            370, 372
         }
     },
     {
@@ -4689,7 +4704,62 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            370, -2
+            371, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 3663,
+            .y = 0,
+            .z = 1831
+        },
+        .distance = -175851,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1158523,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            374, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 917504,
+        .children = {
+            375, 377
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1158523,
+        .children = {
+            376, -2
         }
     },
     {
@@ -4722,7 +4792,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            373, 410
+            379, 416
         }
     },
     {
@@ -4733,7 +4803,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            374, 398
+            380, 404
         }
     },
     {
@@ -4744,7 +4814,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 688128,
         .children = {
-            375, 388
+            381, 394
         }
     },
     {
@@ -4755,7 +4825,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1343488,
         .children = {
-            376, 380
+            382, 386
         }
     },
     {
@@ -4766,7 +4836,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1376256,
         .children = {
-            -1, 377
+            -1, 383
         }
     },
     {
@@ -4777,7 +4847,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            378, -2
+            384, -2
         }
     },
     {
@@ -4788,7 +4858,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            379, -2
+            385, -2
         }
     },
     {
@@ -4810,7 +4880,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -229376,
         .children = {
-            381, 386
+            387, 392
         }
     },
     {
@@ -4821,7 +4891,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1146880,
         .children = {
-            382, 384
+            388, 390
         }
     },
     {
@@ -4832,7 +4902,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2293760,
         .children = {
-            383, -1
+            389, -1
         }
     },
     {
@@ -4854,7 +4924,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2293760,
         .children = {
-            385, -1
+            391, -1
         }
     },
     {
@@ -4876,7 +4946,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 2260992,
         .children = {
-            387, -1
+            393, -1
         }
     },
     {
@@ -4898,7 +4968,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            389, 392
+            395, 398
         }
     },
     {
@@ -4909,7 +4979,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            390, -2
+            396, -2
         }
     },
     {
@@ -4920,7 +4990,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            391, -2
+            397, -2
         }
     },
     {
@@ -4942,7 +5012,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 458752,
         .children = {
-            393, 395
+            399, 401
         }
     },
     {
@@ -4953,7 +5023,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -229376,
         .children = {
-            394, -1
+            400, -1
         }
     },
     {
@@ -4975,7 +5045,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -229376,
         .children = {
-            396, -1
+            402, -1
         }
     },
     {
@@ -4986,7 +5056,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1015808,
         .children = {
-            -1, 397
+            -1, 403
         }
     },
     {
@@ -5008,7 +5078,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            399, 402
+            405, 408
         }
     },
     {
@@ -5019,7 +5089,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            400, 401
+            406, 407
         }
     },
     {
@@ -5052,7 +5122,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            403, 406
+            409, 412
         }
     },
     {
@@ -5063,7 +5133,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            404, -1
+            410, -1
         }
     },
     {
@@ -5074,7 +5144,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            -2, 405
+            -2, 411
         }
     },
     {
@@ -5096,7 +5166,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            407, 409
+            413, 415
         }
     },
     {
@@ -5107,7 +5177,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -229376,
         .children = {
-            -1, 408
+            -1, 414
         }
     },
     {
@@ -5140,7 +5210,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            411, 422
+            417, 428
         }
     },
     {
@@ -5151,7 +5221,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1015808,
         .children = {
-            412, 417
+            418, 423
         }
     },
     {
@@ -5162,7 +5232,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -360448,
         .children = {
-            413, -1
+            419, -1
         }
     },
     {
@@ -5173,7 +5243,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1343488,
         .children = {
-            -1, 414
+            -1, 420
         }
     },
     {
@@ -5184,7 +5254,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            415, -2
+            421, -2
         }
     },
     {
@@ -5195,7 +5265,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            416, -2
+            422, -2
         }
     },
     {
@@ -5217,7 +5287,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -360448,
         .children = {
-            418, -1
+            424, -1
         }
     },
     {
@@ -5228,7 +5298,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 688128,
         .children = {
-            419, -1
+            425, -1
         }
     },
     {
@@ -5239,7 +5309,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            420, -2
+            426, -2
         }
     },
     {
@@ -5250,7 +5320,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            421, -2
+            427, -2
         }
     },
     {
@@ -5266,24 +5336,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -983040,
-        .children = {
-            423, 463
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
         .distance = 983040,
         .children = {
-            424, 443
+            429, 452
         }
     },
     {
@@ -5294,7 +5353,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1638400,
         .children = {
-            425, 434
+            430, 441
         }
     },
     {
@@ -5305,7 +5364,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1966080,
         .children = {
-            426, 430
+            431, 436
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            432, -1
         }
     },
     {
@@ -5316,7 +5386,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            427, 429
+            433, 435
         }
     },
     {
@@ -5327,7 +5397,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            428, -2
+            434, -2
         }
     },
     {
@@ -5354,13 +5424,24 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            437, -1
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
         .distance = 917504,
         .children = {
-            431, 433
+            438, 440
         }
     },
     {
@@ -5371,7 +5452,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            432, -2
+            439, -2
         }
     },
     {
@@ -5404,7 +5485,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            435, 439
+            442, 447
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            443, -1
         }
     },
     {
@@ -5415,7 +5507,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            436, 438
+            444, 446
         }
     },
     {
@@ -5426,7 +5518,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            437, -2
+            445, -2
         }
     },
     {
@@ -5453,13 +5545,24 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            448, -1
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
         .distance = 917504,
         .children = {
-            440, 442
+            449, 451
         }
     },
     {
@@ -5470,7 +5573,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            441, -2
+            450, -2
         }
     },
     {
@@ -5503,7 +5606,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            444, 453
+            453, 464
         }
     },
     {
@@ -5514,7 +5617,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            445, 449
+            454, 459
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            455, -1
         }
     },
     {
@@ -5525,7 +5639,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            446, 448
+            456, 458
         }
     },
     {
@@ -5536,7 +5650,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            447, -2
+            457, -2
         }
     },
     {
@@ -5563,13 +5677,24 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            460, -1
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
         .distance = 917504,
         .children = {
-            450, 452
+            461, 463
         }
     },
     {
@@ -5580,7 +5705,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            451, -2
+            462, -2
         }
     },
     {
@@ -5613,7 +5738,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 0,
         .children = {
-            454, 458
+            465, 470
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            466, -1
         }
     },
     {
@@ -5624,7 +5760,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            455, 457
+            467, 469
         }
     },
     {
@@ -5635,7 +5771,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            456, -2
+            468, -2
         }
     },
     {
@@ -5668,7 +5804,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            459, 461
+            471, 473
         }
     },
     {
@@ -5679,7 +5815,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 917504,
         .children = {
-            -1, 460
+            -1, 472
         }
     },
     {
@@ -5701,7 +5837,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -131072,
         .children = {
-            462, -1
+            474, -1
         }
     },
     {
@@ -5717,46 +5853,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1048576,
-        .children = {
-            464, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            465, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
         .distance = 2293760,
         .children = {
-            467, 558
+            476, 572
         }
     },
     {
@@ -5767,7 +5870,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1048576,
         .children = {
-            468, 546
+            477, 555
         }
     },
     {
@@ -5778,7 +5881,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            469, 540
+            478, 549
         }
     },
     {
@@ -5789,7 +5892,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3604480,
         .children = {
-            470, 501
+            479, 510
         }
     },
     {
@@ -5800,7 +5903,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4259840,
         .children = {
-            471, 482
+            480, 491
         }
     },
     {
@@ -5811,7 +5914,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 4587520,
         .children = {
-            472, 473
+            481, 482
         }
     },
     {
@@ -5833,7 +5936,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            474, 479
+            483, 488
         }
     },
     {
@@ -5844,7 +5947,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -1, 475
+            -1, 484
         }
     },
     {
@@ -5855,7 +5958,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            476, 477
+            485, 486
         }
     },
     {
@@ -5877,7 +5980,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            478, -2
+            487, -2
         }
     },
     {
@@ -5899,7 +6002,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            480, -1
+            489, -1
         }
     },
     {
@@ -5910,7 +6013,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1092476,
         .children = {
-            481, -2
+            490, -2
         }
     },
     {
@@ -5932,106 +6035,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 3932160,
         .children = {
-            483, 492
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -983040,
-        .children = {
-            484, 489
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -327680,
-        .children = {
-            -1, 485
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -917504,
-        .children = {
-            486, 487
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -1158523,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -1158523,
-        .children = {
-            488, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 3663,
-            .y = 0,
-            .z = -1831
-        },
-        .distance = -175851,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -655360,
-        .children = {
-            490, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -1092476,
-        .children = {
-            491, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -1092476,
-        .children = {
-            -1, -2
+            492, 501
         }
     },
     {
@@ -6135,35 +6139,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2949120,
-        .children = {
-            502, 521
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3276800,
-        .children = {
-            503, 512
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
         .distance = -983040,
         .children = {
-            504, 509
+            502, 507
         }
     },
     {
@@ -6174,7 +6156,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -1, 505
+            -1, 503
         }
     },
     {
@@ -6185,7 +6167,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            506, 507
+            504, 505
         }
     },
     {
@@ -6207,7 +6189,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            508, -2
+            506, -2
         }
     },
     {
@@ -6229,7 +6211,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            510, -1
+            508, -1
         }
     },
     {
@@ -6240,7 +6222,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1092476,
         .children = {
-            511, -2
+            509, -2
         }
     },
     {
@@ -6252,6 +6234,28 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = -1092476,
         .children = {
             -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2949120,
+        .children = {
+            511, 530
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3276800,
+        .children = {
+            512, 521
         }
     },
     {
@@ -6355,24 +6359,13 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2621440,
-        .children = {
-            522, 531
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
         .distance = -983040,
         .children = {
-            523, 528
+            522, 527
         }
     },
     {
@@ -6383,7 +6376,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -1, 524
+            -1, 523
         }
     },
     {
@@ -6394,7 +6387,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            525, 526
+            524, 525
         }
     },
     {
@@ -6416,7 +6409,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            527, -2
+            526, -2
         }
     },
     {
@@ -6438,7 +6431,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -655360,
         .children = {
-            529, -1
+            528, -1
         }
     },
     {
@@ -6449,7 +6442,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1092476,
         .children = {
-            530, -2
+            529, -2
         }
     },
     {
@@ -6461,6 +6454,17 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = -1092476,
         .children = {
             -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2621440,
+        .children = {
+            531, 540
         }
     },
     {
@@ -6568,240 +6572,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -327680,
-        .children = {
-            541, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1048576,
-        .children = {
-            542, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3276800,
-        .children = {
-            543, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3932160,
-        .children = {
-            544, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4259840,
-        .children = {
-            545, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4587520,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 0,
-        .children = {
-            547, 552
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            548, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 327680,
-        .children = {
-            -1, 549
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3604480,
-        .children = {
-            550, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4259840,
-        .children = {
-            551, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4587520,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            553, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            554, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3276800,
-        .children = {
-            555, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3932160,
-        .children = {
-            556, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4259840,
-        .children = {
-            557, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4587520,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1048576,
-        .children = {
-            559, 616
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 0,
-        .children = {
-            560, 595
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
         .distance = -983040,
         .children = {
-            561, 593
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -983040,
-        .children = {
-            562, 589
+            541, 546
         }
     },
     {
@@ -6812,40 +6585,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -327680,
         .children = {
-            -1, 563
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 983040,
-        .children = {
-            564, 582
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1638400,
-        .children = {
-            565, 574
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1966080,
-        .children = {
-            566, 570
+            -1, 542
         }
     },
     {
@@ -6856,7 +6596,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            567, 568
+            543, 544
         }
     },
     {
@@ -6878,7 +6618,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            569, -2
+            545, -2
         }
     },
     {
@@ -6898,9 +6638,867 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
+        .distance = -655360,
+        .children = {
+            547, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1092476,
+        .children = {
+            548, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1092476,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            550, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1048576,
+        .children = {
+            551, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3276800,
+        .children = {
+            552, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3932160,
+        .children = {
+            553, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4259840,
+        .children = {
+            554, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1114112,
+        .children = {
+            556, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 0,
+        .children = {
+            557, 564
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 327680,
+        .children = {
+            558, 560
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            559, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3604480,
+        .children = {
+            561, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4259840,
+        .children = {
+            562, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            563, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -327680,
+        .children = {
+            565, 569
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3604480,
+        .children = {
+            566, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4259840,
+        .children = {
+            567, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            568, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -983040,
+        .children = {
+            570, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4587520,
+        .children = {
+            571, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4653056,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -327680,
+        .children = {
+            573, 605
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 0,
+        .children = {
+            574, 595
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 327680,
+        .children = {
+            575, 585
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1092476,
+        .children = {
+            576, 578
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            577, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4095,
+            .y = 0,
+            .z = 1
+        },
+        .distance = -1113907,
+        .children = {
+            579, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            580, 583
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1638400,
+        .children = {
+            581, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1966080,
+        .children = {
+            582, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1048576,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -2, 584
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1048576,
+        .children = {
+            586, 591
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -1, 587
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            588, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -655360,
+        .children = {
+            -2, 589
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            -2, 590
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -32768,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1114112,
+        .children = {
+            592, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            -2, 593
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -2, 594
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1048576,
+        .children = {
+            596, 601
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -1, 597
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            598, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -655360,
+        .children = {
+            -2, 599
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            -2, 600
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -32768,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1114112,
+        .children = {
+            602, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            -2, 603
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -2, 604
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -983040,
+        .children = {
+            606, 658
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -655360,
+        .children = {
+            607, 617
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1092476,
+        .children = {
+            608, 610
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            609, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4095,
+            .y = 0,
+            .z = -1
+        },
+        .distance = -1113907,
+        .children = {
+            611, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            612, 615
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1638400,
+        .children = {
+            613, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1966080,
+        .children = {
+            614, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1048576,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            -2, 616
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -327680,
+        .children = {
+            618, 620
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            619, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 983040,
+        .children = {
+            621, 643
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1638400,
+        .children = {
+            622, 633
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1966080,
+        .children = {
+            623, 628
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            624, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
         .distance = -917504,
         .children = {
-            571, 572
+            625, 626
         }
     },
     {
@@ -6922,7 +7520,62 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            573, -2
+            627, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 3663,
+            .y = 0,
+            .z = -1831
+        },
+        .distance = -175851,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            629, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -917504,
+        .children = {
+            630, 631
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1158523,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1158523,
+        .children = {
+            632, -2
         }
     },
     {
@@ -6944,7 +7597,18 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 1310720,
         .children = {
-            575, 579
+            634, 639
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            635, -1
         }
     },
     {
@@ -6955,7 +7619,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            576, 577
+            636, 637
         }
     },
     {
@@ -6977,7 +7641,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            578, -2
+            638, -2
         }
     },
     {
@@ -6999,7 +7663,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -1158523,
         .children = {
-            580, -2
+            640, 642
         }
     },
     {
@@ -7010,7 +7674,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            -1, 581
+            -1, 641
         }
     },
     {
@@ -7026,13 +7690,35 @@ BSPNode3 bspNodes_hitscan[] = {
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -983040,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
             .x = 2896,
             .y = 0,
             .z = 2896
         },
         .distance = -1158523,
         .children = {
-            583, -2
+            644, 655
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 0,
+        .children = {
+            645, 651
         }
     },
     {
@@ -7043,7 +7729,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -917504,
         .children = {
-            -1, 584
+            -1, 646
         }
     },
     {
@@ -7054,7 +7740,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            585, 588
+            647, 650
         }
     },
     {
@@ -7065,7 +7751,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 655360,
         .children = {
-            586, 587
+            648, 649
         }
     },
     {
@@ -7099,50 +7785,6 @@ BSPNode3 bspNodes_hitscan[] = {
         .distance = -175851,
         .children = {
             -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -1092476,
-        .children = {
-            590, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -655360,
-        .children = {
-            591, 592
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -1092476,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -1, -2
         }
     },
     {
@@ -7151,9 +7793,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -327680,
+        .distance = -655360,
         .children = {
-            594, -1
+            652, 654
         }
     },
     {
@@ -7162,7 +7804,18 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1048576,
+        .distance = -917504,
+        .children = {
+            653, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -7175,105 +7828,6 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -131072,
         .children = {
-            596, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -655360,
-        .children = {
-            597, 605
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -327680,
-        .children = {
-            598, 601
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            -2, 599
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -655360,
-        .children = {
-            -2, 600
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -983040,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 0,
-        .children = {
-            -2, 602
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            -2, 603
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -655360,
-        .children = {
-            -2, 604
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -917504,
-        .children = {
             -2, -1
         }
     },
@@ -7285,161 +7839,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = -983040,
         .children = {
-            606, 609
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            -2, 607
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -655360,
-        .children = {
-            -2, 608
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -1158523,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 0,
-        .children = {
-            610, 613
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 327680,
-        .children = {
-            611, 612
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -1092476,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -32768,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -327680,
-        .children = {
-            614, 615
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -32768,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -1092476,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 0,
-        .children = {
-            617, 622
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            618, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 327680,
-        .children = {
-            -1, 619
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 983040,
-        .children = {
-            -2, 620
+            656, -1
         }
     },
     {
@@ -7450,7 +7850,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            -2, 621
+            -2, 657
         }
     },
     {
@@ -7470,9 +7870,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -327680,
         .children = {
-            623, -1
+            659, -1
         }
     },
     {
@@ -7481,9 +7881,9 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -327680,
+        .distance = -1048576,
         .children = {
-            624, -1
+            660, -1
         }
     },
     {
@@ -7494,7 +7894,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 983040,
         .children = {
-            -2, 625
+            -2, 661
         }
     },
     {
@@ -7505,7 +7905,7 @@ BSPNode3 bspNodes_hitscan[] = {
         },
         .distance = 327680,
         .children = {
-            -2, 626
+            -2, 662
         }
     },
     {
@@ -7520,51 +7920,18 @@ BSPNode3 bspNodes_hitscan[] = {
         }
     },
 };
-BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 627};
+BSPTree3 bsp_hitscan = {.nodes=bspNodes_hitscan, .numNodes = 663};
 
 BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2228224,
-        .children = {
-            1, 418
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 1114112,
+        .distance = 622592,
         .children = {
-            -1, 2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -131072,
-        .children = {
-            3, 173
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            4, 46
+            1, 531
         }
     },
     {
@@ -7573,42 +7940,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -131072,
+        .distance = -32768,
         .children = {
-            5, 28
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3342336,
-        .children = {
-            6, 27
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4194304,
-        .children = {
-            7, 26
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4849664,
-        .children = {
-            8, 11
+            2, 269
         }
     },
     {
@@ -7617,9 +7951,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 622592,
         .children = {
-            -1, 9
+            3, 137
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            4, 67
         }
     },
     {
@@ -7627,10 +7972,32 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = 0,
             .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 5
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
         },
         .distance = 1081344,
         .children = {
-            -1, 10
+            6, 9
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 7
         }
     },
     {
@@ -7639,7 +8006,18 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4915200,
+        .distance = 4456448,
+        .children = {
+            8, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -7650,9 +8028,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 950272,
         .children = {
-            -1, 12
+            10, 44
         }
     },
     {
@@ -7661,42 +8039,64 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4521984,
+        .distance = 3473408,
+        .children = {
+            11, 25
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            12, 20
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
         .children = {
             13, 18
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 524288,
+        .distance = 4456448,
         .children = {
-            14, -2
+            14, 16
         }
     },
     {
         .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = 973159,
+        .distance = 4718592,
         .children = {
             15, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 819200,
+        .distance = 4784128,
         .children = {
-            16, -2
+            -1, -2
         }
     },
     {
@@ -7705,7 +8105,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 1015808,
         .children = {
             17, -2
         }
@@ -7716,7 +8116,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1081344,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -7727,20 +8127,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 524288,
+        .distance = 1015808,
         .children = {
             19, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            20, -2
         }
     },
     {
@@ -7749,53 +8138,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1081344,
-        .children = {
-            21, 23
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            22, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 688128,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            24, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            25, -2
         }
     },
     {
@@ -7804,7 +8149,40 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4325376,
+        .distance = 3801088,
+        .children = {
+            21, 24
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            22, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, 23
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
         .children = {
             -2, -1
         }
@@ -7815,18 +8193,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -7837,9 +8204,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3342336,
+        .distance = 2818048,
         .children = {
-            29, 45
+            26, 34
         }
     },
     {
@@ -7848,31 +8215,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3997696,
+        .distance = 3145728,
         .children = {
-            30, 40
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4849664,
-        .children = {
-            31, 34
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            32, -1
+            27, 31
         }
     },
     {
@@ -7881,7 +8226,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1081344,
+        .distance = 688128,
+        .children = {
+            28, 29
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            30, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            32, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
         .children = {
             -1, 33
         }
@@ -7892,7 +8292,40 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4915200,
+        .distance = 3080192,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            35, 39
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2752512,
+        .children = {
+            36, 37
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -7903,20 +8336,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -819200,
+        .distance = 1015808,
         .children = {
-            -2, 35
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            36, -1
+            38, -2
         }
     },
     {
@@ -7925,183 +8347,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1081344,
-        .children = {
-            37, 38
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 39
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3670016,
-        .children = {
-            41, 43
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -819200,
-        .children = {
-            -2, 42
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -819200,
-        .children = {
-            -2, 44
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
-        .children = {
-            47, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3670016,
-        .children = {
-            48, 91
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            49, 68
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 50
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4849664,
-        .children = {
-            51, 53
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 52
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4915200,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -8112,9 +8358,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4521984,
+        .distance = 2424832,
         .children = {
-            54, 56
+            40, 42
         }
     },
     {
@@ -8123,9 +8369,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 1015808,
         .children = {
-            55, -2
+            41, -2
         }
     },
     {
@@ -8134,7 +8380,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -8145,9 +8391,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 1015808,
         .children = {
-            57, 58
+            43, -2
         }
     },
     {
@@ -8156,7 +8402,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -8164,10 +8410,164 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            45, 56
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
+        .children = {
+            46, 54
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            47, 52
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            48, 49
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, 50
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 51
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 524288,
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 53
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 55
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2752512,
+        .children = {
+            57, 62
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3080192,
+        .children = {
+            58, 60
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
         .children = {
             -2, 59
         }
@@ -8175,21 +8575,21 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 4194304,
+        .distance = 884736,
         .children = {
-            60, 65
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = 2896
         },
-        .distance = 917504,
+        .distance = 1112182,
         .children = {
             -2, 61
         }
@@ -8200,29 +8600,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            62, 64
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, 63
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -8233,18 +8611,40 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4325376,
+        .distance = 2424832,
+        .children = {
+            63, 65
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 64
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = 2896
         },
-        .distance = 917504,
+        .distance = 1112182,
         .children = {
             -2, 66
         }
@@ -8255,18 +8655,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            67, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -8274,12 +8663,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 3997696,
+        .distance = 1015808,
         .children = {
-            69, 82
+            -1, 68
         }
     },
     {
@@ -8288,9 +8677,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4849664,
+        .distance = 524288,
         .children = {
-            70, 72
+            69, 103
         }
     },
     {
@@ -8299,9 +8688,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 950272,
         .children = {
-            71, -1
+            70, 89
         }
     },
     {
@@ -8310,9 +8699,31 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4915200,
+        .distance = 1179648,
         .children = {
-            -1, -2
+            71, 82
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            72, 79
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            73, 76
         }
     },
     {
@@ -8321,9 +8732,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = 1081344,
         .children = {
-            73, 80
+            -1, 74
         }
     },
     {
@@ -8332,18 +8743,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -851968,
-        .children = {
-            74, 77
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
+        .distance = 1015808,
         .children = {
             75, -2
         }
@@ -8351,177 +8751,78 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, 76
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, 78
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            79, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
+        .distance = 688128,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            77, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 78
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 80
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
         .children = {
             81, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            83, 88
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            84, 86
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            85, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            87, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
+        .distance = 688128,
         .children = {
             -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            89, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 90
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
         }
     },
     {
@@ -8530,20 +8831,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3014656,
-        .children = {
-            92, 124
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
         .distance = 851968,
         .children = {
-            93, 104
+            83, 86
         }
     },
     {
@@ -8552,9 +8842,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1245184,
+        .distance = 1146880,
         .children = {
-            -1, 94
+            -1, 84
         }
     },
     {
@@ -8563,9 +8853,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 1015808,
         .children = {
-            95, 96
+            85, -2
         }
     },
     {
@@ -8574,7 +8864,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 87
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            88, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -8582,10 +8905,87 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1441792,
+        .children = {
+            90, 98
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            91, 96
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            92, 94
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 93
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 524288,
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 95
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
         .children = {
             -2, 97
         }
@@ -8593,23 +8993,34 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 3538944,
+        .distance = 884736,
         .children = {
-            98, 101
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 1114112,
         .children = {
-            -2, 99
+            99, 101
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 100
         }
     },
     {
@@ -8618,29 +9029,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            100, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
+        .distance = 884736,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = 2896
         },
-        .distance = 917504,
+        .distance = 1112182,
         .children = {
             -2, 102
         }
@@ -8651,9 +9051,174 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
         .distance = 196608,
         .children = {
-            103, -1
+            104, 110
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            105, 108
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 106
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            107, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 109
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            111, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            112, 123
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 113
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            114, 119
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            115, 117
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            116, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, 118
         }
     },
     {
@@ -8662,9 +9227,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = 938244,
+        .distance = 1131034,
         .children = {
-            -2, -1
+            -1, -2
         }
     },
     {
@@ -8673,183 +9238,40 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3342336,
-        .children = {
-            105, 114
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            106, 111
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            107, 109
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            108, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            110, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            112, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 113
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            115, 121
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            116, 118
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            117, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            119, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 524288,
+        .distance = 131072,
         .children = {
             -2, 120
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 0,
             .y = 0,
-            .z = -803
+            .z = 4096
         },
-        .distance = -938244,
+        .distance = 688128,
+        .children = {
+            121, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, 122
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1204864,
         .children = {
             -1, -2
         }
@@ -8860,20 +9282,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = 688128,
         .children = {
-            122, -2
+            124, 134
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 458752,
+        .distance = -131072,
         .children = {
-            123, -2
+            125, 132
         }
     },
     {
@@ -8882,7 +9304,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 688128,
+        .children = {
+            126, 129
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1204864,
+        .children = {
+            -2, 127
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 128
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            -2, 130
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            131, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -8893,117 +9381,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -851968,
-        .children = {
-            125, 151
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            126, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 127
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            128, 146
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 524288,
-        .children = {
-            129, 130
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            131, 140
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2555904,
-        .children = {
-            132, 138
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
+        .distance = 688128,
         .children = {
             133, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
+            .x = 2896,
+            .y = 0,
+            .z = 2896
         },
-        .distance = 2883584,
+        .distance = 1204864,
         .children = {
-            134, 136
+            -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = -131072,
         .children = {
             135, -2
         }
@@ -9011,320 +9411,23 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            137, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            139, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            141, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = -4096,
             .z = 0
-        },
-        .distance = 2883584,
-        .children = {
-            142, 143
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2555904,
-        .children = {
-            144, 145
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2359296,
-        .children = {
-            147, 150
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2686976,
-        .children = {
-            148, 149
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2686976,
-        .children = {
-            152, 158
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            153, 155
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            154, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            156, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 157
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2359296,
-        .children = {
-            159, 166
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            160, 162
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            161, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
         },
         .distance = 131072,
         .children = {
-            163, -2
+            136, -2
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 2896,
             .y = 0,
-            .z = 4096
+            .z = 2896
         },
-        .distance = 458752,
+        .distance = 1112182,
         .children = {
-            164, -2
+            -2, -1
         }
     },
     {
@@ -9333,20 +9436,328 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 294912,
+        .children = {
+            138, 194
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2424832,
+        .children = {
+            139, 148
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 140
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            141, 146
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            142, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
+        .children = {
+            143, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            144, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            145, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            147, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            149, 185
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 393216,
+        .children = {
+            -1, 150
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1605632,
+        .children = {
+            151, 169
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2326528,
+        .children = {
+            -1, 152
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            153, 161
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1933312,
+        .children = {
+            154, 157
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
+        .children = {
+            155, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            -1, 156
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            158, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            -1, 159
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
+        .children = {
+            160, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1998848,
+        .children = {
+            162, 166
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            163, 164
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
         .children = {
             -2, 165
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 524288,
         .children = {
             -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, 167
         }
     },
     {
@@ -9355,9 +9766,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = 360448,
         .children = {
-            167, 169
+            -1, 168
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            170, 179
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            171, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            -1, 172
         }
     },
     {
@@ -9366,18 +9821,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = 1277952,
         .children = {
-            168, -1
+            173, 176
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -938244,
+        .distance = 1212416,
+        .children = {
+            174, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            175, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
         .children = {
             -1, -2
         }
@@ -9385,78 +9862,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 131072,
-        .children = {
-            170, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            171, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 1212416,
         .children = {
-            -2, 172
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            174, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 131072,
-        .children = {
-            175, 288
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 176
+            177, -2
         }
     },
     {
@@ -9465,20 +9876,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2359296,
+        .distance = 1474560,
         .children = {
-            177, 269
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4849664,
-        .children = {
-            178, 181
+            178, -2
         }
     },
     {
@@ -9487,18 +9887,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 360448,
         .children = {
-            -1, 179
+            -1, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1114112,
+        .distance = 524288,
         .children = {
             180, -1
         }
@@ -9506,10 +9906,153 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1343488,
+        .children = {
+            181, 183
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            182, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 4915200,
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            184, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            186, 192
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            -2, 187
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            188, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -2, 189
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            190, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            191, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            193, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
         .children = {
             -1, -2
         }
@@ -9520,9 +10063,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3670016,
+        .distance = 2162688,
         .children = {
-            182, 213
+            195, 204
         }
     },
     {
@@ -9531,20 +10074,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = 1015808,
         .children = {
-            183, 198
+            -1, 196
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = 851968,
+        .distance = 884736,
         .children = {
-            184, 194
+            197, 202
         }
     },
     {
@@ -9553,73 +10096,51 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4521984,
+        .distance = 3145728,
         .children = {
-            185, 188
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            186, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            187, -2
+            198, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 3801088,
         .children = {
-            189, 191
+            199, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -458752,
+        .distance = 4390912,
         .children = {
-            -2, 190
+            200, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4718592,
+        .children = {
+            201, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -9630,9 +10151,31 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4325376,
+        .distance = 4456448,
         .children = {
-            -2, 192
+            203, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            205, 207
         }
     },
     {
@@ -9641,86 +10184,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = 884736,
         .children = {
-            193, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3997696,
-        .children = {
-            195, 197
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, 196
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 199
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4521984,
-        .children = {
-            200, 202
+            206, -1
         }
     },
     {
@@ -9729,18 +10195,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
-        .children = {
-            -2, 201
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -9751,53 +10206,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 1605632,
         .children = {
-            203, 212
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            204, 206
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            205, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4194304,
-        .children = {
-            207, 210
+            208, 235
         }
     },
     {
@@ -9806,9 +10217,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = 1998848,
         .children = {
-            208, -2
+            209, 232
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2359296,
+        .children = {
+            -1, 210
         }
     },
     {
@@ -9817,9 +10239,119 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4325376,
+        .distance = 557056,
         .children = {
-            -2, 209
+            211, 230
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
+        .children = {
+            212, 213
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2326528,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2326528,
+        .children = {
+            214, 217
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            215, 216
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 262144,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 262144,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            218, 224
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2228224,
+        .children = {
+            219, 223
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 262144,
+        .children = {
+            -2, 220
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, 221
         }
     },
     {
@@ -9830,7 +10362,7 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = 196608,
         .children = {
-            -2, -1
+            -2, 222
         }
     },
     {
@@ -9839,150 +10371,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
-        .children = {
-            211, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            214, 251
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            215, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3342336,
-        .children = {
-            216, 224
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            217, 219
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            -2, 218
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 220
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            221, 222
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            223, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = 2260992,
         .children = {
             -2, -1
         }
@@ -9993,20 +10382,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2686976,
+        .distance = 1212416,
         .children = {
-            225, 242
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3014656,
-        .children = {
-            226, 234
+            -2, -1
         }
     },
     {
@@ -10015,9 +10393,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -458752,
+        .distance = 2228224,
         .children = {
-            227, 229
+            225, 229
         }
     },
     {
@@ -10026,260 +10404,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 262144,
+        .children = {
+            -2, 226
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            227, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2260992,
         .children = {
             -2, 228
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
-        .children = {
-            -1, 230
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            231, 232
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, 233
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            235, 237
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            -2, 236
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 238
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            239, 240
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            241, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            243, 248
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            244, 247
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 245
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 246
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 249
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            250, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = 196608,
         .children = {
             -2, -1
         }
@@ -10290,9 +10448,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3014656,
+        .distance = 819200,
         .children = {
-            252, 260
+            -1, -2
         }
     },
     {
@@ -10301,9 +10459,306 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = 2326528,
         .children = {
-            253, 258
+            -1, 231
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, 233
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            234, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            236, 248
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 32768,
+        .children = {
+            237, 241
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            238, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, 239
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 240
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1277952,
+        .children = {
+            242, 243
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            244, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            245, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            246, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            247, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            249, 252
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1048576,
+        .children = {
+            -2, 250
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            -2, 251
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            253, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 254
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            255, 268
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            256, 267
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            257, 263
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            258, 261
         }
     },
     {
@@ -10313,61 +10768,6 @@ BSPNode3 bspNodes_player[] = {
             .z = 0
         },
         .distance = 196608,
-        .children = {
-            254, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            255, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3342336,
-        .children = {
-            256, 257
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
         .children = {
             259, -2
         }
@@ -10378,9 +10778,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 1015808,
         .children = {
-            -2, -1
+            260, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 262144,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -10389,9 +10800,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = 1015808,
         .children = {
-            261, 267
+            262, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 262144,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -10402,7 +10824,7 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = 196608,
         .children = {
-            262, -1
+            264, 266
         }
     },
     {
@@ -10411,9 +10833,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2686976,
+        .distance = 131072,
         .children = {
-            263, 265
+            265, -2
         }
     },
     {
@@ -10421,109 +10843,21 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = 0,
             .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            264, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            266, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            268, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            270, 283
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            271, 280
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            272, 277
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
         },
         .distance = 917504,
         .children = {
-            273, 276
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -10532,9 +10866,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -196607,
+        .distance = 1015808,
         .children = {
-            -2, 274
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -10543,7 +10888,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = -622592,
+        .children = {
+            270, 398
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            271, 279
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 272
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            273, 277
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            274, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
         .children = {
             275, -2
         }
@@ -10551,45 +10951,45 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4718592,
         .children = {
-            -1, 278
+            276, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 4784128,
         .children = {
-            279, -2
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            278, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -10598,20 +10998,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = 884736,
         .children = {
-            -2, -1
+            280, 396
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 196608,
+        .distance = 1507328,
         .children = {
-            281, -1
+            281, 282
         }
     },
     {
@@ -10620,31 +11020,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = 1015808,
         .children = {
-            282, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            284, -2
+            -1, -2
         }
     },
     {
@@ -10653,75 +11031,42 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 1277952,
+        .children = {
+            283, 347
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -393216,
+        .children = {
+            284, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
         .children = {
             285, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 524288,
-        .children = {
-            286, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            287, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3670016,
-        .children = {
-            289, 339
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4849664,
-        .children = {
-            290, 293
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = -1179648,
+        .distance = 1933312,
         .children = {
-            291, -1
+            286, 318
         }
     },
     {
@@ -10730,9 +11075,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 2359296,
         .children = {
-            292, -1
+            -1, 287
         }
     },
     {
@@ -10741,7 +11086,29 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4915200,
+        .distance = 1474560,
+        .children = {
+            288, 290
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            289, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2326528,
         .children = {
             -1, -2
         }
@@ -10752,20 +11119,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 2326528,
         .children = {
-            294, 338
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            295, 311
+            291, 295
         }
     },
     {
@@ -10774,9 +11130,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4521984,
+        .distance = 1015808,
         .children = {
-            -2, 296
+            292, 293
         }
     },
     {
@@ -10785,29 +11141,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -524288,
-        .children = {
-            297, 303
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            298, 299
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -10818,20 +11152,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -262144,
         .children = {
-            300, -2
+            294, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -851968,
+        .distance = 557056,
         .children = {
-            301, -2
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            296, 317
         }
     },
     {
@@ -10840,7 +11185,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = -360448,
+        .children = {
+            297, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1998848,
+        .children = {
+            298, 312
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            299, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            300, 306
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2228224,
+        .children = {
+            301, 305
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -262144,
         .children = {
             302, -2
         }
@@ -10851,482 +11251,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 4325376,
+        .distance = 1212416,
         .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            -2, 304
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -819200,
-        .children = {
-            305, 310
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4194304,
-        .children = {
-            306, 308
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            307, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            309, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
-        .children = {
-            312, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 4325376,
-        .children = {
-            313, 319
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            314, 317
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            -2, 315
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 316
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 318
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3997696,
-        .children = {
-            320, 329
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            321, 326
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            322, 323
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 324
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 325
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 327
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            328, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            330, 335
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            331, 332
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 333
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 334
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 336
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            337, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
-        .children = {
-            340, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 3014656,
-        .children = {
-            341, 369
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            342, 368
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            343, 347
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -1, 344
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            345, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            346, -2
+            -2, 303
         }
     },
     {
@@ -11337,7 +11264,7 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = -196608,
         .children = {
-            -1, -2
+            304, -2
         }
     },
     {
@@ -11346,9 +11273,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = 2260992,
         .children = {
-            348, 359
+            -2, -1
         }
     },
     {
@@ -11357,9 +11284,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 3342336,
+        .distance = 1212416,
         .children = {
-            349, 354
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2228224,
+        .children = {
+            307, 311
         }
     },
     {
@@ -11368,18 +11306,51 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = -262144,
         .children = {
-            350, 351
+            308, -2
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -938244,
+        .distance = 819200,
+        .children = {
+            309, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -196608,
+        .children = {
+            310, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 2260992,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
         .children = {
             -1, -2
         }
@@ -11387,12 +11358,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -196607,
+        .distance = 1146880,
         .children = {
-            -2, 352
+            313, 315
         }
     },
     {
@@ -11401,9 +11372,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = -294912,
         .children = {
-            -2, 353
+            314, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            316, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -11412,7 +11427,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -458752,
+        .distance = 1605632,
+        .children = {
+            319, 333
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            320, 325
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            321, 322
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            323, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
+        .children = {
+            324, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
         .children = {
             -2, -1
         }
@@ -11423,20 +11504,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = -294912,
         .children = {
-            355, 356
+            326, 327
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -938244,
+        .distance = 819200,
         .children = {
             -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            -2, 328
         }
     },
     {
@@ -11445,9 +11537,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -196607,
+        .distance = 1671168,
         .children = {
-            -2, 357
+            329, 331
         }
     },
     {
@@ -11456,18 +11548,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = -360448,
         .children = {
-            -2, 358
+            -2, 330
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -458752,
+        .distance = 557056,
         .children = {
             -2, -1
         }
@@ -11478,9 +11570,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = -360448,
         .children = {
-            360, -1
+            -2, 332
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            334, 339
         }
     },
     {
@@ -11489,18 +11603,304 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -851968,
+        .distance = -294912,
         .children = {
-            361, 363
+            335, 336
         }
     },
     {
         .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -973159,
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            337, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1474560,
+        .children = {
+            338, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            340, 341
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            -2, 342
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1343488,
+        .children = {
+            343, 345
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 344
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 346
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            348, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            349, 373
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            350, 355
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            351, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            352, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            353, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            354, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 819200,
+        .children = {
+            356, 368
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            357, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1114112,
+        .children = {
+            358, 366
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            359, 364
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            360, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -393216,
+        .children = {
+            361, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1212416,
         .children = {
             362, -2
         }
@@ -11508,23 +11908,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 3342336,
+        .distance = 1474560,
         .children = {
-            364, 366
+            363, -2
         }
     },
     {
@@ -11533,7 +11922,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -393216,
         .children = {
             -2, 365
         }
@@ -11544,9 +11944,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = 1015808,
         .children = {
-            -2, -1
+            -1, -2
         }
     },
     {
@@ -11555,7 +11955,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -393216,
         .children = {
             -2, 367
         }
@@ -11566,62 +11966,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            370, 400
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2359296,
-        .children = {
-            371, 390
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            372, 373
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -11629,12 +11974,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 2686976,
+        .distance = 950272,
         .children = {
-            374, 382
+            369, -2
         }
     },
     {
@@ -11643,9 +11988,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = 1015808,
         .children = {
-            375, 380
+            370, -2
         }
     },
     {
@@ -11654,51 +11999,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = -393216,
+        .children = {
+            371, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 372
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 557056,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1048576,
+        .children = {
+            -1, 374
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            375, 379
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
         .children = {
             376, 377
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 378
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
-        .children = {
-            -2, 379
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -11709,262 +12076,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -262144,
         .children = {
-            -2, 381
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
+            378, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            383, 388
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            384, 385
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 386
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 387
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 389
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            391, 392
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            393, 398
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            394, 395
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            -2, 396
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 397
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 399
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            401, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = -131072,
         .children = {
-            402, 403
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2359296,
-        .children = {
-            404, 412
+            -2, -1
         }
     },
     {
@@ -11973,9 +12098,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -294912,
         .children = {
-            405, 411
+            380, 392
         }
     },
     {
@@ -11984,9 +12109,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2686976,
+        .distance = -131072,
         .children = {
-            406, 408
+            381, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 327680,
+        .children = {
+            382, 386
         }
     },
     {
@@ -11995,9 +12131,86 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = 917504,
         .children = {
-            407, -2
+            383, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            384, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -196608,
+        .children = {
+            385, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 917504,
+        .children = {
+            387, 391
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            388, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            389, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 950272,
+        .children = {
+            -2, 390
         }
     },
     {
@@ -12014,10 +12227,197 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -2, 393
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 394
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = 950272,
+        .children = {
+            395, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            397, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            399, 455
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 400
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            401, 452
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3473408,
+        .children = {
+            402, 427
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            403, 415
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            404, 405
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            406, 412
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            407, 410
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, 408
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
         .children = {
             409, -2
         }
@@ -12028,64 +12428,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
-        .children = {
-            410, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
+        .distance = 884736,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 2896,
             .y = 0,
-            .z = 4096
+            .z = -2896
         },
-        .distance = -1114112,
+        .distance = -1112182,
         .children = {
-            413, 417
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            414, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            415, -2
+            411, -2
         }
     },
     {
@@ -12094,29 +12450,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
-        .children = {
-            416, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -12127,31 +12461,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 393216,
+        .distance = 4456448,
         .children = {
-            419, 906
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 524288,
-        .children = {
-            420, 632
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1114112,
-        .children = {
-            421, 562
+            -2, 413
         }
     },
     {
@@ -12160,9 +12472,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -491520,
+        .distance = -1015808,
         .children = {
-            422, -1
+            -2, 414
         }
     },
     {
@@ -12171,9 +12483,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1507328,
+        .distance = 688128,
         .children = {
-            423, 502
+            -1, -2
         }
     },
     {
@@ -12182,9 +12494,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 491520,
+        .distance = -950272,
         .children = {
-            -1, 424
+            416, 424
         }
     },
     {
@@ -12193,9 +12505,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1638400,
+        .distance = 4063232,
         .children = {
-            -1, 425
+            417, 419
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            418, -2
         }
     },
     {
@@ -12203,131 +12526,252 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = 0,
             .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3735552,
+        .children = {
+            420, 422
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            421, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            423, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3801088,
+        .children = {
+            425, 426
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            428, 442
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3080192,
+        .children = {
+            429, 434
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            430, 432
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            431, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            433, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2752512,
+        .children = {
+            435, 437
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            436, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
         .distance = 2424832,
         .children = {
-            426, 435
+            438, 440
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            439, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
         .distance = 884736,
-        .children = {
-            427, 431
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -360448,
-        .children = {
-            428, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 360448,
-        .children = {
-            -1, 429
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2457600,
-        .children = {
-            -1, 430
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -360448,
-        .children = {
-            432, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 360448,
-        .children = {
-            -1, 433
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2457600,
-        .children = {
-            -1, 434
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -131072,
+        .distance = -1112182,
         .children = {
-            436, 469
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
-        .children = {
-            437, 466
+            441, -2
         }
     },
     {
@@ -12335,96 +12779,52 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = 0,
             .z = 4096
-        },
-        .distance = 1835008,
-        .children = {
-            438, 460
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            439, 440
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2097152,
-        .children = {
-            441, 455
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, 442
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 360448,
-        .children = {
-            -2, 443
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            -2, 444
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2129920,
-        .children = {
-            445, 452
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
         },
         .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            443, 450
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2818048,
+        .children = {
+            444, 448
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
+        .children = {
+            445, 447
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
         .children = {
             446, -2
         }
@@ -12435,20 +12835,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 196608,
+        .distance = -1015808,
         .children = {
-            -2, 447
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            448, -2
+            -2, -1
         }
     },
     {
@@ -12457,20 +12846,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -98304,
+        .distance = -1015808,
         .children = {
-            449, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, 450
+            -2, -1
         }
     },
     {
@@ -12479,7 +12857,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 98304,
+        .distance = -1015808,
+        .children = {
+            -2, 449
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
         .children = {
             -2, 451
         }
@@ -12490,227 +12890,139 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 2162688,
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            453, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            454, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 1015808,
+        .children = {
+            -1, 456
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 851968,
+        .children = {
+            457, 488
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            458, 472
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            459, 464
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            460, 462
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            461, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            453, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = 196608,
-        .children = {
-            -2, 454
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            -2, 456
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -2, 457
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            458, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, 459
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            461, 464
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            462, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
+        .distance = -1112182,
         .children = {
             463, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, 465
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 2097152,
-        .children = {
-            467, 468
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1835008,
-        .children = {
-            470, 488
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            471, 472
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -12721,20 +13033,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 425984,
+        .distance = 1441792,
         .children = {
-            473, 487
+            465, 467
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -458752,
+        .distance = -1112182,
         .children = {
-            474, -2
+            466, -2
         }
     },
     {
@@ -12742,21 +13054,10 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = 0,
             .z = 4096
-        },
-        .distance = 2097152,
-        .children = {
-            475, 483
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
         },
         .distance = 884736,
         .children = {
-            476, -2
+            -2, -1
         }
     },
     {
@@ -12765,31 +13066,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1277952,
+        .distance = 1114112,
         .children = {
-            -2, 477
+            468, 470
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -360448,
+        .distance = -1112182,
         .children = {
-            478, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            479, -2
+            469, -2
         }
     },
     {
@@ -12798,9 +13088,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 2162688,
+        .distance = 884736,
         .children = {
-            -2, 480
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            471, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            473, 485
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            474, 482
         }
     },
     {
@@ -12809,40 +13143,106 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = -1146880,
+        .children = {
+            475, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            476, 480
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            477, 478
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 479
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
         .children = {
             481, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = 1081344,
-        .children = {
-            -2, 482
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 2129920,
+        .distance = -1015808,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = 1277952,
+        .distance = -1146880,
+        .children = {
+            483, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
         .children = {
             -2, 484
         }
@@ -12850,12 +13250,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 950272,
+        .distance = 688128,
         .children = {
-            485, -2
+            -1, -2
         }
     },
     {
@@ -12864,9 +13264,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = -1146880,
         .children = {
-            486, -2
+            486, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 487
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -12875,20 +13297,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1081344,
+        .distance = -262144,
         .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
+            489, -1
         }
     },
     {
@@ -12897,20 +13308,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1277952,
+        .distance = 196608,
         .children = {
-            489, 492
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -2, 490
+            490, 513
         }
     },
     {
@@ -12919,9 +13319,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1605632,
+        .distance = 524288,
         .children = {
-            491, -2
+            491, 502
         }
     },
     {
@@ -12930,20 +13330,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -720896,
         .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            493, 501
+            492, 497
         }
     },
     {
@@ -12952,7 +13341,18 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 425984,
+        .distance = 786432,
+        .children = {
+            493, 495
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
         .children = {
             494, -2
         }
@@ -12963,18 +13363,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1769472,
+        .distance = 884736,
         .children = {
-            495, 498
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -196608,
+        .distance = -1112182,
         .children = {
             496, -2
         }
@@ -12982,65 +13382,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            497, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            499, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = -196608,
-        .children = {
-            500, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
+        .distance = 884736,
         .children = {
             -2, -1
         }
@@ -13051,9 +13396,64 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 491520,
+        .distance = -950272,
         .children = {
-            -1, 503
+            498, 499
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            500, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 501
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            503, 508
         }
     },
     {
@@ -13062,172 +13462,172 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1638400,
+        .distance = 458752,
         .children = {
-            -1, 504
+            504, 506
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            505, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            507, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
         }
     },
     {
         .normal = {
             .x = 4096,
             .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            509, 510
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            511, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 512
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            514, 521
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            515, 517
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1112182,
+        .children = {
+            516, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 884736,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 688128,
+        .children = {
+            518, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = -131072,
-        .children = {
-            505, 536
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1179648,
-        .children = {
-            506, 525
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            507, 515
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            508, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1441792,
-        .children = {
-            509, 512
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            510, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            511, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            513, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            514, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            516, 524
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            -2, 517
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1441792,
-        .children = {
-            518, 521
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 753664,
         .children = {
             -2, 519
         }
@@ -13238,18 +13638,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 458752,
+        .distance = -688128,
         .children = {
-            520, -2
+            -2, 520
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
+            .x = 2896,
+            .y = 0,
+            .z = -2896
         },
-        .distance = 425984,
+        .distance = -1204864,
         .children = {
             -2, -1
         }
@@ -13260,163 +13660,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 458752,
+        .distance = -1146880,
         .children = {
-            522, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 753664,
-        .children = {
-            -2, 523
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            526, 530
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            527, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            528, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            529, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            531, 533
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 753664,
-        .children = {
-            -2, 532
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            534, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, 535
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            -1, -2
+            522, -1
         }
     },
     {
@@ -13425,20 +13671,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1179648,
+        .distance = 688128,
         .children = {
-            537, 551
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1277952,
-        .children = {
-            538, 541
+            523, 527
         }
     },
     {
@@ -13447,9 +13682,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = -1015808,
         .children = {
-            -2, 539
+            524, -1
         }
     },
     {
@@ -13458,18 +13693,29 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1605632,
+        .distance = 131072,
         .children = {
-            540, -2
+            -2, 525
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -131072,
+        .children = {
+            -2, 526
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = -1204864,
         .children = {
             -2, -1
         }
@@ -13480,9 +13726,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -1015808,
         .children = {
-            542, 550
+            -2, 528
         }
     },
     {
@@ -13491,29 +13737,183 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 425984,
+        .distance = 131072,
+        .children = {
+            -2, 529
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, 530
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1131034,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -294912,
+        .children = {
+            532, 860
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 32768,
+        .children = {
+            533, 702
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 622592,
+        .children = {
+            534, 633
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            535, 589
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 536
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            537, 581
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            538, 579
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            539, 550
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            540, 541
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            542, 546
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
         .children = {
             543, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1441792,
-        .children = {
-            544, 547
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = 1081344,
+        .children = {
+            544, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
         .children = {
             545, -2
         }
@@ -13524,262 +13924,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 950272,
-        .children = {
-            546, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
+        .distance = 4456448,
         .children = {
             -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            548, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            549, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1605632,
-        .children = {
-            552, 553
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            554, 556
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            555, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -2, 557
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            -2, 558
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -360448,
-        .children = {
-            -2, 559
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 753664,
-        .children = {
-            -2, 560
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, 561
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 425984,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 131072,
-        .children = {
-            563, 600
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 564
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            565, 582
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1376256,
-        .children = {
-            566, 574
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            567, 572
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2031616,
-        .children = {
-            568, 570
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            569, -2
         }
     },
     {
@@ -13788,7 +13935,216 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
+        .distance = 294912,
+        .children = {
+            547, 549
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, 548
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            551, 572
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3080192,
+        .children = {
+            552, 559
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3735552,
+        .children = {
+            553, 556
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            554, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            -1, 555
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            557, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            -1, 558
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2424832,
+        .children = {
+            560, 569
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            561, 566
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            562, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            563, 564
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2752512,
+        .children = {
+            565, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
         .children = {
             -1, -2
         }
@@ -13799,7 +14155,51 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
+        .distance = 294912,
+        .children = {
+            567, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            568, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            570, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
         .children = {
             571, -2
         }
@@ -13810,7 +14210,106 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 1081344,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            573, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = 1053918,
+        .children = {
+            574, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2424832,
+        .children = {
+            575, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2752512,
+        .children = {
+            576, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            577, 578
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3080192,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            580, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -13821,18 +14320,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 1015808,
         .children = {
-            573, -2
+            582, 587
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 786432,
+        .distance = 3407872,
+        .children = {
+            583, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063232,
+        .children = {
+            584, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            585, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            586, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -13843,9 +14386,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = 4456448,
         .children = {
-            575, 580
+            588, -1
         }
     },
     {
@@ -13854,29 +14397,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1048576,
-        .children = {
-            576, 578
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            577, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -13887,163 +14408,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 1146880,
         .children = {
-            579, -2
+            -1, 590
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            581, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 524288,
         .children = {
-            583, 591
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1572864,
-        .children = {
-            584, 589
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1900544,
-        .children = {
-            585, 587
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, 586
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, 588
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, 590
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            592, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1900544,
-        .children = {
-            -2, 593
+            591, 602
         }
     },
     {
@@ -14052,9 +14430,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 491520,
+        .distance = 1015808,
         .children = {
-            -2, 594
+            592, 599
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
+        .children = {
+            593, -2
         }
     },
     {
@@ -14063,40 +14452,51 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1638400,
+        .distance = 1179648,
         .children = {
-            -2, 595
+            594, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            595, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            596, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            597, -2
         }
     },
     {
         .normal = {
             .x = 4096,
             .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, 596
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
             .z = 0
         },
         .distance = 1081344,
-        .children = {
-            -2, 597
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 917504,
         .children = {
             598, -2
         }
@@ -14104,21 +14504,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 1048576,
-        .children = {
-            -2, 599
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
+        .distance = 360448,
         .children = {
             -1, -2
         }
@@ -14129,9 +14518,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 950272,
         .children = {
-            601, -1
+            600, -1
         }
     },
     {
@@ -14140,95 +14529,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
+        .distance = 294912,
         .children = {
-            602, 610
+            601, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = 803
         },
-        .distance = -1114112,
-        .children = {
-            603, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            604, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            -2, 605
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            606, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 950272,
-        .children = {
-            607, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1376256,
-        .children = {
-            -2, 608
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1081344,
-        .children = {
-            -2, 609
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1048576,
+        .distance = 1053918,
         .children = {
             -2, -1
         }
@@ -14239,9 +14551,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1376256,
+        .distance = -262144,
         .children = {
-            611, 622
+            603, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            604, 624
         }
     },
     {
@@ -14250,9 +14573,86 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1703936,
+        .distance = 196608,
         .children = {
-            612, 619
+            605, 609
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            -2, 606
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            607, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            608, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            610, 618
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            611, 617
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            612, 615
         }
     },
     {
@@ -14261,9 +14661,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2031616,
+        .distance = -131072,
         .children = {
-            613, 616
+            -2, 613
         }
     },
     {
@@ -14272,75 +14672,64 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 1081344,
         .children = {
-            614, -2
+            -1, 614
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = 803
         },
-        .distance = -851968,
-        .children = {
-            615, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
+        .distance = 1131034,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 131072,
         .children = {
-            617, -2
+            616, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = 803
         },
-        .distance = -851968,
+        .distance = 1053918,
         .children = {
-            618, -2
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -973159,
+        .distance = 131072,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 131072,
         .children = {
-            620, -2
+            619, 620
         }
     },
     {
@@ -14349,20 +14738,42 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -851968,
+        .distance = 1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
         .children = {
             621, -2
         }
     },
     {
         .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -973159,
+        .distance = -163840,
         .children = {
-            -1, -2
+            622, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            623, -2
         }
     },
     {
@@ -14371,42 +14782,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = -131072,
         .children = {
-            623, 626
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            624, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            625, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
+            -2, -1
         }
     },
     {
@@ -14415,9 +14793,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = 131072,
         .children = {
-            627, 629
+            625, 628
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 458752,
+        .children = {
+            626, 627
         }
     },
     {
@@ -14426,20 +14815,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 1015808,
         .children = {
-            628, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
+            -2, -1
         }
     },
     {
@@ -14448,128 +14826,150 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 688128,
+        .children = {
+            629, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
         .children = {
             630, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -851968,
+        .distance = -163840,
         .children = {
-            631, -2
+            631, -1
         }
     },
     {
         .normal = {
-            .x = 2896,
+            .x = 4096,
             .y = 0,
-            .z = -2896
+            .z = 0
         },
-        .distance = -973159,
+        .distance = 1081344,
+        .children = {
+            632, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            634, 653
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            635, 644
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            636, 640
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            637, 639
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            638, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 131072,
-        .children = {
-            633, 784
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 634
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1376256,
-        .children = {
-            635, 711
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            636, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            637, 688
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 131072,
-        .children = {
-            638, 647
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            639, 645
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            640, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2031616,
         .children = {
             641, 643
         }
@@ -14577,34 +14977,34 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 458752,
+        .distance = 4456448,
         .children = {
-            642, -2
+            642, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = -262144,
         .children = {
-            644, -2
+            -2, -1
         }
     },
     {
@@ -14613,7 +15013,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = -32768,
+        .children = {
+            645, 649
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            646, 648
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            647, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -14621,21 +15054,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 196608,
-        .children = {
-            646, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -14646,106 +15068,84 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2031616,
+        .distance = 131072,
         .children = {
-            648, 667
+            650, 652
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            649, 662
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 4456448,
         .children = {
-            650, 656
+            651, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -131072,
-        .children = {
-            -2, 651
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 652
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4784128,
         .children = {
-            -1, 653
+            -1, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            -2, 654
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1114112,
-        .children = {
-            655, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = -262144,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
+        .children = {
+            654, 683
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            655, 664
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 851968,
+        .distance = 294912,
+        .children = {
+            656, 660
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
         .children = {
             657, 659
         }
@@ -14753,109 +15153,21 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            658, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 196608,
+        .distance = 4456448,
         .children = {
-            660, -1
+            658, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            661, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 458752,
-        .children = {
-            663, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            664, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 524288,
-        .children = {
-            665, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            666, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -14863,98 +15175,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            668, 670
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 917504,
-        .children = {
-            -2, 669
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 671
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            672, 684
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            673, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            674, 678
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            675, 676
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -14962,87 +15186,32 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, 677
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 131072,
         .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 524288,
-        .children = {
-            679, 683
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            680, 681
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
+            661, 663
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -786432,
+        .distance = 4456448,
         .children = {
-            682, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
+            662, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -786432,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15050,12 +15219,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1114112,
+        .distance = -262144,
         .children = {
-            685, -2
+            -2, -1
         }
     },
     {
@@ -15064,9 +15233,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = 294912,
         .children = {
-            686, -2
+            665, 674
         }
     },
     {
@@ -15075,7 +15244,238 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 196608,
+        .distance = 294912,
+        .children = {
+            666, 670
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            667, 669
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            668, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            671, 673
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            672, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            675, 679
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            676, 678
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            677, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            680, 682
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            681, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            684, 693
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            685, 689
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            686, 688
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
         .children = {
             687, -1
         }
@@ -15083,263 +15483,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            689, 706
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 917504,
-        .children = {
-            690, 699
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 131072,
-        .children = {
-            691, 694
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            692, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            693, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 695
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            -1, 696
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            -2, 697
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            698, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            700, 703
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            701, 702
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            704, 705
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            707, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            708, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 524288,
-        .children = {
-            709, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            710, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15350,9 +15497,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = -262144,
         .children = {
-            712, 761
+            -2, -1
         }
     },
     {
@@ -15361,31 +15508,42 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = 131072,
         .children = {
-            713, 737
+            690, 692
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1179648,
+        .distance = 4456448,
         .children = {
-            714, -1
+            691, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -851968,
+        .distance = 4784128,
         .children = {
-            715, 732
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -15394,51 +15552,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 294912,
         .children = {
-            716, 725
+            694, 698
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
         .distance = 131072,
         .children = {
-            717, 720
+            695, 697
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            718, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4456448,
         .children = {
-            719, -2
+            696, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 458752,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15446,54 +15593,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 721
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
-        .children = {
-            -1, 722
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            -2, 723
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            724, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -15501,197 +15604,32 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            726, 729
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            727, 728
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            730, 731
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            733, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            734, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 524288,
-        .children = {
-            735, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 819200,
-        .children = {
-            736, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            738, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
         },
         .distance = 131072,
         .children = {
-            739, 745
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            740, 743
+            699, 701
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            741, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4456448,
         .children = {
-            742, -2
+            700, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 458752,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15699,21 +15637,87 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 196608,
+        .distance = -262144,
         .children = {
-            744, -1
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 4096,
             .y = 0,
-            .z = 803
+            .z = 0
         },
-        .distance = 938244,
+        .distance = -622592,
+        .children = {
+            703, 767
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            704, 718
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            705, 709
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            706, 708
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            707, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -15724,62 +15728,458 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -32768,
         .children = {
-            746, 754
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            747, 750
+            710, 714
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -196607,
+        .distance = 131072,
         .children = {
-            -2, 748
+            711, 713
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -458752,
+        .distance = 4456448,
         .children = {
-            -2, 749
+            712, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            715, 717
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            716, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 294912,
+        .children = {
+            719, 738
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 851968,
+        .distance = -360448,
+        .children = {
+            720, 729
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            721, 725
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            722, 724
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            723, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            726, 728
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            727, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            730, 734
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            731, 733
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            732, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            735, 737
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            736, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            739, 758
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            740, 749
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
+        .children = {
+            741, 745
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            742, 744
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            743, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            746, 748
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            747, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
+        .children = {
+            750, 754
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
         .children = {
             751, 753
         }
@@ -15787,76 +16187,65 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            752, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 458752,
+        .distance = 4456448,
         .children = {
-            755, 758
+            752, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1114112,
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            755, 757
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
         .children = {
             756, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 819200,
-        .children = {
-            757, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15864,109 +16253,54 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            759, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            760, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 196608,
+        .distance = -262144,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            762, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            763, 780
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 917504,
+        .distance = -360448,
         .children = {
-            764, 773
+            759, 763
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -131072,
-        .children = {
-            765, 768
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            766, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
+        .distance = 131072,
         .children = {
-            767, -2
+            760, 762
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 458752,
+        .distance = 4456448,
+        .children = {
+            761, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -15974,54 +16308,10 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 769
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 1179648,
-        .children = {
-            -1, 770
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            -2, 771
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            772, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -16029,188 +16319,166 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -786432,
+        .distance = 131072,
         .children = {
-            774, 779
+            764, 766
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -524288,
+        .distance = 4456448,
         .children = {
-            775, 778
+            765, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 196608,
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            768, 807
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            769, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            770, 779
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            771, 778
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            772, 773
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, 774
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            -2, 775
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
         .children = {
             776, 777
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 938244,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 196608,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            781, -2
-        }
-    },
-    {
-        .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            782, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 819200,
-        .children = {
-            783, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
+        .distance = 3473408,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
-        .children = {
-            785, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -131072,
-        .children = {
-            786, 826
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 1703936,
+        .distance = 2818048,
         .children = {
-            787, 803
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2031616,
-        .children = {
-            788, 795
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            789, 791
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            790, -1
+            -1, -2
         }
     },
     {
@@ -16219,7 +16487,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = -938244,
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3473408,
+        .children = {
+            780, 791
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            781, 788
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            782, 787
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            783, 785
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            784, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -16230,7 +16564,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 131072,
+        .distance = 360448,
+        .children = {
+            786, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            789, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            790, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
         .children = {
             792, -2
         }
@@ -16238,12 +16638,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = 196608,
+        .distance = 3080192,
         .children = {
-            793, -2
+            793, 801
         }
     },
     {
@@ -16252,18 +16652,73 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = 294912,
         .children = {
             794, -2
         }
     },
     {
         .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3407872,
+        .children = {
+            795, 797
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = -1081344,
+        .children = {
+            -2, 796
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            798, 800
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            799, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
         .children = {
             -2, -1
         }
@@ -16274,84 +16729,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 131072,
-        .children = {
-            796, 802
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            797, 799
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            798, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            800, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 801
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
+        .distance = 360448,
         .children = {
             -1, -2
         }
@@ -16362,9 +16740,31 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1048576,
+        .distance = 2490368,
         .children = {
-            804, 817
+            802, 805
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            803, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            804, -1
         }
     },
     {
@@ -16373,20 +16773,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1376256,
+        .distance = 2818048,
         .children = {
-            805, 811
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            806, 808
+            -1, -2
         }
     },
     {
@@ -16395,9 +16784,108 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = 360448,
         .children = {
-            807, -1
+            806, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            808, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            809, 831
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            810, 830
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            811, 825
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            812, 823
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 32768,
+        .children = {
+            813, 820
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            814, 816
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            -1, 815
         }
     },
     {
@@ -16406,7 +16894,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = -938244,
+        .distance = -1053918,
         .children = {
             -1, -2
         }
@@ -16417,42 +16905,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = 294912,
         .children = {
-            809, -2
+            817, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 1835008,
         .children = {
-            -2, 810
+            818, -2
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -917504,
+        .distance = 2097152,
         .children = {
-            812, 814
+            819, -2
         }
     },
     {
@@ -16461,51 +16938,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            813, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            815, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, 816
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
+        .distance = 360448,
         .children = {
             -1, -2
         }
@@ -16516,9 +16949,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = 1835008,
         .children = {
-            818, 820
+            821, 822
         }
     },
     {
@@ -16527,18 +16960,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
-        .children = {
-            -1, 819
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
+        .distance = -1015808,
         .children = {
             -1, -2
         }
@@ -16549,106 +16971,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
-        .children = {
-            821, 823
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 196608,
-        .children = {
-            822, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -938244,
+        .distance = -1015808,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 4096,
             .y = 0,
-            .z = 4096
+            .z = 0
         },
-        .distance = 196608,
+        .distance = -1015808,
         .children = {
             824, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = -803
         },
-        .distance = -1179648,
-        .children = {
-            -2, 825
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            827, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            828, 869
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            829, 830
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
+        .distance = -1053918,
         .children = {
             -1, -2
         }
@@ -16659,9 +17004,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 2031616,
+        .distance = 851968,
         .children = {
-            831, 836
+            826, 828
         }
     },
     {
@@ -16670,18 +17015,117 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = -1015808,
         .children = {
-            832, 833
+            827, -2
         }
     },
     {
         .normal = {
             .x = 4016,
             .y = 0,
-            .z = 803
+            .z = -803
         },
-        .distance = -938244,
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            829, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -262144,
+        .children = {
+            832, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 196608,
+        .children = {
+            833, 837
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -32768,
+        .children = {
+            834, 836
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            835, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
         .children = {
             -1, -2
         }
@@ -16692,9 +17136,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -458752,
+        .distance = 32768,
         .children = {
-            -2, 834
+            838, 855
         }
     },
     {
@@ -16703,18 +17147,84 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -950272,
         .children = {
-            -2, 835
+            839, 840
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = 360448,
+        .children = {
+            841, 846
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            842, 845
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1131034,
+        .children = {
+            843, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            844, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = -1131034,
         .children = {
             -2, -1
         }
@@ -16725,31 +17235,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = 131072,
         .children = {
-            837, 864
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1376256,
-        .children = {
-            838, 853
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            839, 848
+            847, 849
         }
     },
     {
@@ -16758,117 +17246,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = -1015808,
         .children = {
-            840, 843
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            841, 842
+            848, -2
         }
     },
     {
         .normal = {
             .x = 4016,
             .y = 0,
-            .z = 803
+            .z = -803
         },
-        .distance = -938244,
+        .distance = -1053918,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            844, 846
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 845
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 847
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1703936,
-        .children = {
-            849, 851
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
+        .distance = -1015808,
         .children = {
             -2, 850
         }
@@ -16879,284 +17279,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1179648,
+        .distance = -1081344,
         .children = {
-            -2, -1
+            851, 854
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = -1114112,
+        .distance = 294912,
         .children = {
             -2, 852
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            854, 858
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
-            .z = 0
-        },
-        .distance = 1048576,
-        .children = {
-            855, 856
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, 857
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 859
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            860, 862
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -524288,
-        .children = {
-            861, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1048576,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            863, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1048576,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
-        .children = {
-            865, 866
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            -2, 867
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 868
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            870, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 1048576,
-        .children = {
-            871, 895
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 2031616,
-        .children = {
-            872, 878
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            873, 875
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -819200,
-        .children = {
-            874, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
             .z = 0
         },
         .distance = -131072,
         .children = {
-            -2, 876
+            -2, 853
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -163840,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -17165,18 +17334,282 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = -1015808,
+        .children = {
+            856, 857
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, 858
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            859, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -163840,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 32768,
+        .children = {
+            861, 1130
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 622592,
+        .children = {
+            862, 1027
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            863, 933
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            864, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 865
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            866, 923
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            867, 888
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            868, 886
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            869, 874
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            870, 871
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            872, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, 873
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
+        .children = {
+            875, 881
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4063231,
+        .children = {
+            876, 878
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
         .children = {
             -2, 877
         }
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = -360448,
+        .children = {
+            -2, 879
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            -1, 880
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3473409,
         .children = {
             -2, -1
         }
@@ -17187,31 +17620,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1703936,
+        .distance = 2818048,
         .children = {
-            879, 885
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            880, 884
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            881, 883
+            882, 884
         }
     },
     {
@@ -17220,9 +17631,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = -360448,
         .children = {
-            882, -2
+            -2, 883
         }
     },
     {
@@ -17231,7 +17642,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -196608,
+        .distance = 1081344,
         .children = {
             -1, -2
         }
@@ -17242,31 +17653,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = -360448,
         .children = {
-            -2, -1
+            -2, 885
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 4096,
             .y = 0,
-            .z = 4096
+            .z = 0
         },
-        .distance = -1114112,
+        .distance = 1081344,
         .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -851968,
-        .children = {
-            886, 892
+            -1, -2
         }
     },
     {
@@ -17275,29 +17675,51 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 1376256,
+        .distance = 4456448,
         .children = {
-            887, 889
+            887, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -819200,
+        .distance = 4784128,
         .children = {
-            888, -2
+            -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -196608,
+        .distance = 4390912,
+        .children = {
+            889, 900
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            890, 891
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
         .children = {
             -1, -2
         }
@@ -17308,40 +17730,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -819200,
+        .distance = 950272,
         .children = {
-            890, -2
+            892, 895
         }
     },
     {
         .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            891, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -196608,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
+        .distance = 4456448,
         .children = {
             -2, 893
         }
@@ -17352,18 +17752,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = -622592,
         .children = {
-            -2, 894
+            894, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            896, 897
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -458752,
+        .distance = 4456448,
         .children = {
             -2, -1
         }
@@ -17374,20 +17796,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 720896,
+        .distance = 4456448,
         .children = {
-            896, 900
+            -2, 898
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -458752,
+        .distance = 1112182,
         .children = {
-            897, 899
+            -2, 899
         }
     },
     {
@@ -17396,18 +17818,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
-        .children = {
-            898, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
+        .distance = -884736,
         .children = {
             -1, -2
         }
@@ -17418,62 +17829,51 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = -622592,
         .children = {
-            -2, -1
+            901, 907
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            902, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            903, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -851968,
+        .distance = 2818049,
         .children = {
-            901, 903
+            904, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -819200,
-        .children = {
-            902, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -131072,
-        .children = {
-            -2, 904
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
+        .distance = 4063231,
         .children = {
             -2, 905
         }
@@ -17481,12 +17881,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1114112,
+        .distance = 3473409,
         .children = {
-            -2, -1
+            -2, 906
         }
     },
     {
@@ -17495,31 +17895,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -393216,
+        .distance = 3145728,
         .children = {
-            907, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -131072,
-        .children = {
-            908, 1035
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1114112,
-        .children = {
-            909, 917
+            -1, -2
         }
     },
     {
@@ -17528,9 +17906,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 196608,
+        .distance = 3145728,
         .children = {
-            910, 913
+            908, 917
         }
     },
     {
@@ -17539,20 +17917,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -360448,
+        .distance = 950272,
         .children = {
-            911, -1
+            -2, 909
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = 360448,
+        .distance = 3801088,
         .children = {
-            -1, 912
+            910, 912
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 911
         }
     },
     {
@@ -17561,7 +17950,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 1146880,
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3735552,
+        .children = {
+            913, 915
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 914
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 916
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
         .children = {
             -1, -2
         }
@@ -17572,31 +18016,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -360448,
+        .distance = 950272,
         .children = {
-            914, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 360448,
-        .children = {
-            -1, 915
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1146880,
-        .children = {
-            -1, 916
+            -2, 918
         }
     },
     {
@@ -17605,53 +18027,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 3080192,
         .children = {
-            -2, -1
+            919, 921
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = 524288,
+        .distance = 1112182,
         .children = {
-            918, 966
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 919
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            920, 924
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            921, 922
+            -2, 920
         }
     },
     {
@@ -17660,75 +18049,86 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = -884736,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 2896,
             .y = 0,
-            .z = 4096
+            .z = -2896
         },
-        .distance = 458752,
+        .distance = 1112182,
         .children = {
-            -1, 923
+            -2, 922
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 1015808,
+        .children = {
+            924, 927
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            925, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            926, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 524288,
-        .children = {
-            925, 946
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 851968,
+        .distance = 950272,
         .children = {
-            926, 938
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            927, 930
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            928, -2
+            928, 930
         }
     },
     {
@@ -17737,31 +18137,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
+        .distance = -622592,
         .children = {
             929, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = -803
         },
-        .distance = 1114112,
+        .distance = 1053918,
         .children = {
-            931, 935
+            -2, -1
         }
     },
     {
@@ -17770,9 +18159,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
+        .distance = -622592,
         .children = {
-            932, 933
+            -1, 931
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 932
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            934, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1146880,
+        .children = {
+            -1, 935
         }
     },
     {
@@ -17783,7 +18216,18 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = -262144,
         .children = {
-            -2, -1
+            936, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 950272,
+        .children = {
+            937, 992
         }
     },
     {
@@ -17792,108 +18236,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 1114112,
         .children = {
-            -2, 934
+            938, 957
         }
     },
     {
         .normal = {
             .x = 4016,
             .y = 0,
-            .z = 803
+            .z = -803
         },
-        .distance = 1246708,
+        .distance = 1053918,
         .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            936, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 937
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 1343887,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            939, 942
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            -2, 940
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            941, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            943, -2
+            939, -1
         }
     },
     {
@@ -17902,53 +18258,64 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 786432,
+        .distance = 1015808,
+        .children = {
+            940, 949
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1441792,
+        .children = {
+            941, 948
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            942, 946
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            943, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
         .children = {
             944, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 945
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = 1343887,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            947, 950
-        }
-    },
-    {
-        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 1081344,
         .children = {
-            -2, 948
+            945, -2
         }
     },
     {
@@ -17957,31 +18324,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
-        .children = {
-            949, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
-        },
-        .distance = 938244,
+        .distance = -360448,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = 851968,
+        .distance = -688128,
         .children = {
-            951, -2
+            947, -1
         }
     },
     {
@@ -17990,9 +18346,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = -360448,
         .children = {
-            952, 956
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -18001,9 +18368,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = 1507328,
         .children = {
-            -2, 953
+            950, 953
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            -2, 951
         }
     },
     {
@@ -18012,7 +18390,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = -622592,
+        .children = {
+            952, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
         .children = {
             954, -2
         }
@@ -18020,210 +18420,56 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = -262144,
+        .distance = -688128,
         .children = {
-            -2, 955
+            955, -2
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = 1246708,
+        .distance = 1441792,
+        .children = {
+            956, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            957, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 131072,
-        .children = {
-            958, 962
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -2, 959
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 960
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            961, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -294912,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -2, 963
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 964
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1114112,
-        .children = {
-            965, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -294912,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            967, 998
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            968, 984
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            969, 983
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            970, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            971, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
             .z = 0
         },
         .distance = 458752,
         .children = {
-            -2, 972
+            958, 967
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -98304,
+        .distance = 786432,
         .children = {
-            973, 979
+            959, 963
         }
     },
     {
@@ -18232,20 +18478,262 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 360448,
+        .distance = 1015808,
+        .children = {
+            960, 961
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            962, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
+        .children = {
+            964, 965
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            966, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            968, 980
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            969, 970
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            971, 977
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            972, 975
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            973, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1015808,
         .children = {
             -2, 974
         }
     },
     {
         .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            976, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1053918,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -163840,
+        .children = {
+            978, 979
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1131034,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = -803
+        },
+        .distance = 1131034,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
             .x = 4096,
             .y = 0,
             .z = 0
         },
-        .distance = 98304,
+        .distance = 1015808,
         .children = {
-            975, 978
+            981, 988
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            982, 986
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 1081344,
+        .children = {
+            983, 984
         }
     },
     {
@@ -18254,95 +18742,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 851968,
+        .distance = -688128,
         .children = {
-            -2, 976
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, 985
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 196608,
-        .children = {
-            -2, 977
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 819200,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 851968,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -360448,
-        .children = {
-            980, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 851968,
-        .children = {
-            -2, 981
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            982, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 819200,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -973159,
         .children = {
             -1, -2
         }
@@ -18353,42 +18775,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 524288,
+        .distance = -688128,
         .children = {
-            985, -2
+            987, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 4016,
             .y = 0,
-            .z = 0
+            .z = -803
         },
-        .distance = -524288,
+        .distance = 1131034,
         .children = {
-            986, 995
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            987, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            988, 993
+            -1, -2
         }
     },
     {
@@ -18397,64 +18797,229 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 131072,
         .children = {
             -2, 989
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, 990
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = -131072,
         .children = {
-            990, -2
+            -2, 991
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1204864,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            993, 994
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 851968,
+        .children = {
+            995, 1008
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            996, 1001
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            997, 999
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 998
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 1000
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            1002, 1004
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, 1003
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
         }
     },
     {
         .normal = {
             .x = 4096,
             .y = 0,
+            .z = 0
+        },
+        .distance = 720896,
+        .children = {
+            1005, 1006
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1007, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 196608,
         .children = {
-            991, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 458752,
-        .children = {
-            992, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1048576,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 1048576,
-        .children = {
-            994, -2
+            1009, 1018
         }
     },
     {
@@ -18462,76 +19027,10 @@ BSPNode3 bspNodes_player[] = {
             .x = 0,
             .y = -4096,
             .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 996
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            997, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = -1343887,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            999, 1029
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
         },
         .distance = 524288,
         .children = {
-            1000, 1011
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            1001, 1004
+            1010, 1014
         }
     },
     {
@@ -18540,53 +19039,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 720896,
         .children = {
-            -2, 1002
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 786432,
-        .children = {
-            1003, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 327680,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            1005, 1007
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1006
+            1011, 1012
         }
     },
     {
@@ -18595,7 +19050,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = -1343887,
+        .distance = 1112182,
         .children = {
             -2, -1
         }
@@ -18606,128 +19061,62 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 786432,
-        .children = {
-            1008, 1009
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1010
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -1246708,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            1012, 1015
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -917504,
+        .distance = -884736,
         .children = {
             1013, -2
         }
     },
     {
         .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 720896,
+        .children = {
+            1015, 1016
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = -884736,
         .children = {
-            1014, -1
+            1017, -2
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 2896,
             .y = 0,
-            .z = -803
+            .z = -2896
         },
-        .distance = -938244,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
-        .children = {
-            1016, 1019
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -2, 1017
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1018
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = -1246708,
+        .distance = 1112182,
         .children = {
             -2, -1
         }
@@ -18738,31 +19127,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
-        .children = {
-            -2, 1020
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
         .distance = 131072,
         .children = {
-            1021, 1025
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1022
+            1019, 1023
         }
     },
     {
@@ -18771,9 +19138,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = 720896,
         .children = {
-            -2, 1023
+            1020, 1021
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -18782,7 +19160,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 196608,
+        .distance = -884736,
+        .children = {
+            1022, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = -2896
+        },
+        .distance = 1112182,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
         .children = {
             -2, 1024
         }
@@ -18793,9 +19193,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -294912,
+        .distance = -131072,
         .children = {
-            -2, -1
+            -2, 1025
         }
     },
     {
@@ -18804,86 +19204,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -917504,
+        .distance = 688128,
         .children = {
-            -2, 1026
+            1026, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1027
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
+            .x = 2896,
             .y = 0,
-            .z = 0
+            .z = -2896
         },
-        .distance = -1114112,
-        .children = {
-            -2, 1028
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -294912,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            1030, 1032
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
-        .children = {
-            1031, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = 458752,
+        .distance = 1204864,
         .children = {
             -1, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -1245184,
+        .distance = 2162688,
         .children = {
-            1033, -1
+            1028, 1079
         }
     },
     {
@@ -18892,9 +19237,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = 458752,
+        .distance = -1081344,
         .children = {
-            -1, 1034
+            1029, -1
         }
     },
     {
@@ -18903,7 +19248,150 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 2490368,
+        .children = {
+            1030, 1074
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1031, 1033
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            1032, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3080192,
+        .children = {
+            1034, 1070
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            1035, 1044
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            1036, 1038
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1037, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1039, 1043
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            -2, 1040
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1041, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            -2, 1042
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
         .children = {
             -2, -1
         }
@@ -18914,42 +19402,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -131072,
+        .distance = 360448,
         .children = {
-            1036, 1103
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1179648,
-        .children = {
-            1037, 1040
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 1245184,
-        .children = {
-            -1, 1038
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -458752,
-        .children = {
-            1039, -1
+            -1, -2
         }
     },
     {
@@ -18958,7 +19413,29 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 3735552,
+        .children = {
+            1045, 1056
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            1046, 1047
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
         .children = {
             -2, -1
         }
@@ -18966,109 +19443,32 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1179648,
-        .children = {
-            1041, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1114112,
-        .children = {
-            1042, 1098
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 851968,
-        .children = {
-            1043, 1069
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            1044, 1050
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 4063232,
         .children = {
-            1045, 1046
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 917504,
-        .children = {
-            1047, -2
+            1048, 1050
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1048
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = 1114112,
+        .distance = -950272,
         .children = {
             1049, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = -294912,
+        .distance = 294912,
         .children = {
             -2, -1
         }
@@ -19079,9 +19479,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = -1015808,
         .children = {
-            1051, 1058
+            1051, -2
         }
     },
     {
@@ -19090,18 +19490,18 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 3801088,
         .children = {
-            1052, 1055
+            1052, 1054
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 262144,
+        .distance = -950272,
         .children = {
             1053, -2
         }
@@ -19112,18 +19512,29 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 917504,
+        .distance = 294912,
         .children = {
-            -2, 1054
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 0,
             .y = 0,
-            .z = -803
+            .z = 4096
         },
-        .distance = 938244,
+        .distance = -950272,
+        .children = {
+            1055, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
         .children = {
             -2, -1
         }
@@ -19134,42 +19545,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -294912,
+        .distance = 3407872,
         .children = {
-            1056, 1057
+            1057, 1062
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 4096,
             .y = 0,
-            .z = -803
-        },
-        .distance = 1246708,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 1246708,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = 360448,
         .children = {
-            1059, 1063
+            1058, 1059
         }
     },
     {
@@ -19178,31 +19567,42 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -1015808,
         .children = {
-            -2, 1060
+            -2, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 262144,
+        .distance = -1015808,
+        .children = {
+            1060, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
         .children = {
             1061, -2
         }
     },
     {
         .normal = {
-            .x = 0,
-            .y = -4096,
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = 327680,
+        .distance = 294912,
         .children = {
-            1062, -2
+            -2, -1
         }
     },
     {
@@ -19211,9 +19611,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 1114112,
+        .distance = 360448,
         .children = {
-            -1, -2
+            1063, 1064
         }
     },
     {
@@ -19222,18 +19622,18 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -1015808,
         .children = {
-            1064, 1067
+            -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = 1114112,
+        .distance = -1015808,
         .children = {
             1065, -2
         }
@@ -19244,42 +19644,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 3145728,
         .children = {
-            -2, 1066
-        }
-    },
-    {
-        .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = -803
-        },
-        .distance = 1246708,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1068
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 1343887,
-        .children = {
-            -1, -2
+            1066, 1068
         }
     },
     {
@@ -19288,18 +19655,117 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = -950272,
         .children = {
-            1070, 1071
+            1067, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            -2, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1069, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 294912,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            1071, 1072
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1073, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1075, 1077
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            1076, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
         .children = {
             -1, -2
         }
@@ -19310,31 +19776,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 131072,
+        .distance = 360448,
         .children = {
-            1072, 1095
+            1078, -2
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 524288,
         .children = {
-            1073, 1084
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            1074, 1080
+            1080, 1107
         }
     },
     {
@@ -19343,9 +19809,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1048576,
+        .distance = -884736,
         .children = {
-            1075, -2
+            -1, 1081
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1081344,
+        .children = {
+            1082, -1
         }
     },
     {
@@ -19354,9 +19831,20 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 1507328,
         .children = {
-            1076, -2
+            1083, 1092
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            1084, 1088
         }
     },
     {
@@ -19365,95 +19853,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 819200,
-        .children = {
-            1077, 1078
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            1079, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 973159,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, 1081
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = 786432,
-        .children = {
-            1082, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1083
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = -2896
-        },
-        .distance = 1343887,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
+        .distance = 360448,
         .children = {
             1085, 1086
         }
@@ -19461,45 +19861,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 262144,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = 458752,
+        .distance = -1015808,
         .children = {
-            1087, 1090
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -2, 1088
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1089
+            -2, -1
         }
     },
     {
@@ -19508,7 +19875,40 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1048576,
+        .distance = -950272,
+        .children = {
+            1087, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            1089, 1090
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
         .children = {
             -2, -1
         }
@@ -19516,23 +19916,34 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 65536,
+        .distance = -950272,
         .children = {
             1091, -2
         }
     },
     {
         .normal = {
-            .x = 0,
+            .x = 4096,
             .y = 0,
-            .z = 4096
+            .z = 0
         },
-        .distance = -1048576,
+        .distance = 294912,
         .children = {
-            1092, -2
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            1093, 1097
         }
     },
     {
@@ -19541,9 +19952,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 196608,
+        .distance = 360448,
         .children = {
-            -2, 1093
+            1094, 1095
         }
     },
     {
@@ -19552,42 +19963,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = -1015808,
         .children = {
-            1094, -2
+            -2, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 262144,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
+        .distance = -950272,
         .children = {
             1096, -2
         }
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 851968,
         .children = {
-            1097, -2
+            1098, 1102
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            1099, 1100
         }
     },
     {
@@ -19596,9 +20018,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = -1015808,
         .children = {
-            -1, -2
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1101, -2
         }
     },
     {
@@ -19607,9 +20040,64 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = 458752,
+        .distance = 294912,
         .children = {
-            -1, 1099
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            1103, 1106
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1104
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1105
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -19618,42 +20106,31 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = -262144,
         .children = {
-            -2, 1100
+            1108, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1109, 1110
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
         .distance = 131072,
         .children = {
-            1101, 1102
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, -1
+            -1, -2
         }
     },
     {
@@ -19662,20 +20139,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1114112,
+        .distance = -1081344,
         .children = {
-            1104, 1167
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -851968,
-        .children = {
-            1105, 1133
+            1111, -1
         }
     },
     {
@@ -19684,20 +20150,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 196608,
         .children = {
-            1106, 1115
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            1107, 1111
+            1112, 1117
         }
     },
     {
@@ -19706,9 +20161,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -950272,
         .children = {
-            -1, 1108
+            1113, 1115
         }
     },
     {
@@ -19717,20 +20172,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -458752,
+        .distance = 294912,
         .children = {
-            1109, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            1110, -2
+            1114, -1
         }
     },
     {
@@ -19739,7 +20183,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -851968,
+        .distance = -884736,
         .children = {
             -1, -2
         }
@@ -19750,9 +20194,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -819200,
+        .distance = 360448,
         .children = {
-            1112, 1114
+            1116, -2
         }
     },
     {
@@ -19761,106 +20205,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
-        .children = {
-            1113, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -973159,
-        .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -524288,
-        .children = {
-            1116, 1122
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -786432,
-        .children = {
-            -2, 1117
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = 65536,
-        .children = {
-            -2, 1118
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -196608,
-        .children = {
-            -2, 1119
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1120
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            -2, 1121
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -1048576,
+        .distance = -1015808,
         .children = {
             -2, -1
         }
@@ -19871,53 +20216,119 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = -1015808,
+        .children = {
+            1118, 1128
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 294912,
+        .children = {
+            1119, 1125
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            1120, 1122
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1121, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
         .children = {
             -2, 1123
         }
     },
     {
         .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = 360448,
+        .children = {
+            1124, -2
+        }
+    },
+    {
+        .normal = {
             .x = 0,
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = -131072,
         .children = {
-            -2, 1124
+            -2, -1
         }
     },
     {
         .normal = {
             .x = 0,
-            .y = 0,
-            .z = 4096
+            .y = -4096,
+            .z = 0
         },
-        .distance = -786432,
-        .children = {
-            -2, 1125
-        }
-    },
-    {
-        .normal = {
-            .x = 3663,
-            .y = 0,
-            .z = -1831
-        },
-        .distance = -351703,
+        .distance = -131072,
         .children = {
             1126, -2
         }
     },
     {
         .normal = {
-            .x = 2896,
+            .x = 0,
             .y = 0,
-            .z = 2896
+            .z = 4096
         },
-        .distance = -973159,
+        .distance = -950272,
         .children = {
-            -2, 1127
+            1127, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
         }
     },
     {
@@ -19926,9 +20337,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -819200,
+        .distance = 360448,
         .children = {
-            1128, 1131
+            -1, 1129
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -622592,
+        .children = {
+            1131, 1228
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -294912,
+        .children = {
+            1132, 1153
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2162688,
+        .children = {
+            1133, 1145
         }
     },
     {
@@ -19937,97 +20392,20 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1048576,
-        .children = {
-            -2, 1129
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1130
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -1343887,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = -4096,
-            .z = 0
-        },
-        .distance = -262144,
-        .children = {
-            -2, 1132
-        }
-    },
-    {
-        .normal = {
-            .x = 2896,
-            .y = 0,
-            .z = 2896
-        },
-        .distance = -1343887,
-        .children = {
-            -2, -1
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1245184,
+        .distance = -1081344,
         .children = {
             1134, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1179648,
-        .children = {
-            1135, 1164
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = -524288,
+        .distance = -950272,
         .children = {
-            1136, 1153
-        }
-    },
-    {
-        .normal = {
-            .x = 0,
-            .y = 0,
-            .z = 4096
-        },
-        .distance = -196607,
-        .children = {
-            1137, 1142
+            1135, 1137
         }
     },
     {
@@ -20036,18 +20414,40 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 4456448,
         .children = {
-            1138, 1140
+            1136, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
+            .x = 0,
+            .y = -4096,
             .z = 0
         },
-        .distance = -917504,
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
+        .children = {
+            1138, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3801088,
         .children = {
             1139, -2
         }
@@ -20058,20 +20458,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 4128768,
         .children = {
-            -1, -2
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            -2, 1141
+            1140, -2
         }
     },
     {
@@ -20080,9 +20469,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -294912,
+        .distance = 4390912,
         .children = {
-            -2, -1
+            1141, -2
         }
     },
     {
@@ -20091,18 +20480,29 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 4456448,
         .children = {
-            1143, 1151
+            1142, -2
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1246708,
+        .distance = 4784128,
+        .children = {
+            -1, 1143
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
         .children = {
             1144, -2
         }
@@ -20110,12 +20510,12 @@ BSPNode3 bspNodes_player[] = {
     {
         .normal = {
             .x = 0,
-            .y = -4096,
-            .z = 0
+            .y = 0,
+            .z = 4096
         },
-        .distance = 65536,
+        .distance = -1015808,
         .children = {
-            1145, -2
+            -2, -1
         }
     },
     {
@@ -20124,20 +20524,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -458752,
+        .distance = -1081344,
         .children = {
-            1146, 1149
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -1114112,
-        .children = {
-            1147, -2
+            1146, -1
         }
     },
     {
@@ -20146,18 +20535,18 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 131072,
         .children = {
-            1148, -2
+            1147, 1148
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 0,
             .y = 0,
-            .z = 803
+            .z = 4096
         },
-        .distance = -938244,
+        .distance = -950272,
         .children = {
             -1, -2
         }
@@ -20168,40 +20557,51 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = -262144,
         .children = {
-            1150, -2
+            1149, -1
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 0,
             .y = 0,
-            .z = 803
+            .z = 4096
         },
-        .distance = -938244,
+        .distance = -622592,
         .children = {
-            -1, -2
+            -2, 1150
         }
     },
     {
         .normal = {
-            .x = 4096,
+            .x = 0,
             .y = 0,
-            .z = 0
+            .z = 4096
         },
-        .distance = -1114112,
+        .distance = -688128,
+        .children = {
+            -2, 1151
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
         .children = {
             -2, 1152
         }
     },
     {
         .normal = {
-            .x = 4016,
-            .y = 0,
-            .z = 803
+            .x = 0,
+            .y = -4096,
+            .z = 0
         },
-        .distance = -1246708,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -20212,9 +20612,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = 2162688,
         .children = {
-            1154, 1158
+            1154, 1187
         }
     },
     {
@@ -20223,9 +20623,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -1081344,
         .children = {
-            -2, 1155
+            1155, -1
         }
     },
     {
@@ -20234,9 +20634,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 262144,
+        .distance = 3145728,
         .children = {
-            1156, -2
+            1156, 1174
         }
     },
     {
@@ -20245,9 +20645,86 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 327680,
+        .distance = 3801088,
         .children = {
-            1157, -2
+            1157, 1167
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            1158, 1160
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1159, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1161, 1162
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            1163, 1165
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1164
         }
     },
     {
@@ -20256,7 +20733,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -360448,
         .children = {
             -2, -1
         }
@@ -20267,9 +20744,9 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -786432,
+        .distance = -1015808,
         .children = {
-            1159, 1162
+            -2, 1166
         }
     },
     {
@@ -20278,9 +20755,548 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = -1114112,
+        .distance = -360448,
         .children = {
-            -2, 1160
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, 1168
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3473408,
+        .children = {
+            1169, 1171
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1170
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1172
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1173
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2818048,
+        .children = {
+            1175, 1179
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1176, 1177
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1178
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, 1180
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            1181, 1184
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1182
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1183
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1185
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1186
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1081344,
+        .children = {
+            1188, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 196608,
+        .children = {
+            1189, 1216
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, 1190
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            1191, 1203
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1192
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            1193, 1195
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1194
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            1196, 1201
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            1197, 1199
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1198
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1200
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1202
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            1204, 1213
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1205
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 851968,
+        .children = {
+            1206, 1211
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1114112,
+        .children = {
+            1207, 1209
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1208
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1210
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1212
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, 1214
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            -2, 1215
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -20291,16 +21307,126 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = -262144,
         .children = {
-            -2, 1161
+            1217, -1
         }
     },
     {
         .normal = {
-            .x = 4016,
+            .x = 0,
             .y = 0,
-            .z = 803
+            .z = 4096
         },
-        .distance = -1246708,
+        .distance = -688128,
+        .children = {
+            1218, 1219
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1220, 1226
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            1221, 1224
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            1222, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            1223, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1225
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -950272,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -360448,
+        .children = {
+            1227, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -20311,9 +21437,185 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = 2162688,
         .children = {
-            -2, 1163
+            1229, 1303
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1230, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2490368,
+        .children = {
+            1231, 1292
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            1232, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1233, 1262
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1234, 1240
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            1235, 1236
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            1237, 1238
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, 1239
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2818048,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
+        .children = {
+            1241, 1256
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4390912,
+        .children = {
+            1242, 1248
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            1243, 1244
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1245, -2
         }
     },
     {
@@ -20322,7 +21624,315 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = -1343887,
+        .distance = -1112182,
+        .children = {
+            1246, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1247, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3801088,
+        .children = {
+            1249, 1254
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1250, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            1251, 1253
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1252, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1255, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2818048,
+        .children = {
+            1257, 1259
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1258, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1260, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1261, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3473408,
+        .children = {
+            1263, 1279
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4128768,
+        .children = {
+            1264, 1270
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4456448,
+        .children = {
+            1265, 1267
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4718592,
+        .children = {
+            1266, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 4784128,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1268, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            -2, 1269
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3801088,
+        .children = {
+            1271, 1275
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1272, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1273, 1274
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
         .children = {
             -2, -1
         }
@@ -20333,9 +21943,53 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -458752,
+        .distance = -360448,
         .children = {
-            1165, -1
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1276, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1277, 1278
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -20344,9 +21998,922 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = 2818048,
         .children = {
-            -2, 1166
+            1280, 1289
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 3145728,
+        .children = {
+            1281, 1285
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1282, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1283, 1284
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1286, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1287, 1288
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1290, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            -2, 1291
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1293, 1299
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1294, 1297
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            -1, 1295
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1296, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1298, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1300, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            1301, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            -2, 1302
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -1015808,
+        .children = {
+            1304, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1146880,
+        .children = {
+            1305, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 851968,
+        .children = {
+            1306, 1339
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1179648,
+        .children = {
+            1307, 1328
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1308, 1322
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1309, 1318
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            -1, 1310
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1835008,
+        .children = {
+            1311, 1313
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1312, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            1314, 1316
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1315, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            1317, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, 1319
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1769472,
+        .children = {
+            1320, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1321, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            1323, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 1507328,
+        .children = {
+            1324, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 2097152,
+        .children = {
+            1325, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1326, 1327
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1329, 1337
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1330, 1335
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            -1, 1331
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            1332, 1334
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1333, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1336, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1338
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 196608,
+        .children = {
+            1340, 1363
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 524288,
+        .children = {
+            1341, 1352
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1342, 1350
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1343, 1348
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            -1, 1344
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            1345, 1347
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1346, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1349, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1351
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1353, 1361
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1354, 1359
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            -1, 1355
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            1356, 1358
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1357, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1360, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -360448,
+        .children = {
+            -2, 1362
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, -1
         }
     },
     {
@@ -20357,6 +22924,160 @@ BSPNode3 bspNodes_player[] = {
         },
         .distance = -262144,
         .children = {
+            1364, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1015808,
+        .children = {
+            1365, 1381
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -622592,
+        .children = {
+            1366, 1368
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            1367, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1053918,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -950272,
+        .children = {
+            1369, 1378
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = 131072,
+        .children = {
+            1370, 1374
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -720896,
+        .children = {
+            1371, 1373
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -884736,
+        .children = {
+            1372, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1112182,
+        .children = {
+            -1, -2
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = 0,
+            .z = 4096
+        },
+        .distance = -688128,
+        .children = {
+            -2, 1375
+        }
+    },
+    {
+        .normal = {
+            .x = 0,
+            .y = -4096,
+            .z = 0
+        },
+        .distance = -131072,
+        .children = {
+            -2, 1376
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -688128,
+        .children = {
+            -2, 1377
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1204864,
+        .children = {
             -2, -1
         }
     },
@@ -20366,20 +23087,9 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = 65536,
+        .distance = -131072,
         .children = {
-            1168, 1170
-        }
-    },
-    {
-        .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            1169, -1
+            -2, 1379
         }
     },
     {
@@ -20388,31 +23098,31 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = -1179648,
+        .distance = -688128,
+        .children = {
+            -2, 1380
+        }
+    },
+    {
+        .normal = {
+            .x = 2896,
+            .y = 0,
+            .z = 2896
+        },
+        .distance = -1204864,
         .children = {
             -2, -1
         }
     },
     {
         .normal = {
-            .x = 4096,
-            .y = 0,
-            .z = 0
-        },
-        .distance = -458752,
-        .children = {
-            1171, -1
-        }
-    },
-    {
-        .normal = {
             .x = 0,
             .y = 0,
             .z = 4096
         },
-        .distance = -1179648,
+        .distance = -688128,
         .children = {
-            1172, -1
+            1382, -1
         }
     },
     {
@@ -20421,15 +23131,37 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = -262144,
+        .distance = -131072,
+        .children = {
+            -2, 1383
+        }
+    },
+    {
+        .normal = {
+            .x = 4096,
+            .y = 0,
+            .z = 0
+        },
+        .distance = -1081344,
+        .children = {
+            1384, -1
+        }
+    },
+    {
+        .normal = {
+            .x = 4016,
+            .y = 0,
+            .z = 803
+        },
+        .distance = -1131034,
         .children = {
             -2, -1
         }
     },
 };
-BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 1173};
+BSPTree3 bsp_player = {.nodes=bspNodes_player, .numNodes = 1385};
 
-int numTris = 968;
+int numTris = 994;
 Tri3_texturedFlat tris[] = {
     {
         {327680, 0, 0},
@@ -20610,24 +23342,6 @@ Tri3_texturedFlat tris[] = {
         {255, 255},
         {224, 255},
         16
-    },
-    {
-        {1048576, 0, -327680},
-        {983040, -327680, -655360},
-        {983040, 0, -655360},
-        {32, 255},
-        {63, 224},
-        {63, 255},
-        14
-    },
-    {
-        {1048576, 0, -327680},
-        {1048576, -327680, -327680},
-        {983040, -327680, -655360},
-        {32, 255},
-        {32, 224},
-        {63, 224},
-        14
     },
     {
         {327680, -327680, -917504},
@@ -22700,417 +25414,21 @@ Tri3_texturedFlat tris[] = {
         0
     },
     {
-        {1048576, -327680, -327680},
-        {983040, -655360, -655360},
-        {983040, -327680, -655360},
-        {32, 223},
-        {63, 192},
-        {63, 223},
-        14
-    },
-    {
-        {1048576, -327680, -327680},
-        {1048576, -655360, -327680},
-        {983040, -655360, -655360},
-        {32, 223},
-        {32, 192},
-        {63, 192},
-        14
-    },
-    {
-        {1048576, -655360, -327680},
-        {983040, -983040, -655360},
-        {983040, -655360, -655360},
-        {32, 191},
-        {63, 160},
-        {63, 191},
-        14
-    },
-    {
-        {1048576, -655360, -327680},
-        {1048576, -983040, -327680},
-        {983040, -983040, -655360},
-        {32, 191},
-        {32, 160},
-        {63, 160},
-        14
-    },
-    {
-        {1048576, -983040, -327680},
-        {983040, -1310720, -655360},
-        {983040, -983040, -655360},
-        {32, 159},
-        {63, 128},
-        {63, 159},
-        14
-    },
-    {
-        {1048576, -983040, -327680},
-        {1048576, -1310720, -327680},
-        {983040, -1310720, -655360},
-        {32, 159},
-        {32, 128},
-        {63, 128},
-        14
-    },
-    {
-        {1048576, -1310720, -327680},
-        {983040, -1638400, -655360},
-        {983040, -1310720, -655360},
-        {32, 127},
-        {63, 96},
-        {63, 127},
-        14
-    },
-    {
-        {1048576, -1310720, -327680},
-        {1048576, -1638400, -327680},
-        {983040, -1638400, -655360},
-        {32, 127},
-        {32, 96},
-        {63, 96},
-        14
-    },
-    {
-        {1048576, -1638400, -327680},
-        {983040, -1966080, -655360},
-        {983040, -1638400, -655360},
-        {32, 95},
-        {63, 64},
-        {63, 95},
-        14
-    },
-    {
-        {1048576, -1638400, -327680},
-        {1048576, -1966080, -327680},
-        {983040, -1966080, -655360},
-        {32, 95},
-        {32, 64},
-        {63, 64},
-        14
-    },
-    {
-        {1048576, -327680, 327680},
-        {983040, 0, 655360},
-        {983040, -327680, 655360},
-        {223, 224},
-        {192, 255},
-        {192, 224},
-        14
-    },
-    {
-        {1048576, -327680, 327680},
-        {1048576, 0, 327680},
-        {983040, 0, 655360},
-        {223, 224},
-        {223, 255},
-        {192, 255},
-        14
-    },
-    {
-        {1048576, -655360, 327680},
-        {983040, -327680, 655360},
-        {983040, -655360, 655360},
-        {223, 192},
-        {192, 223},
-        {192, 192},
-        14
-    },
-    {
-        {1048576, -655360, 327680},
-        {1048576, -327680, 327680},
-        {983040, -327680, 655360},
-        {223, 192},
-        {223, 223},
-        {192, 223},
-        14
-    },
-    {
-        {1048576, -983040, 327680},
-        {983040, -655360, 655360},
-        {983040, -983040, 655360},
-        {223, 160},
-        {192, 191},
-        {192, 160},
-        14
-    },
-    {
-        {1048576, -983040, 327680},
-        {1048576, -655360, 327680},
-        {983040, -655360, 655360},
-        {223, 160},
-        {223, 191},
-        {192, 191},
-        14
-    },
-    {
-        {1048576, -1310720, 327680},
-        {983040, -983040, 655360},
-        {983040, -1310720, 655360},
-        {223, 128},
-        {192, 159},
-        {192, 128},
-        14
-    },
-    {
-        {1048576, -1310720, 327680},
-        {1048576, -983040, 327680},
-        {983040, -983040, 655360},
-        {223, 128},
-        {223, 159},
-        {192, 159},
-        14
-    },
-    {
-        {1048576, -1638400, 327680},
-        {983040, -1310720, 655360},
-        {983040, -1638400, 655360},
-        {223, 96},
-        {192, 127},
-        {192, 96},
-        14
-    },
-    {
-        {1048576, -1638400, 327680},
-        {1048576, -1310720, 327680},
-        {983040, -1310720, 655360},
-        {223, 96},
-        {223, 127},
-        {192, 127},
-        14
-    },
-    {
-        {1048576, -1966080, 327680},
-        {983040, -1638400, 655360},
-        {983040, -1966080, 655360},
-        {223, 64},
-        {192, 95},
-        {192, 64},
-        14
-    },
-    {
-        {1048576, -1966080, 327680},
-        {1048576, -1638400, 327680},
-        {983040, -1638400, 655360},
-        {223, 64},
-        {223, 95},
-        {192, 95},
-        14
-    },
-    {
+        {-983040, -327680, 655360},
+        {-1048576, 0, 327680},
         {-1048576, -327680, 327680},
+        {192, 224},
+        {223, 255},
+        {223, 224},
+        14
+    },
+    {
+        {-983040, -327680, 655360},
         {-983040, 0, 655360},
         {-1048576, 0, 327680},
-        {223, 224},
-        {192, 255},
-        {223, 255},
-        14
-    },
-    {
-        {-1048576, -327680, 327680},
-        {-983040, -327680, 655360},
-        {-983040, 0, 655360},
-        {223, 224},
         {192, 224},
         {192, 255},
-        14
-    },
-    {
-        {-1048576, -655360, 327680},
-        {-983040, -327680, 655360},
-        {-1048576, -327680, 327680},
-        {223, 192},
-        {192, 223},
-        {223, 223},
-        14
-    },
-    {
-        {-1048576, -655360, 327680},
-        {-983040, -655360, 655360},
-        {-983040, -327680, 655360},
-        {223, 192},
-        {192, 192},
-        {192, 223},
-        14
-    },
-    {
-        {-1048576, -983040, 327680},
-        {-983040, -655360, 655360},
-        {-1048576, -655360, 327680},
-        {223, 160},
-        {192, 191},
-        {223, 191},
-        14
-    },
-    {
-        {-1048576, -983040, 327680},
-        {-983040, -983040, 655360},
-        {-983040, -655360, 655360},
-        {223, 160},
-        {192, 160},
-        {192, 191},
-        14
-    },
-    {
-        {-1048576, -1310720, 327680},
-        {-983040, -983040, 655360},
-        {-1048576, -983040, 327680},
-        {223, 128},
-        {192, 159},
-        {223, 159},
-        14
-    },
-    {
-        {-1048576, -1310720, 327680},
-        {-983040, -1310720, 655360},
-        {-983040, -983040, 655360},
-        {223, 128},
-        {192, 128},
-        {192, 159},
-        14
-    },
-    {
-        {-1048576, -1638400, 327680},
-        {-983040, -1310720, 655360},
-        {-1048576, -1310720, 327680},
-        {223, 96},
-        {192, 127},
-        {223, 127},
-        14
-    },
-    {
-        {-1048576, -1638400, 327680},
-        {-983040, -1638400, 655360},
-        {-983040, -1310720, 655360},
-        {223, 96},
-        {192, 96},
-        {192, 127},
-        14
-    },
-    {
-        {-1048576, -1966080, 327680},
-        {-983040, -1638400, 655360},
-        {-1048576, -1638400, 327680},
-        {223, 64},
-        {192, 95},
-        {223, 95},
-        14
-    },
-    {
-        {-1048576, -1966080, 327680},
-        {-983040, -1966080, 655360},
-        {-983040, -1638400, 655360},
-        {223, 64},
-        {192, 64},
-        {192, 95},
-        14
-    },
-    {
-        {-983040, 0, -655360},
-        {-1048576, -327680, -327680},
-        {-1048576, 0, -327680},
-        {63, 255},
-        {32, 224},
-        {32, 255},
-        14
-    },
-    {
-        {-983040, 0, -655360},
-        {-983040, -327680, -655360},
-        {-1048576, -327680, -327680},
-        {63, 255},
-        {63, 224},
-        {32, 224},
-        14
-    },
-    {
-        {-983040, -327680, -655360},
-        {-1048576, -655360, -327680},
-        {-1048576, -327680, -327680},
-        {63, 223},
-        {32, 192},
-        {32, 223},
-        14
-    },
-    {
-        {-983040, -327680, -655360},
-        {-983040, -655360, -655360},
-        {-1048576, -655360, -327680},
-        {63, 223},
-        {63, 192},
-        {32, 192},
-        14
-    },
-    {
-        {-983040, -655360, -655360},
-        {-1048576, -983040, -327680},
-        {-1048576, -655360, -327680},
-        {63, 191},
-        {32, 160},
-        {32, 191},
-        14
-    },
-    {
-        {-983040, -655360, -655360},
-        {-983040, -983040, -655360},
-        {-1048576, -983040, -327680},
-        {63, 191},
-        {63, 160},
-        {32, 160},
-        14
-    },
-    {
-        {-983040, -983040, -655360},
-        {-1048576, -1310720, -327680},
-        {-1048576, -983040, -327680},
-        {63, 159},
-        {32, 128},
-        {32, 159},
-        14
-    },
-    {
-        {-983040, -983040, -655360},
-        {-983040, -1310720, -655360},
-        {-1048576, -1310720, -327680},
-        {63, 159},
-        {63, 128},
-        {32, 128},
-        14
-    },
-    {
-        {-983040, -1310720, -655360},
-        {-1048576, -1638400, -327680},
-        {-1048576, -1310720, -327680},
-        {63, 127},
-        {32, 96},
-        {32, 127},
-        14
-    },
-    {
-        {-983040, -1310720, -655360},
-        {-983040, -1638400, -655360},
-        {-1048576, -1638400, -327680},
-        {63, 127},
-        {63, 96},
-        {32, 96},
-        14
-    },
-    {
-        {-983040, -1638400, -655360},
-        {-1048576, -1966080, -327680},
-        {-1048576, -1638400, -327680},
-        {63, 95},
-        {32, 64},
-        {32, 95},
-        14
-    },
-    {
-        {-983040, -1638400, -655360},
-        {-983040, -1966080, -655360},
-        {-1048576, -1966080, -327680},
-        {63, 95},
-        {63, 64},
-        {32, 64},
+        {223, 255},
         14
     },
     {
@@ -27722,6 +30040,24 @@ Tri3_texturedFlat tris[] = {
         0
     },
     {
+        {327680, -1310720, 917504},
+        {0, -1310720, 983040},
+        {0, -1310720, 917504},
+        {31, 171},
+        {0, 166},
+        {0, 171},
+        11
+    },
+    {
+        {327680, -1310720, 917504},
+        {327680, -1310720, 983040},
+        {0, -1310720, 983040},
+        {31, 171},
+        {31, 166},
+        {0, 166},
+        11
+    },
+    {
         {0, -1638400, 917504},
         {-327680, -1310720, 917504},
         {-327680, -1638400, 917504},
@@ -27738,6 +30074,24 @@ Tri3_texturedFlat tris[] = {
         {31, 127},
         {0, 127},
         0
+    },
+    {
+        {0, -1310720, 917504},
+        {-327680, -1310720, 983040},
+        {-327680, -1310720, 917504},
+        {255, 171},
+        {224, 166},
+        {224, 171},
+        11
+    },
+    {
+        {0, -1310720, 917504},
+        {0, -1310720, 983040},
+        {-327680, -1310720, 983040},
+        {255, 171},
+        {255, 166},
+        {224, 166},
+        11
     },
     {
         {0, -1966080, 917504},
@@ -28350,6 +30704,114 @@ Tri3_texturedFlat tris[] = {
         {31, 159},
         {0, 159},
         13
+    },
+    {
+        {0, -688128, 917504},
+        {-327680, -655360, 917504},
+        {-327680, -688128, 917504},
+        {255, 88},
+        {176, 95},
+        {176, 88},
+        11
+    },
+    {
+        {0, -688128, 917504},
+        {0, -655360, 917504},
+        {-327680, -655360, 917504},
+        {255, 88},
+        {255, 95},
+        {176, 95},
+        11
+    },
+    {
+        {0, -655360, 917504},
+        {-327680, -655360, 983040},
+        {-327680, -655360, 917504},
+        {255, 31},
+        {176, 16},
+        {176, 31},
+        11
+    },
+    {
+        {0, -655360, 917504},
+        {0, -655360, 983040},
+        {-327680, -655360, 983040},
+        {255, 31},
+        {255, 16},
+        {176, 16},
+        11
+    },
+    {
+        {0, -688128, 983040},
+        {-327680, -688128, 917504},
+        {-327680, -688128, 983040},
+        {255, 16},
+        {176, 31},
+        {176, 16},
+        11
+    },
+    {
+        {0, -688128, 983040},
+        {0, -688128, 917504},
+        {-327680, -688128, 917504},
+        {255, 16},
+        {255, 31},
+        {176, 31},
+        11
+    },
+    {
+        {327680, -688128, 917504},
+        {0, -655360, 917504},
+        {0, -688128, 917504},
+        {79, 88},
+        {0, 95},
+        {0, 88},
+        11
+    },
+    {
+        {327680, -688128, 917504},
+        {327680, -655360, 917504},
+        {0, -655360, 917504},
+        {79, 88},
+        {79, 95},
+        {0, 95},
+        11
+    },
+    {
+        {327680, -655360, 917504},
+        {0, -655360, 983040},
+        {0, -655360, 917504},
+        {79, 31},
+        {0, 16},
+        {0, 31},
+        11
+    },
+    {
+        {327680, -655360, 917504},
+        {327680, -655360, 983040},
+        {0, -655360, 983040},
+        {79, 31},
+        {79, 16},
+        {0, 16},
+        11
+    },
+    {
+        {327680, -688128, 983040},
+        {0, -688128, 917504},
+        {0, -688128, 983040},
+        {79, 16},
+        {0, 31},
+        {0, 16},
+        11
+    },
+    {
+        {327680, -688128, 983040},
+        {327680, -688128, 917504},
+        {0, -688128, 917504},
+        {79, 16},
+        {79, 31},
+        {0, 31},
+        11
     },
     {
         {0, -688128, 1638400},
@@ -29143,8 +31605,511 @@ Tri3_texturedFlat tris[] = {
         {0, 143},
         5
     },
+    {
+        {-983040, -655360, 655360},
+        {-1048576, -327680, 327680},
+        {-1048576, -655360, 327680},
+        {192, 192},
+        {223, 223},
+        {223, 192},
+        14
+    },
+    {
+        {-983040, -655360, 655360},
+        {-983040, -327680, 655360},
+        {-1048576, -327680, 327680},
+        {192, 192},
+        {192, 223},
+        {223, 223},
+        14
+    },
+    {
+        {-983040, -983040, 655360},
+        {-1048576, -655360, 327680},
+        {-1048576, -983040, 327680},
+        {192, 160},
+        {223, 191},
+        {223, 160},
+        14
+    },
+    {
+        {-983040, -983040, 655360},
+        {-983040, -655360, 655360},
+        {-1048576, -655360, 327680},
+        {192, 160},
+        {192, 191},
+        {223, 191},
+        14
+    },
+    {
+        {-983040, -1310720, 655360},
+        {-1048576, -983040, 327680},
+        {-1048576, -1310720, 327680},
+        {192, 128},
+        {223, 159},
+        {223, 128},
+        14
+    },
+    {
+        {-983040, -1310720, 655360},
+        {-983040, -983040, 655360},
+        {-1048576, -983040, 327680},
+        {192, 128},
+        {192, 159},
+        {223, 159},
+        14
+    },
+    {
+        {-983040, -1638400, 655360},
+        {-1048576, -1310720, 327680},
+        {-1048576, -1638400, 327680},
+        {192, 96},
+        {223, 127},
+        {223, 96},
+        14
+    },
+    {
+        {-983040, -1638400, 655360},
+        {-983040, -1310720, 655360},
+        {-1048576, -1310720, 327680},
+        {192, 96},
+        {192, 127},
+        {223, 127},
+        14
+    },
+    {
+        {-983040, -1966080, 655360},
+        {-1048576, -1638400, 327680},
+        {-1048576, -1966080, 327680},
+        {192, 64},
+        {223, 95},
+        {223, 64},
+        14
+    },
+    {
+        {-983040, -1966080, 655360},
+        {-983040, -1638400, 655360},
+        {-1048576, -1638400, 327680},
+        {192, 64},
+        {192, 95},
+        {223, 95},
+        14
+    },
+    {
+        {-1048576, -327680, -327680},
+        {-983040, 0, -655360},
+        {-983040, -327680, -655360},
+        {32, 224},
+        {63, 255},
+        {63, 224},
+        14
+    },
+    {
+        {-1048576, -327680, -327680},
+        {-1048576, 0, -327680},
+        {-983040, 0, -655360},
+        {32, 224},
+        {32, 255},
+        {63, 255},
+        14
+    },
+    {
+        {-1048576, -655360, -327680},
+        {-983040, -327680, -655360},
+        {-983040, -655360, -655360},
+        {32, 192},
+        {63, 223},
+        {63, 192},
+        14
+    },
+    {
+        {-1048576, -655360, -327680},
+        {-1048576, -327680, -327680},
+        {-983040, -327680, -655360},
+        {32, 192},
+        {32, 223},
+        {63, 223},
+        14
+    },
+    {
+        {-1048576, -983040, -327680},
+        {-983040, -655360, -655360},
+        {-983040, -983040, -655360},
+        {32, 160},
+        {63, 191},
+        {63, 160},
+        14
+    },
+    {
+        {-1048576, -983040, -327680},
+        {-1048576, -655360, -327680},
+        {-983040, -655360, -655360},
+        {32, 160},
+        {32, 191},
+        {63, 191},
+        14
+    },
+    {
+        {-1048576, -1310720, -327680},
+        {-983040, -983040, -655360},
+        {-983040, -1310720, -655360},
+        {32, 128},
+        {63, 159},
+        {63, 128},
+        14
+    },
+    {
+        {-1048576, -1310720, -327680},
+        {-1048576, -983040, -327680},
+        {-983040, -983040, -655360},
+        {32, 128},
+        {32, 159},
+        {63, 159},
+        14
+    },
+    {
+        {-1048576, -1638400, -327680},
+        {-983040, -1310720, -655360},
+        {-983040, -1638400, -655360},
+        {32, 96},
+        {63, 127},
+        {63, 96},
+        14
+    },
+    {
+        {-1048576, -1638400, -327680},
+        {-1048576, -1310720, -327680},
+        {-983040, -1310720, -655360},
+        {32, 96},
+        {32, 127},
+        {63, 127},
+        14
+    },
+    {
+        {-1048576, -1966080, -327680},
+        {-983040, -1638400, -655360},
+        {-983040, -1966080, -655360},
+        {32, 64},
+        {63, 95},
+        {63, 64},
+        14
+    },
+    {
+        {-1048576, -1966080, -327680},
+        {-1048576, -1638400, -327680},
+        {-983040, -1638400, -655360},
+        {32, 64},
+        {32, 95},
+        {63, 95},
+        14
+    },
+    {
+        {1048576, -1638400, -327680},
+        {983040, -1966080, -655360},
+        {983040, -1638400, -655360},
+        {32, 95},
+        {63, 64},
+        {63, 95},
+        14
+    },
+    {
+        {1048576, -1638400, -327680},
+        {1048576, -1966080, -327680},
+        {983040, -1966080, -655360},
+        {32, 95},
+        {32, 64},
+        {63, 64},
+        14
+    },
+    {
+        {1048576, -1310720, -327680},
+        {983040, -1638400, -655360},
+        {983040, -1310720, -655360},
+        {32, 127},
+        {63, 96},
+        {63, 127},
+        14
+    },
+    {
+        {1048576, -1310720, -327680},
+        {1048576, -1638400, -327680},
+        {983040, -1638400, -655360},
+        {32, 127},
+        {32, 96},
+        {63, 96},
+        14
+    },
+    {
+        {1048576, -983040, -327680},
+        {983040, -1310720, -655360},
+        {983040, -983040, -655360},
+        {32, 159},
+        {63, 128},
+        {63, 159},
+        14
+    },
+    {
+        {1048576, -983040, -327680},
+        {1048576, -1310720, -327680},
+        {983040, -1310720, -655360},
+        {32, 159},
+        {32, 128},
+        {63, 128},
+        14
+    },
+    {
+        {1048576, -655360, -327680},
+        {983040, -983040, -655360},
+        {983040, -655360, -655360},
+        {32, 191},
+        {63, 160},
+        {63, 191},
+        14
+    },
+    {
+        {1048576, -655360, -327680},
+        {1048576, -983040, -327680},
+        {983040, -983040, -655360},
+        {32, 191},
+        {32, 160},
+        {63, 160},
+        14
+    },
+    {
+        {1048576, -327680, -327680},
+        {983040, -655360, -655360},
+        {983040, -327680, -655360},
+        {32, 223},
+        {63, 192},
+        {63, 223},
+        14
+    },
+    {
+        {1048576, -327680, -327680},
+        {1048576, -655360, -327680},
+        {983040, -655360, -655360},
+        {32, 223},
+        {32, 192},
+        {63, 192},
+        14
+    },
+    {
+        {1048576, 0, -327680},
+        {983040, -327680, -655360},
+        {983040, 0, -655360},
+        {32, 255},
+        {63, 224},
+        {63, 255},
+        14
+    },
+    {
+        {1048576, 0, -327680},
+        {1048576, -327680, -327680},
+        {983040, -327680, -655360},
+        {32, 255},
+        {32, 224},
+        {63, 224},
+        14
+    },
+    {
+        {983040, 0, 655360},
+        {1048576, -327680, 327680},
+        {1048576, 0, 327680},
+        {192, 255},
+        {223, 224},
+        {223, 255},
+        14
+    },
+    {
+        {983040, 0, 655360},
+        {983040, -327680, 655360},
+        {1048576, -327680, 327680},
+        {192, 255},
+        {192, 224},
+        {223, 224},
+        14
+    },
+    {
+        {983040, -327680, 655360},
+        {1048576, -655360, 327680},
+        {1048576, -327680, 327680},
+        {192, 223},
+        {223, 192},
+        {223, 223},
+        14
+    },
+    {
+        {983040, -327680, 655360},
+        {983040, -655360, 655360},
+        {1048576, -655360, 327680},
+        {192, 223},
+        {192, 192},
+        {223, 192},
+        14
+    },
+    {
+        {983040, -655360, 655360},
+        {1048576, -983040, 327680},
+        {1048576, -655360, 327680},
+        {192, 191},
+        {223, 160},
+        {223, 191},
+        14
+    },
+    {
+        {983040, -655360, 655360},
+        {983040, -983040, 655360},
+        {1048576, -983040, 327680},
+        {192, 191},
+        {192, 160},
+        {223, 160},
+        14
+    },
+    {
+        {983040, -983040, 655360},
+        {1048576, -1310720, 327680},
+        {1048576, -983040, 327680},
+        {192, 159},
+        {223, 128},
+        {223, 159},
+        14
+    },
+    {
+        {983040, -983040, 655360},
+        {983040, -1310720, 655360},
+        {1048576, -1310720, 327680},
+        {192, 159},
+        {192, 128},
+        {223, 128},
+        14
+    },
+    {
+        {983040, -1310720, 655360},
+        {1048576, -1638400, 327680},
+        {1048576, -1310720, 327680},
+        {192, 127},
+        {223, 96},
+        {223, 127},
+        14
+    },
+    {
+        {983040, -1310720, 655360},
+        {983040, -1638400, 655360},
+        {1048576, -1638400, 327680},
+        {192, 127},
+        {192, 96},
+        {223, 96},
+        14
+    },
+    {
+        {983040, -1638400, 655360},
+        {1048576, -1966080, 327680},
+        {1048576, -1638400, 327680},
+        {192, 95},
+        {223, 64},
+        {223, 95},
+        14
+    },
+    {
+        {983040, -1638400, 655360},
+        {983040, -1966080, 655360},
+        {1048576, -1966080, 327680},
+        {192, 95},
+        {192, 64},
+        {223, 64},
+        14
+    },
+    {
+        {-1114112, -4587520, 983040},
+        {-1114112, -4653056, -983040},
+        {-1114112, -4587520, -983040},
+        {239, 159},
+        {16, 144},
+        {16, 159},
+        11
+    },
+    {
+        {-1114112, -4587520, 983040},
+        {-1114112, -4653056, 983040},
+        {-1114112, -4653056, -983040},
+        {239, 159},
+        {239, 144},
+        {16, 144},
+        11
+    },
+    {
+        {1114112, -4653056, -983040},
+        {-1114112, -4587520, -983040},
+        {-1114112, -4653056, -983040},
+        {15, 144},
+        {240, 159},
+        {240, 144},
+        11
+    },
+    {
+        {1114112, -4653056, -983040},
+        {1114112, -4587520, -983040},
+        {-1114112, -4587520, -983040},
+        {15, 144},
+        {15, 159},
+        {240, 159},
+        11
+    },
+    {
+        {1114112, -4653056, 983040},
+        {-1114112, -4653056, -983040},
+        {-1114112, -4653056, 983040},
+        {15, 16},
+        {240, 239},
+        {240, 16},
+        11
+    },
+    {
+        {1114112, -4653056, 983040},
+        {1114112, -4653056, -983040},
+        {-1114112, -4653056, -983040},
+        {15, 16},
+        {15, 239},
+        {240, 239},
+        11
+    },
+    {
+        {1114112, -4587520, 983040},
+        {-1114112, -4653056, 983040},
+        {-1114112, -4587520, 983040},
+        {15, 159},
+        {240, 144},
+        {240, 159},
+        11
+    },
+    {
+        {1114112, -4587520, 983040},
+        {1114112, -4653056, 983040},
+        {-1114112, -4653056, 983040},
+        {15, 159},
+        {15, 144},
+        {240, 144},
+        11
+    },
+    {
+        {1114112, -4653056, 983040},
+        {1114112, -4587520, -983040},
+        {1114112, -4653056, -983040},
+        {239, 144},
+        {16, 159},
+        {16, 144},
+        11
+    },
+    {
+        {1114112, -4653056, 983040},
+        {1114112, -4587520, 983040},
+        {1114112, -4587520, -983040},
+        {239, 144},
+        {239, 159},
+        {16, 159},
+        11
+    },
 };
-
 
 #pragma endregion
 
@@ -29156,82 +32121,75 @@ Tri3_texturedFlat tris[] = {
 
 // Functions for look controls
 void lookLeft(void){
-    mainCamera.yaw += 20;
+    mainCamera.yaw += 16;
 }
 void lookRight(void){
-    mainCamera.yaw -= 20;
+    mainCamera.yaw -= 16;
 }
 void lookUp(void){
-    mainCamera.pitch -= 20;
+    mainCamera.pitch -= 16;
+    if(mainCamera.pitch<-1024){
+        mainCamera.pitch = -1024;
+    }
 }
 void lookDown(void){
-    mainCamera.pitch += 20;
+    mainCamera.pitch += 16;
+    if(mainCamera.pitch>1024){
+        mainCamera.pitch = 1024;
+    }
 }
 
 // Functions for move controls
 void moveCameraForward(void){
-    mainCamera.x -=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
-    mainCamera.z +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.x -=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
+    mainCamera.z +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
 }
 void moveCameraBackward(void){
-    mainCamera.x +=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
-    mainCamera.z -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.x +=  ((isin(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
+    mainCamera.z -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
 }
 void moveCameraLeft(void){
-    mainCamera.x -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
-    mainCamera.z += -((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.x -=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
+    mainCamera.z += -((isin(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
 }
 void moveCameraRight(void){
-    mainCamera.x +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
-    mainCamera.z -= -((isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12);
+    mainCamera.x +=  ((icos(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
+    mainCamera.z -= -((isin(mainCamera.yaw) * MOVEMENT_SPEED>>12)>>12);
 }
 void moveCameraUp(void){
-    mainCamera.y -= MOVEMENT_SPEED;
+    mainCamera.y -= MOVEMENT_SPEED>>12;
 }
 void moveCameraDown(void){
-    mainCamera.y += MOVEMENT_SPEED;
+    mainCamera.y += MOVEMENT_SPEED>>12;
 }
 
+
+// TODO: This overwrites the value rather than add onto it.
+// So if you press two buttons, you only move in one direction.
+// Maybe create a movement vector similar to what Source does?
 // Functions for move controls
 void movePlayerForward(void){
-    player.position.x -=  (isin(mainCamera.yaw) * MOVEMENT_SPEED);
-    player.position.z +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.velocity.x = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z =  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerBackward(void){
-    player.position.x +=  (isin(mainCamera.yaw) * MOVEMENT_SPEED);
-    player.position.z -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.velocity.x =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z = -(icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerLeft(void){
-    player.position.x -=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
-    player.position.z += -(isin(mainCamera.yaw) * MOVEMENT_SPEED);
+    player.velocity.x = -(icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z = -(isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 void movePlayerRight(void){
-    player.position.x +=  (icos(mainCamera.yaw) * MOVEMENT_SPEED);
-    player.position.z -= -(isin(mainCamera.yaw) * MOVEMENT_SPEED);
-}
-void movePlayerUp(void){
-    player.position.y -= MOVEMENT_SPEED<<GTE_SCALE_FACTOR;
-}
-void movePlayerDown(void){
-    player.position.y += MOVEMENT_SPEED<<GTE_SCALE_FACTOR;
+    player.velocity.x =  (icos(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
+    player.velocity.z =  (isin(mainCamera.yaw) * MOVEMENT_SPEED)>>12;
 }
 
-void incrementScaleFactor(void){
-    gteScaleFactor ++;
-    if(gteScaleFactor > 255){
-        gteScaleFactor = 255;
-    }
-}
-void incrementDebugVariable(void){
-    debugVariable ++;
-    if(debugVariable > 255){
-        debugVariable = 255;
-    }
-}
-void decrementDebugVariable(void){
-    debugVariable --;
-    if(debugVariable < 0){
-        debugVariable = 0;
+void playerJump(void){
+    if(player.isGrounded || player.coyoteTimer > 0){
+        player.velocity.y = -JUMP_FORCE;
+        player.isGrounded = false;
+        player.coyoteTimer = 0;
     }
 }
 
@@ -29246,46 +32204,6 @@ void resetPlayer(void){
 void toggleOutlines(void){
     drawOutlines = !drawOutlines;
 }
-
-
-bool controlCamera = false;
-void toggleControlSet(void){
-    controlCamera = !controlCamera;
-    if(controlCamera){
-        controller_subscribeOnKeyHold(moveCameraLeft,         BUTTON_INDEX_LEFT    );
-        controller_subscribeOnKeyHold(moveCameraRight,        BUTTON_INDEX_RIGHT   );
-        controller_subscribeOnKeyHold(moveCameraForward,      BUTTON_INDEX_UP      );
-        controller_subscribeOnKeyHold(moveCameraBackward,     BUTTON_INDEX_DOWN    );
-        controller_subscribeOnKeyHold(moveCameraUp,           BUTTON_INDEX_R2      );
-        controller_subscribeOnKeyHold(moveCameraDown,         BUTTON_INDEX_L2      );
-        controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
-        controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
-        controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
-        controller_subscribeOnKeyHold(lookDown,               BUTTON_INDEX_X       );
-        
-        controller_subscribeOnKeyDown(decrementDebugVariable, BUTTON_INDEX_L1      );
-        controller_subscribeOnKeyDown(incrementDebugVariable, BUTTON_INDEX_R1      );
-        controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(toggleControlSet,       BUTTON_INDEX_START   );
-    } else {
-        controller_subscribeOnKeyHold(movePlayerLeft,         BUTTON_INDEX_LEFT    );
-        controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
-        controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
-        controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
-        controller_subscribeOnKeyHold(movePlayerUp,           BUTTON_INDEX_R2      );
-        controller_subscribeOnKeyHold(movePlayerDown,         BUTTON_INDEX_L2      );
-        controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
-        controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
-        controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
-        controller_subscribeOnKeyHold(lookDown,               BUTTON_INDEX_X       );
-
-        controller_subscribeOnKeyDown(decrementDebugVariable, BUTTON_INDEX_L1      );
-        controller_subscribeOnKeyDown(incrementDebugVariable, BUTTON_INDEX_R1      );
-        controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
-        controller_subscribeOnKeyDown(toggleControlSet,       BUTTON_INDEX_START   );
-    }
-}
-
 
 #pragma endregion
 
@@ -29303,7 +32221,7 @@ void initHardware(void){
     initControllerBus();
     initCDROM();
     initFilesystem();
-    initGPU();
+    initGPU();//
     
     setupGTE(SCREEN_WIDTH, SCREEN_HEIGHT);
     // Upload textures
@@ -29343,11 +32261,18 @@ void main(void){
     initHardware();
 
     // Run this stuff once before the main loop.
-    toggleControlSet();
-    // Creates a new list and initialises with nulls
-    Model filth;
-    model_load("FILTH.MDL;1", &filth);
-    uploadTexture(&filth_128, filth_128Data, SCREEN_WIDTH, 256, 128, 128);
+    controller_subscribeOnKeyHold(movePlayerLeft,         BUTTON_INDEX_LEFT    );
+    controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
+    controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
+    controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
+    controller_subscribeOnKeyHold(playerJump,             BUTTON_INDEX_R2      );
+    controller_subscribeOnKeyHold(NULL,                   BUTTON_INDEX_L2      );
+    controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
+    controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
+    controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
+    controller_subscribeOnKeyHold(lookDown,               BUTTON_INDEX_X       );
+    controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
+
 
     // Load all the necessary textures from disc
     printf("Loading textures from disc...\n");
@@ -29388,9 +32313,9 @@ void main(void){
     
 
     // Init camera
-    mainCamera.x     = 0;
-    mainCamera.y     = -512;
-    mainCamera.z     = -1500;
+    mainCamera.x     = (player.position.x)>>GTE_SCALE_FACTOR;
+    mainCamera.y     = (player.position.y-(PLAYER_BBOX_Y>>2))>>GTE_SCALE_FACTOR;
+    mainCamera.z     = (player.position.z)>>GTE_SCALE_FACTOR;
     mainCamera.pitch = 0;
     mainCamera.roll  = 0;
     mainCamera.yaw   = 0;
@@ -29416,15 +32341,38 @@ void main(void){
         controller_update();
 
         // Apply gravity if not grounded
-        //if(!player.isGrounded){
-        //    if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
-        //        player.velocity.y = TERMINAL_VELOCITY;
-        //    } else {
-        //        player.velocity.y += GRAVITY_CONSTANT;
-        //    }
-        //}
-        //// Collide with the BSP tree
-        //Player3_move(&bsp_player, &player);
+        if(!player.isGrounded){
+            if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
+                player.velocity.y = TERMINAL_VELOCITY;
+            } else {
+                player.velocity.y += GRAVITY_CONSTANT;
+            }
+        } else {
+            // Apply friction if grounded
+            if(player.velocity.x >= FRICTION_CONSTANT){
+                player.velocity.x -= FRICTION_CONSTANT;
+            } else if(player.velocity.x <= -FRICTION_CONSTANT){
+                player.velocity.x += FRICTION_CONSTANT;
+            } else {
+                player.velocity.x = 0;
+            }
+            if(player.velocity.z >= FRICTION_CONSTANT){
+                player.velocity.z -= FRICTION_CONSTANT;
+            } else if(player.velocity.z <= -FRICTION_CONSTANT){
+                player.velocity.z += FRICTION_CONSTANT;
+            } else {
+                player.velocity.z = 0;
+            }
+        }
+
+        // Collide with the BSP tree
+        Player3_move(&bsp_player, &player);
+        //int playerColour = BSPTree3_pointContents(&bsp_player, 0, player.position) == -1 ? 0xFFFFFF : 0x000000;
+
+        // Move camera to player position
+        mainCamera.x     = (player.position.x)>>GTE_SCALE_FACTOR;
+        mainCamera.y     = (player.position.y-(PLAYER_BBOX_Y>>2))>>GTE_SCALE_FACTOR;
+        mainCamera.z     = (player.position.z)>>GTE_SCALE_FACTOR;
 
 
         #pragma endregion
@@ -29453,22 +32401,12 @@ void main(void){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
             drawCross2(transformedGizmoPoints[i], 0xFFFFFF);
         };
-        printf("\n");
         drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
         drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
         drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
-        
-        uint32_t colours[6] = {
-            0x0000FF,
-            0x00FF00,
-            0xFF0000,
-            0x00FFFF,
-            0xFF00FF,
-            0xFFFF00
-        };
+
 
         // Render world
-        
         Tri2_texturedFlat transformedTri;
         for(int i = 0; i<numTris; i++){
             int32_t ti = tris[i].textureIndex;
@@ -29482,41 +32420,29 @@ void main(void){
                 );
                 continue;
             }
-
             if(
                 transformTri_texturedFlat(&mainCamera, tris[i], &transformedTri)
             ){
                 // Assume texture is loaded otherwise.
                 // Ideally, if the correct texture isn't loaded, then the "missing"
                 // texture will take its place in the texinfo field.
-                drawTri2_texturedFlat(transformedTri, &bspTextureInfo[ti].textureInfo, 5);
-                //Tri2 flatTri = {
-                //    transformedTri.a,
-                //    transformedTri.b,
-                //    transformedTri.c,
-                //    transformedTri.z
-                //};
-                //drawTri2(flatTri, colours[i%6]);
+                drawTri2_texturedFlat(transformedTri, &bspTextureInfo[ti].textureInfo, 20);
             }
         }
-        
 
+        // Crosshair
+        drawCross2((Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
 
-        sprintf(str_Buffer, 
-            "%s Mode\n"
-            "Debug Variable: %d\n",
-            controlCamera ? "Camera" : "Player",
-            debugVariable
-        );
-        // Text rendering
+        sprintf(str_Buffer, "Controls:\n D-Pad: Move\n Face Buttons: Look\n Select: Show wireframe\n R2: Jump");
         printString(activeChain, &font, 10, 10, str_Buffer);
-
+        
         // Draw a plain background
         dmaPtr = allocatePacket(activeChain, ORDERING_TABLE_SIZE -1 , 3);
         dmaPtr[0] = screenColor | gp0_vramFill();
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
-
+        
+        
         #pragma endregion
 
 
