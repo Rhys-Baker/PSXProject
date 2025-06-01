@@ -88,3 +88,42 @@ static inline Vector3 Vector3_cross(Vector3 a, Vector3 b) {
         ((a.x * b.y) >> 12) - ((a.y * b.x) >> 12)  // c.z
     };
 }
+
+
+// Computes the integer square root of a 32-bit unsigned integer
+static inline uint32_t isqrt(uint32_t n) {
+    uint32_t res = 0;
+    uint32_t bit = 1UL << 30; // The second-to-top bit (1 << 30)
+
+    // "bit" starts at the highest power of four <= n
+    while (bit > n) {
+        bit >>= 2;
+    }
+
+    while (bit != 0) {
+        if (n >= res + bit) {
+            n -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+
+    return res;
+}
+
+/// @brief Normalise a Vector3 to 1<<12. Note that this uses divides and 64-bit math so its a bit slow
+/// @param a Vector3 to normalise
+/// @return Normalised Vector3
+static inline Vector3 Vector3_normalise(Vector3 a){
+    int32_t mag = isqrt((int64_t)a.x*a.x + (int64_t)a.y*a.y + (int64_t)a.z*a.z);
+    if(mag == 0){
+        return (Vector3){0, 0, 0};
+    }
+    return (Vector3){
+        (int32_t)((a.x<<12) / mag),
+        (int32_t)((a.y<<12) / mag),
+        (int32_t)((a.z<<12) / mag)
+    };
+}
