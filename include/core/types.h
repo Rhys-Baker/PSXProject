@@ -61,7 +61,7 @@ typedef struct Tri3_texturedFlat {
     Vector3 a, b, c;
     Vector2 auv, buv, cuv;
     int32_t textureIndex;
-} Tri3_texturedFlat ;
+} Tri3_texturedFlat;
 typedef struct Tri3_texturedShaded {
     Vector3 a, b, c;
     Vector2 uva, uvb, uvc;
