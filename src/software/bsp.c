@@ -23,11 +23,8 @@ int32_t BSPTree2_pointContents(BSPTree2 *bspTree, int num, Vector2 p){
 	BSPNode2 *node;
 	while (num >= 0){
 		assert(num < bspTree->numNodes && num >= 0);
-        
 		node = &bspTree->nodes[num];
-       
 		fdot = Vector2_dot(node->normal, p);
-
         fdot -= node->distance;
         if(fdot < 0){
             num = node->children[1];
@@ -259,3 +256,220 @@ void Player2_move(BSPTree2 *bspTree, Player2 *player){
 ////////////////////////////////
 // 3D BSP Tree and Collisions //
 ////////////////////////////////
+
+static inline Vector3 slideAlongWall3(Vector3 velocity, Vector3 normal){
+    int32_t dot = Vector3_dot(velocity, normal);
+    Vector3 proj = Vector3_scale(normal, dot);
+    return Vector3_sub(velocity, proj);
+}
+
+/// @brief Return the contents of the leaf node at the coordinates of point P
+/// @param bspTree Pointer to the tree to compare with
+/// @param num Node to start at (usually 0)
+/// @param p Point to check contents at
+/// @return Point contents (-2(solid) or -1(empty))
+int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p){
+    int32_t fdot;
+    BSPNode3 *node;
+    while(num >= 0){
+        assert(num < bspTree->numNodes && num >= 0);
+        node = &bspTree->nodes[num];
+        fdot = Vector3_dot(node->normal, p);
+        fdot -= node->distance;
+        if(fdot < 0){
+            num = node->children[1];
+        } else {
+            num = node->children[0];
+        }
+    }
+    return num;
+}
+
+bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3 p2, Vector3 *intersection, Vector3 *intersectionNormal){
+    int32_t frac;
+    int32_t t1, t2;
+    int32_t side;
+    
+    Vector3 mid;
+    BSPNode3 *node;
+    
+    // Handle leaves
+    if(node_num < 0){
+        if(node_num == CONTENTS_EMPTY) {
+            intersection->x = p2.x;
+            intersection->y = p2.y;
+            intersectionNormal->x = 0;
+            intersectionNormal->y = 0;
+            return false; // Completely empty, so hit nothing.
+        }
+
+        if(node_num == CONTENTS_SOLID) {
+            intersection->x = p1.x;
+            intersection->y = p1.y;
+            return true;
+        }
+    }
+    
+    // TODO: Add bounds checking here.
+    // If < min or > max, etc
+    
+    node = &bspTree->nodes[node_num];
+    // Both points, which side of the wall are they on?
+    t1 = Vector3_dot(node->normal, p1) - node->distance;
+    t2 = Vector3_dot(node->normal, p2) - node->distance;
+
+    // Handle cases where the entire line is within a single child.
+    if(t1 >= 0 && t2 >= 0){
+        return BSPTree3_recursiveCast(bspTree, node->children[0], p1, p2, intersection, intersectionNormal);
+    }
+    if(t1 < 0 && t2 < 0){
+        return BSPTree3_recursiveCast(bspTree, node->children[1], p1, p2, intersection, intersectionNormal);
+    }
+
+    // Compute the intersection distance.
+    // Offset by FIXED_EPSILON to avoid stuck-in-wall issues.
+    if(t1<0){
+        frac = fixed32_div(t1 + FIXED_EPSILON, (t1-t2));
+    } else {
+        frac = fixed32_div(t1 - FIXED_EPSILON, (t1-t2));
+    }
+    
+    // Clamp frac to 0-1
+    if(frac < 0){
+        frac = 0;
+    }
+    if(frac > (1<<12)){
+        frac = (1<<12);
+    }
+    
+    // Calculate the midpoint.
+    mid.x = p1.x + fixed32_mul(frac, (p2.x - p1.x));
+    mid.y = p1.y + fixed32_mul(frac, (p2.y - p1.y));
+    mid.z = p1.z + fixed32_mul(frac, (p2.z - p1.z));
+
+
+    // `side` gives the child containing `p1` 
+    side = (t1 < 0); // -x = 1 | +x = 0;
+
+    
+    // Recurse into the child node of p1->mid
+    if (BSPTree3_recursiveCast(bspTree, node->children[side], p1, mid, intersection, intersectionNormal)){
+        return true;
+    }
+    
+    // If no collision is detected in p1 -> mid,
+    // Try the other side of the wall.
+
+    // If the contents of the midpoint is not solid...
+    if(BSPTree3_pointContents(bspTree, node->children[1 - side], mid) != CONTENTS_SOLID){
+        return BSPTree3_recursiveCast(bspTree, node->children[1 - side], mid, p2, intersection, intersectionNormal);
+    }
+
+    // The other side of this node is solid!
+    // Therefore, this midpoint, is the impact point.
+    
+    // If the side p1 is on is the near side?
+    if(!side){
+        // Output the node's normal.
+        intersectionNormal->x = node->normal.x;
+        intersectionNormal->y = node->normal.y;
+        intersectionNormal->z = node->normal.z;
+    } else {
+        // Output the inverse of the node's normal.
+        intersectionNormal->x = 0-node->normal.x;
+        intersectionNormal->y = 0-node->normal.y;
+        intersectionNormal->z = 0-node->normal.z;
+    }
+    
+    // Step back while inside wall
+    while(BSPTree3_pointContents(bspTree, 0, mid) == CONTENTS_SOLID){
+        frac -= 410;
+        if(frac < 0){
+            intersection->x = mid.x;
+            intersection->y = mid.y;
+            intersection->y = mid.z;
+            return true;
+        }
+            
+        mid.x = p1.x + fixed32_mul(frac, p2.x - p1.x);
+        mid.y = p1.y + fixed32_mul(frac, p2.y - p1.y);
+        mid.z = p1.z + fixed32_mul(frac, p2.z - p1.z);
+    }
+
+    intersection->x = mid.x;
+    intersection->y = mid.y;
+    intersection->z = mid.z;
+
+    return true;
+}
+
+void Player3_move(BSPTree3 *bspTree, Player3 *player){
+    Vector3 hitPoint;
+    Vector3 hitNormal;
+    const int maxIterations = 5;
+    int iterations = 0;
+    
+    Vector3 prevPos = player->position;
+    Vector3 nextPos = {
+        player->position.x + player->velocity.x,
+        player->position.y + player->velocity.y,
+        player->position.z + player->velocity.z
+    };
+    
+
+    player->isGrounded = false;
+
+    while (BSPTree3_recursiveCast(bspTree, 0, prevPos, nextPos, &hitPoint, &hitNormal)){
+        if (iterations++ >= maxIterations) {
+            break; // Prevent infinite loops
+        }
+
+        ///////////////////////////////////////////////////
+        // Note: Need to change this to handle 3D slopes //
+        ///////////////////////////////////////////////////
+        // For now, all slopes will be treated as a wall //
+        ///////////////////////////////////////////////////
+
+        // Determine collision type
+        if (abs(hitNormal.y) <= abs(hitNormal.x) && abs(hitNormal.y) <= abs(hitNormal.z)) {
+            // Wall collision -> Slide along the wall
+            player->velocity = slideAlongWall3(player->velocity, hitNormal);
+        }
+        // TODO: Check that the sliding mechanic works okay on sloped, walkable surfaces.
+        else if (hitNormal.y < 0) {
+            // Walkable slope -> Snap to ground
+            player->position = hitPoint;
+            player->velocity.y = 0;  
+            player->isGrounded = true;
+            player->coyoteTimer = COYOTE_TIME;
+
+            // Align movement with slope tangent
+            Vector3 forward = {player->velocity.x, 0, player->velocity.z}; // Ignore Y
+            Vector3 normal = hitNormal;
+
+            // Project movement onto slope's surface
+            Vector3 projectedVelocity = Vector3_sub(forward, Vector3_scale(normal, Vector3_dot(forward, normal)));
+
+            player->velocity = projectedVelocity;
+        } 
+        else {  
+            // Ceiling or steep slope -> Slide along it
+            player->velocity = slideAlongWall3(player->velocity, hitNormal);
+        }
+
+        // Update positions for next iteration
+        prevPos = hitPoint;
+        nextPos = (Vector3){
+            player->position.x + player->velocity.x,
+            player->position.y + player->velocity.y,
+            player->position.z + player->velocity.z
+        };
+    }
+
+    // Final position update
+    player->position = nextPos;
+
+    if(!player->isGrounded && player->coyoteTimer > 0){
+        player->coyoteTimer--;
+    }
+}

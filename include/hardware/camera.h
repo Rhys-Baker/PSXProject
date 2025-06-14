@@ -19,7 +19,7 @@
 
 // Constants for the speed and sensitivity of our camera
 #define CAMERA_SENSITIVITY 10
-#define MOVEMENT_SPEED 4
+
 
 // Somewhere to store the Sine and Cosine of the camera's yaw value.
 // This saves us from recalculating it multiple times per frame.

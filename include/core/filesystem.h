@@ -16,6 +16,7 @@ extern uint8_t gRootDirData[2048];
 typedef struct{
    uint32_t lba;
    uint8_t length;
+   uint32_t fileSize[2];
    char name[255];
 } DirectoryEntry;
 
@@ -25,4 +26,4 @@ void initFilesystem(void);
 uint32_t getRootDirLba(uint8_t *pvdSector, uint32_t *LBA);
 int parseDirRecord(uint8_t *dataSector, uint8_t *recordLength, DirectoryEntry *directoryEntry);
 void getRootDirData(void *rootDirData);
-uint32_t getLbaToFile(const char *filename);
+uint32_t getLbaToFile(const char *filename, uint32_t fileSize[2]);

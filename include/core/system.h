@@ -38,7 +38,7 @@ extern Thread *nextThread;
  * immediately.
  */
 static inline void enableInterrupts(void) {
-	cop0_setSR(cop0_getSR() | COP0_SR_IEc);
+	cop0_setReg(COP0_STATUS, cop0_getReg(COP0_STATUS) | COP0_STATUS_IEc);
 }
 
 /**
@@ -50,10 +50,9 @@ static inline void enableInterrupts(void) {
  * @return True if interrupts were previously enabled, false otherwise
  */
 static inline bool disableInterrupts(void) {
-	uint32_t sr = cop0_getSR();
-
-	cop0_setSR(sr & ~COP0_SR_IEc);
-	return (sr & COP0_SR_IEc);
+	uint32_t sr = cop0_getReg(COP0_STATUS);
+	cop0_setReg(COP0_STATUS, sr & ~COP0_STATUS_IEc);
+	return (sr & COP0_STATUS_IEc);
 }
 
 /**

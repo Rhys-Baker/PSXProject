@@ -272,7 +272,7 @@ int sound_loadSound(const char *name, Sound *sound){
     
     
     // Find the file on the filesystem
-    _vagLba = getLbaToFile(name);
+    _vagLba = getLbaToFile(name, NULL);
     assert(_vagLba); // File not found
 
     // Load the data into the sector
@@ -335,9 +335,7 @@ int sound_loadSound(const char *name, Sound *sound){
 
 
 int sound_loadSoundFromBinary(const uint8_t *data, Sound *sound){
-    int remainingLength;
-    
-    VAGHeader *_vagHeader = (const VAGHeader*) data;
+    VAGHeader *_vagHeader = (VAGHeader*) data;
     
     printf("%d\n",   _vagHeader->channels);
     printf("%d\n",   _vagHeader->interleave);

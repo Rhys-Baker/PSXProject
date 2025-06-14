@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "gpu.h"
 #include "types.h"
 
 #define FIXED_EPSILON (1<<7) // 4096 * 0.03125 == 128
@@ -63,25 +64,24 @@ void Player2_move(BSPTree2 *bspTree, Player2 *player);
 // 3D BSP Tree and Collisions //
 ////////////////////////////////
 
-typedef struct BSPPlane3 {
-	Vector3 normal;
-	int32_t distance;
-} BSPPlane3;
 
 typedef struct BSPNode3 {
     Vector3 normal;
 	int32_t distance;
-    int16_t children[2];
+    int16_t children[2]; // 0 is front and 1 is back
 } BSPNode3;
 
 typedef struct BSPTree3 {
-	BSPPlane3 *planes;
 	BSPNode3 *nodes;
-	uint32_t numPlanes;
 	uint32_t numNodes;
 } BSPTree3;
 
-int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector2 p);
-bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector2 p1, Vector2 p2, Vector2 *intersection, Vector2 *intersectionNormal);
+typedef struct BSPTextureInfo {
+	char *name;
+	TextureInfo textureInfo;
+} BSPTextureInfo;
+
+int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p);
+bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3 p2, Vector3 *intersection, Vector3 *intersectionNormal);
 void Player3_move(BSPTree3 *bspTree, Player3 *player);
 

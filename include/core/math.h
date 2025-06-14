@@ -5,6 +5,22 @@
 #include "trig.h"
 #include "types.h"
 
+
+////////////////////////
+// Integer operations //
+////////////////////////
+
+static inline int16_t  max16s(int16_t a,  int16_t b) {return ((a > b) ? a : b);}
+static inline uint16_t max16u(uint16_t a, uint16_t b){return ((a > b) ? a : b);}
+static inline int32_t  max32s(int32_t a,  int32_t b) {return ((a > b) ? a : b);}
+static inline uint32_t max32u(uint32_t a, uint32_t b){return ((a > b) ? a : b);}
+
+static inline int16_t  min16s(int16_t a,  int16_t b) {return ((a > b) ? b : a);}
+static inline uint16_t min16u(uint16_t a, uint16_t b){return ((a > b) ? b : a);}
+static inline int32_t  min32s(int32_t a,  int32_t b) {return ((a > b) ? b : a);}
+static inline uint32_t min32u(uint32_t a, uint32_t b){return ((a > b) ? b : a);}
+
+
 //////////////////////////
 // 2D Vector operations //
 //////////////////////////
@@ -38,6 +54,16 @@ static inline int32_t Vector2_cross(Vector2 a, Vector2 b) {
     return ((a.x * b.y) >> 12) - ((a.y * b.x) >> 12);
 }
 
+static inline uint8_t shiftAndMergeLeft_8(uint8_t dest, uint8_t src, uint8_t num_bits) {
+    return (dest << num_bits) | (src >> (8 - num_bits));
+}
+static inline uint16_t shiftAndMergeLeft_16(uint16_t dest, uint16_t src, uint16_t num_bits) {
+    return (dest << num_bits) | (src >> (16 - num_bits));
+}
+static inline uint32_t shiftAndMergeLeft_32(uint32_t dest, uint32_t src, uint32_t num_bits) {
+    return (dest << num_bits) | (src >> (32 - num_bits));
+}
+
 
 //////////////////////////
 // 3D Vector operations //
@@ -60,5 +86,44 @@ static inline Vector3 Vector3_cross(Vector3 a, Vector3 b) {
         ((a.y * b.z) >> 12) - ((a.z * b.y) >> 12), // c.x
         ((a.z * b.x) >> 12) - ((a.x * b.z) >> 12), // c.y
         ((a.x * b.y) >> 12) - ((a.y * b.x) >> 12)  // c.z
+    };
+}
+
+
+// Computes the integer square root of a 32-bit unsigned integer
+static inline uint32_t isqrt(uint32_t n) {
+    uint32_t res = 0;
+    uint32_t bit = 1UL << 30; // The second-to-top bit (1 << 30)
+
+    // "bit" starts at the highest power of four <= n
+    while (bit > n) {
+        bit >>= 2;
+    }
+
+    while (bit != 0) {
+        if (n >= res + bit) {
+            n -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+
+    return res;
+}
+
+/// @brief Normalise a Vector3 to 1<<12. Note that this uses divides and 64-bit math so its a bit slow
+/// @param a Vector3 to normalise
+/// @return Normalised Vector3
+static inline Vector3 Vector3_normalise(Vector3 a){
+    int32_t mag = isqrt((int64_t)a.x*a.x + (int64_t)a.y*a.y + (int64_t)a.z*a.z);
+    if(mag == 0){
+        return (Vector3){0, 0, 0};
+    }
+    return (Vector3){
+        (int32_t)((a.x<<12) / mag),
+        (int32_t)((a.y<<12) / mag),
+        (int32_t)((a.z<<12) / mag)
     };
 }

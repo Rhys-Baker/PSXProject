@@ -15,12 +15,16 @@
  */
 #pragma once
 
-#include "ps1/cop0gte.h"
+#include "cop0gte.h"
 
+#define GTE_SCALE_FACTOR 10
 #define ONE (1<<12)
 
 void setupGTE(int width, int height);
 void multiplyCurrentMatrixByVectors(GTEMatrix *output);
-void rotateCurrentMatrix(int roll, int yaw, int pitch);
+void rotateCurrentMatrix(int pitch, int roll, int yaw);
 void setTranslationMatrix(int32_t x, int32_t y, int32_t z);
 void updateTranslationMatrix(int32_t x, int32_t y, int32_t z);
+void translateCurrentMatrixByV0(void);
+
+
