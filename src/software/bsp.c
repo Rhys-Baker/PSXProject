@@ -267,7 +267,7 @@ static inline Vector3 slideAlongWall3(Vector3 velocity, Vector3 normal){
 /// @param bspTree Pointer to the tree to compare with
 /// @param num Node to start at (usually 0)
 /// @param p Point to check contents at
-/// @return Point contents (solid or empty)
+/// @return Point contents (-2(solid) or -1(empty))
 int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p){
     int32_t fdot;
     BSPNode3 *node;
