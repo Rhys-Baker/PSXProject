@@ -74,9 +74,20 @@ typedef struct Quad2{
     Vector2 a, b, c, d;
     uint32_t z;
 } Quad2;
+typedef struct Quad2_texturedFlat{
+    Vector2 a, b, c, d;
+    uint32_t z;
+    int32_t textureIndex;
+} Quad2_texturedFlat;
+
 typedef struct Quad3{
     Vector3 a, b, c, d;
 } Quad3;
+typedef struct Quad3_texturedFlat{
+    Vector3 a, b, c, d;
+    Vector2 auv, buv, cuv, duv;
+    int32_t textureIndex;
+} Quad3_texturedFlat;
 
 
 
