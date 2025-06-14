@@ -71,13 +71,14 @@ typedef struct Tri3_texturedShaded {
 
 
 typedef struct Quad2{
-    Vector2 a, b, c, d;
+    Vector2_16 a, b, c, d;
     uint32_t z;
 } Quad2;
 typedef struct Quad2_texturedFlat{
-    Vector2 a, b, c, d;
-    uint32_t z;
+    Vector2_16 a, b, c, d;
+    Vector2 auv, buv, cuv, duv;
     int32_t textureIndex;
+    uint32_t z;
 } Quad2_texturedFlat;
 
 typedef struct Quad3{
