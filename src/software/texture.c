@@ -156,19 +156,16 @@ size_t texture_loadTIM(char *name, TextureInfo *texinfo){
 
     // TODO: Is there a neater way to do this? Maybe.
     if(flags.type == 0){
-        printf("4bpp\n");
         uploadIndexedTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w*4, texture_h,
             clut_data, clut_u, clut_v, GP0_COLOR_4BPP
         );
     } else if(flags.type == 1){
-        printf("8bpp\n");
         uploadIndexedTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w*2, texture_h,
             clut_data, clut_u, clut_v, GP0_COLOR_8BPP
         );
     } else {
-        printf("16bpp\n");
         uploadTexture(
             texinfo, texture_data, texture_u, texture_v, texture_w, texture_h
         );

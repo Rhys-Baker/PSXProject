@@ -63,7 +63,6 @@ void multiplyCurrentMatrixByVectors(GTEMatrix *output) {
 void rotateCurrentMatrix(int pitch, int yaw, int roll) {
 	static GTEMatrix multiplied;
 	int s, c;
-
 	// For each axis, compute the rotation matrix then "combine" it with the
 	// GTE's current matrix by multiplying the two and writing the result back
 	// to the GTE's registers.
@@ -79,7 +78,6 @@ void rotateCurrentMatrix(int pitch, int yaw, int roll) {
 		multiplyCurrentMatrixByVectors(&multiplied);
 		gte_loadRotationMatrix(&multiplied);
 	}
-
 	if (pitch) {
 		s = isin(pitch);
 		c = icos(pitch);
@@ -92,8 +90,6 @@ void rotateCurrentMatrix(int pitch, int yaw, int roll) {
 		multiplyCurrentMatrixByVectors(&multiplied);
 		gte_loadRotationMatrix(&multiplied);
 	}
-
-
 	if (roll) {
 		s = isin(roll);
 		c = icos(roll);
@@ -146,4 +142,12 @@ void updateTranslationMatrix(int32_t x, int32_t y, int32_t z){
 	gte_setControlReg(GTE_TRX, gte_getControlReg(GTE_TRX) + tx);
 	gte_setControlReg(GTE_TRY, gte_getControlReg(GTE_TRY) + ty);
 	gte_setControlReg(GTE_TRZ, gte_getControlReg(GTE_TRZ) + tz);
+}
+
+void translateCurrentMatrixByV0() {
+    gte_command(GTE_CMD_MVMVA | GTE_SF | GTE_MX_RT | GTE_V_V0 | GTE_CV_TR);
+    int x = gte_getDataReg(GTE_IR1), y = gte_getDataReg(GTE_IR2), z = gte_getDataReg(GTE_IR3);
+    gte_setControlReg(GTE_TRX, x);
+    gte_setControlReg(GTE_TRY, y);
+    gte_setControlReg(GTE_TRZ, z);
 }
