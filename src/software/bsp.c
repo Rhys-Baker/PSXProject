@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "types.h"
 #include "math.h"
+#include "model.h"
 #include "util.h"
 #include "gpu.h"
 
@@ -25,7 +26,7 @@ int32_t BSPTree2_pointContents(BSPTree2 *bspTree, int num, Vector2 p){
 		assert(num < bspTree->numNodes && num >= 0);
 		node = &bspTree->nodes[num];
 		fdot = Vector2_dot(node->normal, p);
-        fdot -= node->distance;
+        fdot -= node->distance * MODEL_SCALE_MULTIPLIER;
         if(fdot < 0){
             num = node->children[1];
         } else {
@@ -62,8 +63,8 @@ bool BSPTree2_recursiveCast(BSPTree2 *bspTree, int node_num, Vector2 p1, Vector2
     
     BSPNode2 *node = &bspTree->nodes[node_num];
     // Both points, which side of the wall are they on?
-    int32_t t1 = Vector2_dot(node->normal, p1) - node->distance;
-    int32_t t2 = Vector2_dot(node->normal, p2) - node->distance;
+    int32_t t1 = Vector2_dot(node->normal, p1) - node->distance * MODEL_SCALE_MULTIPLIER;
+    int32_t t2 = Vector2_dot(node->normal, p2) - node->distance * MODEL_SCALE_MULTIPLIER;
 
     // Handle cases where the entire line is within a single child.
     if(t1 >= 0 && t2 >= 0){
@@ -275,7 +276,7 @@ int32_t BSPTree3_pointContents (BSPTree3 *bspTree, int num, Vector3 p){
         assert(num < bspTree->numNodes && num >= 0);
         node = &bspTree->nodes[num];
         fdot = Vector3_dot(node->normal, p);
-        fdot -= node->distance;
+        fdot -= node->distance * MODEL_SCALE_MULTIPLIER;
         if(fdot < 0){
             num = node->children[1];
         } else {
@@ -315,8 +316,8 @@ bool BSPTree3_recursiveCast(BSPTree3 *bspTree, int node_num, Vector3 p1, Vector3
     
     node = &bspTree->nodes[node_num];
     // Both points, which side of the wall are they on?
-    t1 = Vector3_dot(node->normal, p1) - node->distance;
-    t2 = Vector3_dot(node->normal, p2) - node->distance;
+    t1 = Vector3_dot(node->normal, p1) - node->distance * MODEL_SCALE_MULTIPLIER;
+    t2 = Vector3_dot(node->normal, p2) - node->distance * MODEL_SCALE_MULTIPLIER;
 
     // Handle cases where the entire line is within a single child.
     if(t1 >= 0 && t2 >= 0){

@@ -4,6 +4,8 @@
 #include "gpu.h"
 #include "gte.h"
 
+#define MODEL_SCALE_MULTIPLIER (8)
+
 extern int numPrims;
 extern int maxNumVerts;
 

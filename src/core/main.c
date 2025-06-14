@@ -31,8 +31,6 @@
 #include "system.h"
 #pragma endregion
 
-#define MODEL_SCALE_MULTIPLIER (8)
-
 #define MOVEMENT_SPEED (ONE * 5 * MODEL_SCALE_MULTIPLIER)
 
 #define ACCELERATION_CONSTANT (ONE * MODEL_SCALE_MULTIPLIER)
@@ -474,6 +472,7 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 ///////////////////////////////////////////////
 #pragma region BSPTree
 int numTextures = 17;
+
 BSPTextureInfo bspTextureInfo[] = {
     {
         "01F7.TIM;1",
@@ -612,7 +611,6 @@ BSPTextureInfo bspTextureInfo[] = {
         }
     },
 };
-
 BSPNode3 bspNodes_hitscan[] = {
     {
         .normal = {
@@ -620,7 +618,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             1, 337
         }
@@ -631,7 +629,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             2, 150
         }
@@ -642,7 +640,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             3, 56
         }
@@ -653,7 +651,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 4
         }
@@ -664,7 +662,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             5, 49
         }
@@ -675,7 +673,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             6, 26
         }
@@ -686,7 +684,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             7, 15
         }
@@ -697,7 +695,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             8, 10
         }
@@ -708,7 +706,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 9
         }
@@ -719,7 +717,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -730,7 +728,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 11
         }
@@ -741,7 +739,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             12, 14
         }
@@ -752,7 +750,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 13
         }
@@ -763,7 +761,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -774,7 +772,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -785,7 +783,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             16, 21
         }
@@ -796,7 +794,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 17
         }
@@ -807,7 +805,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             18, 20
         }
@@ -818,7 +816,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 19
         }
@@ -829,7 +827,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -840,7 +838,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -851,7 +849,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 22
         }
@@ -862,7 +860,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             23, 25
         }
@@ -873,7 +871,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 24
         }
@@ -884,7 +882,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -895,7 +893,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -906,7 +904,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2949120,
+        .distance = 2949120,
         .children = {
             27, 38
         }
@@ -917,7 +915,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             28, 33
         }
@@ -928,7 +926,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 29
         }
@@ -939,7 +937,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             30, 32
         }
@@ -950,7 +948,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 31
         }
@@ -961,7 +959,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -972,7 +970,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -983,7 +981,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 34
         }
@@ -994,7 +992,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             35, 37
         }
@@ -1005,7 +1003,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 36
         }
@@ -1016,7 +1014,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1027,7 +1025,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1038,7 +1036,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2621440,
+        .distance = 2621440,
         .children = {
             39, 44
         }
@@ -1049,7 +1047,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 40
         }
@@ -1060,7 +1058,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             41, 43
         }
@@ -1071,7 +1069,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 42
         }
@@ -1082,7 +1080,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1093,7 +1091,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1104,7 +1102,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 45
         }
@@ -1115,7 +1113,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             46, 48
         }
@@ -1126,7 +1124,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 47
         }
@@ -1137,7 +1135,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1148,7 +1146,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1159,7 +1157,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             50, 54
         }
@@ -1170,7 +1168,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             51, -2
         }
@@ -1181,7 +1179,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             52, -2
         }
@@ -1192,7 +1190,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             53, -2
         }
@@ -1203,7 +1201,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -1214,7 +1212,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             55, -1
         }
@@ -1225,7 +1223,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -1236,7 +1234,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             57, 113
         }
@@ -1247,7 +1245,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             58, 69
         }
@@ -1258,7 +1256,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             59, 64
         }
@@ -1269,7 +1267,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 360448,
+        .distance = 360448,
         .children = {
             -1, 60
         }
@@ -1280,7 +1278,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1343488,
+        .distance = 1343488,
         .children = {
             -1, 61
         }
@@ -1291,7 +1289,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             62, -2
         }
@@ -1302,7 +1300,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             63, -2
         }
@@ -1313,7 +1311,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -1324,7 +1322,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 360448,
+        .distance = 360448,
         .children = {
             -1, 65
         }
@@ -1335,7 +1333,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             66, -1
         }
@@ -1346,7 +1344,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             67, -2
         }
@@ -1357,7 +1355,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             68, -2
         }
@@ -1368,7 +1366,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -1379,7 +1377,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             70, 73
         }
@@ -1390,7 +1388,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, 71
         }
@@ -1401,7 +1399,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             72, -1
         }
@@ -1412,7 +1410,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -1, -2
         }
@@ -1423,7 +1421,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             74, 93
         }
@@ -1434,7 +1432,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             75, 84
         }
@@ -1445,7 +1443,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             76, 80
         }
@@ -1456,7 +1454,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             77, 79
         }
@@ -1467,7 +1465,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 78
         }
@@ -1478,7 +1476,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1489,7 +1487,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1500,7 +1498,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             81, 83
         }
@@ -1511,7 +1509,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 82
         }
@@ -1522,7 +1520,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1533,7 +1531,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1544,7 +1542,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             85, 89
         }
@@ -1555,7 +1553,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             86, 88
         }
@@ -1566,7 +1564,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 87
         }
@@ -1577,7 +1575,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1588,7 +1586,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1599,7 +1597,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             90, 92
         }
@@ -1610,7 +1608,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 91
         }
@@ -1621,7 +1619,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1632,7 +1630,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1643,7 +1641,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             94, 103
         }
@@ -1654,7 +1652,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             95, 99
         }
@@ -1665,7 +1663,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             96, 98
         }
@@ -1676,7 +1674,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 97
         }
@@ -1687,7 +1685,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1698,7 +1696,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1709,7 +1707,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             100, 102
         }
@@ -1720,7 +1718,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 101
         }
@@ -1731,7 +1729,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1742,7 +1740,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1753,7 +1751,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             104, 108
         }
@@ -1764,7 +1762,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             105, 107
         }
@@ -1775,7 +1773,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 106
         }
@@ -1786,7 +1784,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -1797,7 +1795,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -1808,7 +1806,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             109, 111
         }
@@ -1819,7 +1817,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             110, -1
         }
@@ -1830,7 +1828,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -1, -2
         }
@@ -1841,7 +1839,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -1, 112
         }
@@ -1852,7 +1850,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -1863,7 +1861,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             114, 138
         }
@@ -1874,7 +1872,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             115, 128
         }
@@ -1885,7 +1883,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1343488,
+        .distance = 1343488,
         .children = {
             116, 120
         }
@@ -1896,7 +1894,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             -1, 117
         }
@@ -1907,7 +1905,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             118, -2
         }
@@ -1918,7 +1916,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             119, -2
         }
@@ -1929,7 +1927,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -1940,7 +1938,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 229376,
+        .distance = 229376,
         .children = {
             121, 123
         }
@@ -1951,7 +1949,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2260992,
+        .distance = 2260992,
         .children = {
             122, -1
         }
@@ -1962,7 +1960,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -1973,7 +1971,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1146880,
+        .distance = 1146880,
         .children = {
             124, 126
         }
@@ -1984,7 +1982,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             125, -1
         }
@@ -1995,7 +1993,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2326528,
+        .distance = 2326528,
         .children = {
             -1, -2
         }
@@ -2006,7 +2004,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             127, -1
         }
@@ -2017,7 +2015,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2326528,
+        .distance = 2326528,
         .children = {
             -1, -2
         }
@@ -2028,7 +2026,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             129, 132
         }
@@ -2039,7 +2037,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             130, -2
         }
@@ -2050,7 +2048,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             131, -2
         }
@@ -2061,7 +2059,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -2072,7 +2070,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 458752,
+        .distance = 458752,
         .children = {
             133, 135
         }
@@ -2083,7 +2081,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 229376,
+        .distance = 229376,
         .children = {
             -1, 134
         }
@@ -2094,7 +2092,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -2105,7 +2103,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 229376,
+        .distance = 229376,
         .children = {
             -1, 136
         }
@@ -2116,7 +2114,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             -1, 137
         }
@@ -2127,7 +2125,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -2138,7 +2136,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             139, 142
         }
@@ -2149,7 +2147,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             140, 141
         }
@@ -2160,7 +2158,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -2171,7 +2169,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -2182,7 +2180,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             143, 146
         }
@@ -2193,7 +2191,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             144, -1
         }
@@ -2204,7 +2202,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             -2, 145
         }
@@ -2215,7 +2213,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -2226,7 +2224,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             147, 149
         }
@@ -2237,7 +2235,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 229376,
+        .distance = 229376,
         .children = {
             148, -1
         }
@@ -2248,7 +2246,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -2, -1
         }
@@ -2259,7 +2257,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -2270,7 +2268,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             151, 247
         }
@@ -2281,7 +2279,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             152, 169
         }
@@ -2292,7 +2290,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 153
         }
@@ -2303,7 +2301,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             154, 161
         }
@@ -2314,7 +2312,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             155, 157
         }
@@ -2325,7 +2323,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             156, -1
         }
@@ -2336,7 +2334,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2347,7 +2345,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             158, -2
         }
@@ -2358,7 +2356,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             159, -2
         }
@@ -2369,7 +2367,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             160, -2
         }
@@ -2380,7 +2378,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2391,7 +2389,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             162, 166
         }
@@ -2402,7 +2400,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             163, -2
         }
@@ -2413,7 +2411,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             164, -2
         }
@@ -2424,7 +2422,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             165, -2
         }
@@ -2435,7 +2433,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2446,7 +2444,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             167, -1
         }
@@ -2457,7 +2455,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             168, -1
         }
@@ -2468,7 +2466,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2479,7 +2477,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             170, 241
         }
@@ -2490,7 +2488,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             171, 202
         }
@@ -2501,7 +2499,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             172, 183
         }
@@ -2512,7 +2510,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             173, 174
         }
@@ -2523,7 +2521,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -2534,7 +2532,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             175, 178
         }
@@ -2545,7 +2543,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             176, -1
         }
@@ -2556,7 +2554,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 177
         }
@@ -2567,7 +2565,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -2578,7 +2576,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             179, -1
         }
@@ -2589,7 +2587,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             180, 181
         }
@@ -2600,7 +2598,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -2611,7 +2609,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 182
         }
@@ -2622,7 +2620,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -2633,7 +2631,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             184, 193
         }
@@ -2644,7 +2642,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             185, 188
         }
@@ -2655,7 +2653,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             186, -1
         }
@@ -2666,7 +2664,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 187
         }
@@ -2677,7 +2675,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -2688,7 +2686,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             189, -1
         }
@@ -2699,7 +2697,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             190, 191
         }
@@ -2710,7 +2708,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -2721,7 +2719,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 192
         }
@@ -2732,7 +2730,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -2743,7 +2741,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             194, 197
         }
@@ -2754,7 +2752,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             195, -1
         }
@@ -2765,7 +2763,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 196
         }
@@ -2776,7 +2774,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -2787,7 +2785,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             198, -1
         }
@@ -2798,7 +2796,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             199, 200
         }
@@ -2809,7 +2807,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -2820,7 +2818,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 201
         }
@@ -2831,7 +2829,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -2842,7 +2840,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2949120,
+        .distance = 2949120,
         .children = {
             203, 222
         }
@@ -2853,7 +2851,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             204, 213
         }
@@ -2864,7 +2862,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             205, 208
         }
@@ -2875,7 +2873,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             206, -1
         }
@@ -2886,7 +2884,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 207
         }
@@ -2897,7 +2895,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -2908,7 +2906,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             209, -1
         }
@@ -2919,7 +2917,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             210, 211
         }
@@ -2930,7 +2928,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -2941,7 +2939,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 212
         }
@@ -2952,7 +2950,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -2963,7 +2961,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             214, 217
         }
@@ -2974,7 +2972,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             215, -1
         }
@@ -2985,7 +2983,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 216
         }
@@ -2996,7 +2994,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -3007,7 +3005,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             218, -1
         }
@@ -3018,7 +3016,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             219, 220
         }
@@ -3029,7 +3027,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -3040,7 +3038,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 221
         }
@@ -3051,7 +3049,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -3062,7 +3060,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2621440,
+        .distance = 2621440,
         .children = {
             223, 232
         }
@@ -3073,7 +3071,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             224, 227
         }
@@ -3084,7 +3082,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             225, -1
         }
@@ -3095,7 +3093,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 226
         }
@@ -3106,7 +3104,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -3117,7 +3115,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             228, -1
         }
@@ -3128,7 +3126,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             229, 230
         }
@@ -3139,7 +3137,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -3150,7 +3148,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 231
         }
@@ -3161,7 +3159,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -3172,7 +3170,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             233, 236
         }
@@ -3183,7 +3181,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             234, -1
         }
@@ -3194,7 +3192,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, 235
         }
@@ -3205,7 +3203,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             -2, -1
         }
@@ -3216,7 +3214,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             237, -1
         }
@@ -3227,7 +3225,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             238, 239
         }
@@ -3238,7 +3236,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -3249,7 +3247,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 240
         }
@@ -3260,7 +3258,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -3271,7 +3269,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -1, 242
         }
@@ -3282,7 +3280,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             243, -1
         }
@@ -3293,7 +3291,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             244, -2
         }
@@ -3304,7 +3302,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             245, -2
         }
@@ -3315,7 +3313,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             246, -2
         }
@@ -3326,7 +3324,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             -1, -2
         }
@@ -3337,7 +3335,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             248, 268
         }
@@ -3348,7 +3346,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 249
         }
@@ -3359,7 +3357,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             250, 259
         }
@@ -3370,7 +3368,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             251, 257
         }
@@ -3381,7 +3379,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             252, 255
         }
@@ -3392,7 +3390,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             253, -2
         }
@@ -3403,7 +3401,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             254, -2
         }
@@ -3414,7 +3412,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -3425,7 +3423,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 256
         }
@@ -3436,7 +3434,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -3447,7 +3445,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             258, -1
         }
@@ -3458,7 +3456,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -3469,7 +3467,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             260, 263
         }
@@ -3480,7 +3478,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             -2, 261
         }
@@ -3491,7 +3489,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 262
         }
@@ -3502,7 +3500,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -3513,7 +3511,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, 264
         }
@@ -3524,7 +3522,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             265, -1
         }
@@ -3535,7 +3533,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             266, -2
         }
@@ -3546,7 +3544,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             267, -2
         }
@@ -3557,7 +3555,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -32768,
+        .distance = -32768,
         .children = {
             -2, -1
         }
@@ -3568,7 +3566,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             269, 280
         }
@@ -3579,7 +3577,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             270, 275
         }
@@ -3590,7 +3588,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 271
         }
@@ -3601,7 +3599,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 163840,
+        .distance = 163840,
         .children = {
             -2, 272
         }
@@ -3612,7 +3610,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -163840,
+        .distance = -163840,
         .children = {
             273, 274
         }
@@ -3623,7 +3621,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -3634,7 +3632,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -3645,7 +3643,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, 276
         }
@@ -3656,7 +3654,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             277, -1
         }
@@ -3667,7 +3665,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             278, -2
         }
@@ -3678,7 +3676,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             279, -2
         }
@@ -3689,7 +3687,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -32768,
+        .distance = -32768,
         .children = {
             -2, -1
         }
@@ -3700,7 +3698,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             281, 332
         }
@@ -3711,7 +3709,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             282, 292
         }
@@ -3722,7 +3720,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1092476,
+        .distance = 1092476,
         .children = {
             283, 290
         }
@@ -3733,7 +3731,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1113907,
+        .distance = 1113907,
         .children = {
             -1, 284
         }
@@ -3744,7 +3742,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             285, 287
         }
@@ -3755,7 +3753,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             286, -2
         }
@@ -3766,7 +3764,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -3777,7 +3775,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             -2, 288
         }
@@ -3788,7 +3786,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 289
         }
@@ -3799,7 +3797,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -3810,7 +3808,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             291, -1
         }
@@ -3821,7 +3819,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -3832,7 +3830,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             293, 330
         }
@@ -3843,7 +3841,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             294, 297
         }
@@ -3854,7 +3852,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, 295
         }
@@ -3865,7 +3863,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             296, -1
         }
@@ -3876,7 +3874,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -1, -2
         }
@@ -3887,7 +3885,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             298, 316
         }
@@ -3898,7 +3896,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             299, 308
         }
@@ -3909,7 +3907,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             300, 304
         }
@@ -3920,7 +3918,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             301, 302
         }
@@ -3931,7 +3929,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -3942,7 +3940,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 303
         }
@@ -3953,7 +3951,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -3964,7 +3962,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             305, 306
         }
@@ -3975,7 +3973,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -3986,7 +3984,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 307
         }
@@ -3997,7 +3995,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4008,7 +4006,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             309, 313
         }
@@ -4019,7 +4017,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             310, 311
         }
@@ -4030,7 +4028,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, -1
         }
@@ -4041,7 +4039,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 312
         }
@@ -4052,7 +4050,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4063,7 +4061,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             -2, 314
         }
@@ -4074,7 +4072,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 315
         }
@@ -4085,7 +4083,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4096,7 +4094,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1158523,
+        .distance = 1158523,
         .children = {
             317, 319
         }
@@ -4107,7 +4105,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 318
         }
@@ -4118,7 +4116,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -4129,7 +4127,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             320, 326
         }
@@ -4140,7 +4138,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 321
         }
@@ -4151,7 +4149,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             322, 325
         }
@@ -4162,7 +4160,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             323, 324
         }
@@ -4173,7 +4171,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4184,7 +4182,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4195,7 +4193,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 175851,
+        .distance = 175851,
         .children = {
             -1, -2
         }
@@ -4206,7 +4204,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             327, 328
         }
@@ -4217,7 +4215,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -4228,7 +4226,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             329, -1
         }
@@ -4239,7 +4237,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -4250,7 +4248,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             331, -1
         }
@@ -4261,7 +4259,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -4272,7 +4270,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -1, 333
         }
@@ -4283,7 +4281,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             334, -1
         }
@@ -4294,7 +4292,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 335
         }
@@ -4305,7 +4303,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 336
         }
@@ -4316,7 +4314,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -4327,7 +4325,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             338, 489
         }
@@ -4338,7 +4336,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             339, 392
         }
@@ -4349,7 +4347,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, 340
         }
@@ -4360,7 +4358,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             341, 348
         }
@@ -4371,7 +4369,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             342, 346
         }
@@ -4382,7 +4380,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             343, -2
         }
@@ -4393,7 +4391,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             344, -2
         }
@@ -4404,7 +4402,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             345, -2
         }
@@ -4415,7 +4413,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -4426,7 +4424,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             347, -1
         }
@@ -4437,7 +4435,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -4448,7 +4446,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             349, 369
         }
@@ -4459,7 +4457,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             350, 358
         }
@@ -4470,7 +4468,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             351, 353
         }
@@ -4481,7 +4479,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             352, -1
         }
@@ -4492,7 +4490,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -4503,7 +4501,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             354, -1
         }
@@ -4514,7 +4512,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             355, 357
         }
@@ -4525,7 +4523,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             356, -2
         }
@@ -4536,7 +4534,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4547,7 +4545,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4558,7 +4556,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             359, 364
         }
@@ -4569,7 +4567,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             360, -1
         }
@@ -4580,7 +4578,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             361, 363
         }
@@ -4591,7 +4589,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             362, -2
         }
@@ -4602,7 +4600,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4613,7 +4611,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4624,7 +4622,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             365, -1
         }
@@ -4635,7 +4633,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             366, 368
         }
@@ -4646,7 +4644,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             367, -2
         }
@@ -4657,7 +4655,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4668,7 +4666,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4679,7 +4677,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2949120,
+        .distance = 2949120,
         .children = {
             370, 381
         }
@@ -4690,7 +4688,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             371, 376
         }
@@ -4701,7 +4699,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             372, -1
         }
@@ -4712,7 +4710,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             373, 375
         }
@@ -4723,7 +4721,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             374, -2
         }
@@ -4734,7 +4732,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4745,7 +4743,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4756,7 +4754,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             377, -1
         }
@@ -4767,7 +4765,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             378, 380
         }
@@ -4778,7 +4776,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             379, -2
         }
@@ -4789,7 +4787,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4800,7 +4798,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4811,7 +4809,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2621440,
+        .distance = 2621440,
         .children = {
             382, 387
         }
@@ -4822,7 +4820,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             383, -1
         }
@@ -4833,7 +4831,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             384, 386
         }
@@ -4844,7 +4842,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             385, -2
         }
@@ -4855,7 +4853,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4866,7 +4864,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4877,7 +4875,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             388, -1
         }
@@ -4888,7 +4886,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             389, 391
         }
@@ -4899,7 +4897,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             390, -2
         }
@@ -4910,7 +4908,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -4921,7 +4919,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -4932,7 +4930,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             393, 430
         }
@@ -4943,7 +4941,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             394, 418
         }
@@ -4954,7 +4952,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             395, 408
         }
@@ -4965,7 +4963,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1343488,
+        .distance = 1343488,
         .children = {
             396, 400
         }
@@ -4976,7 +4974,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             -1, 397
         }
@@ -4987,7 +4985,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             398, -2
         }
@@ -4998,7 +4996,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             399, -2
         }
@@ -5009,7 +5007,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -5020,7 +5018,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -229376,
+        .distance = -229376,
         .children = {
             401, 406
         }
@@ -5031,7 +5029,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1146880,
+        .distance = 1146880,
         .children = {
             402, 404
         }
@@ -5042,7 +5040,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             403, -1
         }
@@ -5053,7 +5051,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2326528,
+        .distance = 2326528,
         .children = {
             -1, -2
         }
@@ -5064,7 +5062,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             405, -1
         }
@@ -5075,7 +5073,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2326528,
+        .distance = 2326528,
         .children = {
             -1, -2
         }
@@ -5086,7 +5084,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2260992,
+        .distance = 2260992,
         .children = {
             407, -1
         }
@@ -5097,7 +5095,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -5108,7 +5106,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             409, 412
         }
@@ -5119,7 +5117,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             410, -2
         }
@@ -5130,7 +5128,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             411, -2
         }
@@ -5141,7 +5139,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -5152,7 +5150,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 458752,
+        .distance = 458752,
         .children = {
             413, 415
         }
@@ -5163,7 +5161,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -229376,
+        .distance = -229376,
         .children = {
             414, -1
         }
@@ -5174,7 +5172,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             -1, -2
         }
@@ -5185,7 +5183,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -229376,
+        .distance = -229376,
         .children = {
             416, -1
         }
@@ -5196,7 +5194,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             -1, 417
         }
@@ -5207,7 +5205,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -5218,7 +5216,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             419, 422
         }
@@ -5229,7 +5227,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             420, 421
         }
@@ -5240,7 +5238,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -5251,7 +5249,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -5262,7 +5260,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             423, 426
         }
@@ -5273,7 +5271,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             424, -1
         }
@@ -5284,7 +5282,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             -2, 425
         }
@@ -5295,7 +5293,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             -1, -2
         }
@@ -5306,7 +5304,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             427, 429
         }
@@ -5317,7 +5315,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -229376,
+        .distance = -229376,
         .children = {
             -1, 428
         }
@@ -5328,7 +5326,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -2, -1
         }
@@ -5339,7 +5337,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -5350,7 +5348,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             431, 442
         }
@@ -5361,7 +5359,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015808,
+        .distance = 1015808,
         .children = {
             432, 437
         }
@@ -5372,7 +5370,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -360448,
+        .distance = -360448,
         .children = {
             433, -1
         }
@@ -5383,7 +5381,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1343488,
+        .distance = 1343488,
         .children = {
             -1, 434
         }
@@ -5394,7 +5392,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             435, -2
         }
@@ -5405,7 +5403,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             436, -2
         }
@@ -5416,7 +5414,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -5427,7 +5425,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -360448,
+        .distance = -360448,
         .children = {
             438, -1
         }
@@ -5438,7 +5436,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 688128,
+        .distance = 688128,
         .children = {
             439, -1
         }
@@ -5449,7 +5447,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             440, -2
         }
@@ -5460,7 +5458,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             441, -2
         }
@@ -5471,7 +5469,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             -1, -2
         }
@@ -5482,7 +5480,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             443, 466
         }
@@ -5493,7 +5491,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             444, 455
         }
@@ -5504,7 +5502,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             445, 450
         }
@@ -5515,7 +5513,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             446, -1
         }
@@ -5526,7 +5524,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             447, 449
         }
@@ -5537,7 +5535,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             448, -2
         }
@@ -5548,7 +5546,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5559,7 +5557,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5570,7 +5568,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             451, -1
         }
@@ -5581,7 +5579,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             452, 454
         }
@@ -5592,7 +5590,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             453, -2
         }
@@ -5603,7 +5601,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5614,7 +5612,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5625,7 +5623,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             456, 461
         }
@@ -5636,7 +5634,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             457, -1
         }
@@ -5647,7 +5645,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             458, 460
         }
@@ -5658,7 +5656,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             459, -2
         }
@@ -5669,7 +5667,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5680,7 +5678,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5691,7 +5689,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             462, -1
         }
@@ -5702,7 +5700,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             463, 465
         }
@@ -5713,7 +5711,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             464, -2
         }
@@ -5724,7 +5722,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5735,7 +5733,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5746,7 +5744,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             467, 478
         }
@@ -5757,7 +5755,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             468, 473
         }
@@ -5768,7 +5766,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             469, -1
         }
@@ -5779,7 +5777,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             470, 472
         }
@@ -5790,7 +5788,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             471, -2
         }
@@ -5801,7 +5799,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5812,7 +5810,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5823,7 +5821,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             474, -1
         }
@@ -5834,7 +5832,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             475, 477
         }
@@ -5845,7 +5843,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             476, -2
         }
@@ -5856,7 +5854,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5867,7 +5865,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5878,7 +5876,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             479, 484
         }
@@ -5889,7 +5887,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             480, -1
         }
@@ -5900,7 +5898,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             481, 483
         }
@@ -5911,7 +5909,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             482, -2
         }
@@ -5922,7 +5920,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -5933,7 +5931,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -5944,7 +5942,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             485, 487
         }
@@ -5955,7 +5953,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -1, 486
         }
@@ -5966,7 +5964,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -5977,7 +5975,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             488, -1
         }
@@ -5988,7 +5986,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -2, -1
         }
@@ -5999,7 +5997,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2293760,
+        .distance = 2293760,
         .children = {
             490, 586
         }
@@ -6010,7 +6008,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             491, 569
         }
@@ -6021,7 +6019,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             492, 563
         }
@@ -6032,7 +6030,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             493, 524
         }
@@ -6043,7 +6041,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             494, 505
         }
@@ -6054,7 +6052,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             495, 496
         }
@@ -6065,7 +6063,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -6076,7 +6074,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             497, 502
         }
@@ -6087,7 +6085,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 498
         }
@@ -6098,7 +6096,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             499, 500
         }
@@ -6109,7 +6107,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6120,7 +6118,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             501, -2
         }
@@ -6131,7 +6129,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6142,7 +6140,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             503, -1
         }
@@ -6153,7 +6151,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             504, -2
         }
@@ -6164,7 +6162,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6175,7 +6173,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             506, 515
         }
@@ -6186,7 +6184,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             507, 512
         }
@@ -6197,7 +6195,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 508
         }
@@ -6208,7 +6206,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             509, 510
         }
@@ -6219,7 +6217,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6230,7 +6228,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             511, -2
         }
@@ -6241,7 +6239,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6252,7 +6250,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             513, -1
         }
@@ -6263,7 +6261,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             514, -2
         }
@@ -6274,7 +6272,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6285,7 +6283,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             516, 521
         }
@@ -6296,7 +6294,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 517
         }
@@ -6307,7 +6305,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             518, 519
         }
@@ -6318,7 +6316,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6329,7 +6327,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             520, -2
         }
@@ -6340,7 +6338,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6351,7 +6349,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             522, -1
         }
@@ -6362,7 +6360,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             523, -2
         }
@@ -6373,7 +6371,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6384,7 +6382,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2949120,
+        .distance = 2949120,
         .children = {
             525, 544
         }
@@ -6395,7 +6393,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             526, 535
         }
@@ -6406,7 +6404,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             527, 532
         }
@@ -6417,7 +6415,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 528
         }
@@ -6428,7 +6426,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             529, 530
         }
@@ -6439,7 +6437,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6450,7 +6448,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             531, -2
         }
@@ -6461,7 +6459,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6472,7 +6470,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             533, -1
         }
@@ -6483,7 +6481,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             534, -2
         }
@@ -6494,7 +6492,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6505,7 +6503,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             536, 541
         }
@@ -6516,7 +6514,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 537
         }
@@ -6527,7 +6525,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             538, 539
         }
@@ -6538,7 +6536,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6549,7 +6547,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             540, -2
         }
@@ -6560,7 +6558,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6571,7 +6569,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             542, -1
         }
@@ -6582,7 +6580,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             543, -2
         }
@@ -6593,7 +6591,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6604,7 +6602,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2621440,
+        .distance = 2621440,
         .children = {
             545, 554
         }
@@ -6615,7 +6613,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             546, 551
         }
@@ -6626,7 +6624,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 547
         }
@@ -6637,7 +6635,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             548, 549
         }
@@ -6648,7 +6646,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6659,7 +6657,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             550, -2
         }
@@ -6670,7 +6668,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6681,7 +6679,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             552, -1
         }
@@ -6692,7 +6690,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             553, -2
         }
@@ -6703,7 +6701,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6714,7 +6712,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             555, 560
         }
@@ -6725,7 +6723,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             -1, 556
         }
@@ -6736,7 +6734,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             557, 558
         }
@@ -6747,7 +6745,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -6758,7 +6756,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             559, -2
         }
@@ -6769,7 +6767,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -6780,7 +6778,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             561, -1
         }
@@ -6791,7 +6789,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             562, -2
         }
@@ -6802,7 +6800,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             -1, -2
         }
@@ -6813,7 +6811,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             564, -1
         }
@@ -6824,7 +6822,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             565, -1
         }
@@ -6835,7 +6833,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3276800,
+        .distance = 3276800,
         .children = {
             566, -2
         }
@@ -6846,7 +6844,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3932160,
+        .distance = 3932160,
         .children = {
             567, -2
         }
@@ -6857,7 +6855,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             568, -2
         }
@@ -6868,7 +6866,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             -1, -2
         }
@@ -6879,7 +6877,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             570, -1
         }
@@ -6890,7 +6888,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             571, 578
         }
@@ -6901,7 +6899,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             572, 574
         }
@@ -6912,7 +6910,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             573, -1
         }
@@ -6923,7 +6921,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -6934,7 +6932,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             575, -2
         }
@@ -6945,7 +6943,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             576, -2
         }
@@ -6956,7 +6954,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             577, -2
         }
@@ -6967,7 +6965,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -6978,7 +6976,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             579, 583
         }
@@ -6989,7 +6987,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3604480,
+        .distance = 3604480,
         .children = {
             580, -2
         }
@@ -7000,7 +6998,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4259840,
+        .distance = 4259840,
         .children = {
             581, -2
         }
@@ -7011,7 +7009,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             582, -2
         }
@@ -7022,7 +7020,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -7033,7 +7031,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             584, -1
         }
@@ -7044,7 +7042,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4587520,
+        .distance = 4587520,
         .children = {
             585, -1
         }
@@ -7055,7 +7053,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4653056,
+        .distance = 4653056,
         .children = {
             -1, -2
         }
@@ -7066,7 +7064,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             587, 619
         }
@@ -7077,7 +7075,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             588, 609
         }
@@ -7088,7 +7086,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             589, 599
         }
@@ -7099,7 +7097,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             590, 592
         }
@@ -7110,7 +7108,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             591, -1
         }
@@ -7121,7 +7119,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -7132,7 +7130,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 1
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1113907,
+        .distance = -1113907,
         .children = {
             593, -1
         }
@@ -7143,7 +7141,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             594, 597
         }
@@ -7154,7 +7152,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             595, -2
         }
@@ -7165,7 +7163,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             596, -2
         }
@@ -7176,7 +7174,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -7187,7 +7185,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 598
         }
@@ -7198,7 +7196,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -7209,7 +7207,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             600, 605
         }
@@ -7220,7 +7218,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, 601
         }
@@ -7231,7 +7229,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             602, -1
         }
@@ -7242,7 +7240,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             -2, 603
         }
@@ -7253,7 +7251,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, 604
         }
@@ -7264,7 +7262,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -32768,
+        .distance = -32768,
         .children = {
             -2, -1
         }
@@ -7275,7 +7273,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             606, -1
         }
@@ -7286,7 +7284,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 607
         }
@@ -7297,7 +7295,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 608
         }
@@ -7308,7 +7306,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -7319,7 +7317,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             610, 615
         }
@@ -7330,7 +7328,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, 611
         }
@@ -7341,7 +7339,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             612, -1
         }
@@ -7352,7 +7350,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             -2, 613
         }
@@ -7363,7 +7361,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, 614
         }
@@ -7374,7 +7372,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -32768,
+        .distance = -32768,
         .children = {
             -2, -1
         }
@@ -7385,7 +7383,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             616, -1
         }
@@ -7396,7 +7394,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 617
         }
@@ -7407,7 +7405,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 618
         }
@@ -7418,7 +7416,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -7429,7 +7427,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             620, 672
         }
@@ -7440,7 +7438,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             621, 631
         }
@@ -7451,7 +7449,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1092476,
+        .distance = -1092476,
         .children = {
             622, 624
         }
@@ -7462,7 +7460,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             623, -1
         }
@@ -7473,7 +7471,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -7484,7 +7482,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1113907,
+        .distance = -1113907,
         .children = {
             625, -1
         }
@@ -7495,7 +7493,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             626, 629
         }
@@ -7506,7 +7504,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             627, -2
         }
@@ -7517,7 +7515,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             628, -2
         }
@@ -7528,7 +7526,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -7539,7 +7537,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 630
         }
@@ -7550,7 +7548,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -7561,7 +7559,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             632, 634
         }
@@ -7572,7 +7570,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             633, -1
         }
@@ -7583,7 +7581,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -1, -2
         }
@@ -7594,7 +7592,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             635, 657
         }
@@ -7605,7 +7603,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             636, 647
         }
@@ -7616,7 +7614,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1966080,
+        .distance = 1966080,
         .children = {
             637, 642
         }
@@ -7627,7 +7625,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             638, -1
         }
@@ -7638,7 +7636,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             639, 640
         }
@@ -7649,7 +7647,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -7660,7 +7658,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             641, -2
         }
@@ -7671,7 +7669,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7682,7 +7680,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             643, -1
         }
@@ -7693,7 +7691,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             644, 645
         }
@@ -7704,7 +7702,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -7715,7 +7713,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             646, -2
         }
@@ -7726,7 +7724,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7737,7 +7735,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1310720,
+        .distance = 1310720,
         .children = {
             648, 653
         }
@@ -7748,7 +7746,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             649, -1
         }
@@ -7759,7 +7757,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             650, 651
         }
@@ -7770,7 +7768,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             -1, -2
         }
@@ -7781,7 +7779,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             652, -2
         }
@@ -7792,7 +7790,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7803,7 +7801,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             654, 656
         }
@@ -7814,7 +7812,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 655
         }
@@ -7825,7 +7823,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7836,7 +7834,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, -1
         }
@@ -7847,7 +7845,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1158523,
+        .distance = -1158523,
         .children = {
             658, 669
         }
@@ -7858,7 +7856,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             659, 665
         }
@@ -7869,7 +7867,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 660
         }
@@ -7880,7 +7878,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             661, 664
         }
@@ -7891,7 +7889,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 655360,
+        .distance = 655360,
         .children = {
             662, 663
         }
@@ -7902,7 +7900,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7913,7 +7911,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7924,7 +7922,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -175851,
+        .distance = -175851,
         .children = {
             -2, -1
         }
@@ -7935,7 +7933,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -655360,
+        .distance = -655360,
         .children = {
             666, 668
         }
@@ -7946,7 +7944,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             667, -1
         }
@@ -7957,7 +7955,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -7968,7 +7966,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, -1
         }
@@ -7979,7 +7977,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             670, -1
         }
@@ -7990,7 +7988,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 671
         }
@@ -8001,7 +7999,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -8012,7 +8010,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -327680,
+        .distance = -327680,
         .children = {
             673, -1
         }
@@ -8023,7 +8021,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             674, -1
         }
@@ -8034,7 +8032,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 675
         }
@@ -8045,7 +8043,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 676
         }
@@ -8056,7 +8054,7 @@ BSPNode3 bspNodes_hitscan[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, -1
         }
@@ -8071,7 +8069,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2228224,
+        .distance = 2228224,
         .children = {
             1, 451
         }
@@ -8082,7 +8080,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, 2
         }
@@ -8093,7 +8091,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             3, 175
         }
@@ -8104,7 +8102,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             4, -1
         }
@@ -8115,7 +8113,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             5, 74
         }
@@ -8126,7 +8124,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1179648,
+        .distance = 1179648,
         .children = {
             -1, 6
         }
@@ -8137,7 +8135,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4521984,
+        .distance = 4521984,
         .children = {
             7, 9
         }
@@ -8148,7 +8146,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4849664,
+        .distance = 4849664,
         .children = {
             8, -2
         }
@@ -8159,7 +8157,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4915200,
+        .distance = 4915200,
         .children = {
             -1, -2
         }
@@ -8170,7 +8168,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             10, 69
         }
@@ -8181,7 +8179,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3014656,
+        .distance = 3014656,
         .children = {
             11, 43
         }
@@ -8192,7 +8190,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3670016,
+        .distance = 3670016,
         .children = {
             12, 32
         }
@@ -8203,7 +8201,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             13, 15
         }
@@ -8214,7 +8212,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 14
         }
@@ -8225,7 +8223,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -8236,7 +8234,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             16, 22
         }
@@ -8247,7 +8245,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             17, 20
         }
@@ -8258,7 +8256,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 18
         }
@@ -8269,7 +8267,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             19, -2
         }
@@ -8280,7 +8278,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8291,7 +8289,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             21, -2
         }
@@ -8302,7 +8300,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8313,7 +8311,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4194304,
+        .distance = 4194304,
         .children = {
             23, 27
         }
@@ -8324,7 +8322,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 24
         }
@@ -8335,7 +8333,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 25
         }
@@ -8346,7 +8344,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             26, -1
         }
@@ -8357,7 +8355,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8368,7 +8366,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 28
         }
@@ -8379,7 +8377,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             29, -1
         }
@@ -8390,7 +8388,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3866623,
+        .distance = 3866623,
         .children = {
             30, 31
         }
@@ -8401,7 +8399,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8412,7 +8410,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8423,7 +8421,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             33, 34
         }
@@ -8434,7 +8432,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -8445,7 +8443,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             35, 40
         }
@@ -8456,7 +8454,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             36, 38
         }
@@ -8467,7 +8465,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             37, -2
         }
@@ -8478,7 +8476,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8489,7 +8487,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             39, -2
         }
@@ -8500,7 +8498,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8511,7 +8509,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 41
         }
@@ -8522,7 +8520,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             42, -1
         }
@@ -8533,7 +8531,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8544,7 +8542,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             44, 53
         }
@@ -8555,7 +8553,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 45
         }
@@ -8566,7 +8564,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             46, 48
         }
@@ -8577,7 +8575,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             47, -2
         }
@@ -8588,7 +8586,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8599,7 +8597,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             49, 51
         }
@@ -8610,7 +8608,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             50, -2
         }
@@ -8621,7 +8619,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -8632,7 +8630,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             52, -2
         }
@@ -8643,7 +8641,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -8654,7 +8652,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             54, 63
         }
@@ -8665,7 +8663,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2555904,
+        .distance = 2555904,
         .children = {
             55, 61
         }
@@ -8676,7 +8674,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             56, -2
         }
@@ -8687,7 +8685,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2883584,
+        .distance = 2883584,
         .children = {
             57, 59
         }
@@ -8698,7 +8696,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             58, -2
         }
@@ -8709,7 +8707,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -8720,7 +8718,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             60, -2
         }
@@ -8731,7 +8729,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -8742,7 +8740,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             62, -2
         }
@@ -8753,7 +8751,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -8764,7 +8762,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             64, -1
         }
@@ -8775,7 +8773,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2883584,
+        .distance = 2883584,
         .children = {
             65, 66
         }
@@ -8786,7 +8784,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8797,7 +8795,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2555904,
+        .distance = 2555904,
         .children = {
             67, 68
         }
@@ -8808,7 +8806,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8819,7 +8817,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -8830,7 +8828,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 70
         }
@@ -8841,7 +8839,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             71, 73
         }
@@ -8852,7 +8850,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, 72
         }
@@ -8863,7 +8861,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -8874,7 +8872,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -8885,7 +8883,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             75, 120
         }
@@ -8896,7 +8894,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3670016,
+        .distance = 3670016,
         .children = {
             76, 107
         }
@@ -8907,7 +8905,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             77, 94
         }
@@ -8918,7 +8916,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4849664,
+        .distance = 4849664,
         .children = {
             78, 79
         }
@@ -8929,7 +8927,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4915200,
+        .distance = 4915200,
         .children = {
             -1, -2
         }
@@ -8940,7 +8938,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4521984,
+        .distance = 4521984,
         .children = {
             -2, 80
         }
@@ -8951,7 +8949,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             81, 85
         }
@@ -8962,7 +8960,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 82
         }
@@ -8973,7 +8971,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 83
         }
@@ -8984,7 +8982,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             84, -1
         }
@@ -8995,7 +8993,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9006,7 +9004,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 86
         }
@@ -9017,7 +9015,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             87, 90
         }
@@ -9028,7 +9026,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             88, -1
         }
@@ -9039,7 +9037,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 89
         }
@@ -9050,7 +9048,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9061,7 +9059,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             91, 92
         }
@@ -9072,7 +9070,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9083,7 +9081,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             93, -2
         }
@@ -9094,7 +9092,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, -1
         }
@@ -9105,7 +9103,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             95, 102
         }
@@ -9116,7 +9114,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 96
         }
@@ -9127,7 +9125,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             97, 100
         }
@@ -9138,7 +9136,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             98, 99
         }
@@ -9149,7 +9147,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9160,7 +9158,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9171,7 +9169,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 101
         }
@@ -9182,7 +9180,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9193,7 +9191,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             103, -2
         }
@@ -9204,7 +9202,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             104, -1
         }
@@ -9215,7 +9213,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             105, -2
         }
@@ -9226,7 +9224,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 106
         }
@@ -9237,7 +9235,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9248,7 +9246,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             108, 115
         }
@@ -9259,7 +9257,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 109
         }
@@ -9270,7 +9268,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             110, 113
         }
@@ -9281,7 +9279,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             111, 112
         }
@@ -9292,7 +9290,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9303,7 +9301,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9314,7 +9312,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 114
         }
@@ -9325,7 +9323,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9336,7 +9334,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             116, -2
         }
@@ -9347,7 +9345,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             117, -1
         }
@@ -9358,7 +9356,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             118, -2
         }
@@ -9369,7 +9367,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 119
         }
@@ -9380,7 +9378,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9391,7 +9389,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             121, 147
         }
@@ -9402,7 +9400,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             122, 128
         }
@@ -9413,7 +9411,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 123
         }
@@ -9424,7 +9422,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3014656,
+        .distance = 3014656,
         .children = {
             124, 126
         }
@@ -9435,7 +9433,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             125, -1
         }
@@ -9446,7 +9444,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9457,7 +9455,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             127, -1
         }
@@ -9468,7 +9466,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9479,7 +9477,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3014656,
+        .distance = 3014656,
         .children = {
             129, 139
         }
@@ -9490,7 +9488,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             130, 133
         }
@@ -9501,7 +9499,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -2, 131
         }
@@ -9512,7 +9510,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             -2, 132
         }
@@ -9523,7 +9521,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9534,7 +9532,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             134, -2
         }
@@ -9545,7 +9543,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             135, -2
         }
@@ -9556,7 +9554,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             136, -1
         }
@@ -9567,7 +9565,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             137, -2
         }
@@ -9578,7 +9576,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             138, -2
         }
@@ -9589,7 +9587,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -9600,7 +9598,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             140, 142
         }
@@ -9611,7 +9609,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             -2, 141
         }
@@ -9622,7 +9620,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9633,7 +9631,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             143, -2
         }
@@ -9644,7 +9642,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             144, -1
         }
@@ -9655,7 +9653,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             145, -2
         }
@@ -9666,7 +9664,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 146
         }
@@ -9677,7 +9675,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9688,7 +9686,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             148, 153
         }
@@ -9699,7 +9697,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             149, -1
         }
@@ -9710,7 +9708,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 150
         }
@@ -9721,7 +9719,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             151, 152
         }
@@ -9732,7 +9730,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9743,7 +9741,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -9754,7 +9752,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             154, 164
         }
@@ -9765,7 +9763,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             155, 163
         }
@@ -9776,7 +9774,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             156, 159
         }
@@ -9787,7 +9785,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             157, -1
         }
@@ -9798,7 +9796,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 158
         }
@@ -9809,7 +9807,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9820,7 +9818,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             160, 161
         }
@@ -9831,7 +9829,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9842,7 +9840,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             162, -2
         }
@@ -9853,7 +9851,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, -1
         }
@@ -9864,7 +9862,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -9875,7 +9873,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             165, 174
         }
@@ -9886,7 +9884,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             166, 169
         }
@@ -9897,7 +9895,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             167, -1
         }
@@ -9908,7 +9906,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 168
         }
@@ -9919,7 +9917,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -9930,7 +9928,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             170, 171
         }
@@ -9941,7 +9939,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -9952,7 +9950,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             172, -2
         }
@@ -9963,7 +9961,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             173, -2
         }
@@ -9974,7 +9972,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, -1
         }
@@ -9985,7 +9983,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -9996,7 +9994,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             176, -1
         }
@@ -10007,7 +10005,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             177, 314
         }
@@ -10018,7 +10016,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1179648,
+        .distance = 1179648,
         .children = {
             -1, 178
         }
@@ -10029,7 +10027,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             179, 291
         }
@@ -10040,7 +10038,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4849664,
+        .distance = 4849664,
         .children = {
             180, 182
         }
@@ -10051,7 +10049,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             181, -1
         }
@@ -10062,7 +10060,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4915200,
+        .distance = 4915200,
         .children = {
             -1, -2
         }
@@ -10073,7 +10071,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3670016,
+        .distance = 3670016,
         .children = {
             183, 228
         }
@@ -10084,7 +10082,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4521984,
+        .distance = 4521984,
         .children = {
             184, 187
         }
@@ -10095,7 +10093,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 185
         }
@@ -10106,7 +10104,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 186
         }
@@ -10117,7 +10115,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -10128,7 +10126,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             188, 227
         }
@@ -10139,7 +10137,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             189, 208
         }
@@ -10150,7 +10148,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             190, 200
         }
@@ -10161,7 +10159,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             191, 194
         }
@@ -10172,7 +10170,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 192
         }
@@ -10183,7 +10181,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             193, -2
         }
@@ -10194,7 +10192,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -10205,7 +10203,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             195, 196
         }
@@ -10216,7 +10214,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -10227,7 +10225,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4194304,
+        .distance = 4194304,
         .children = {
             197, 199
         }
@@ -10238,7 +10236,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 198
         }
@@ -10249,7 +10247,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -10260,7 +10258,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -10271,7 +10269,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             201, 202
         }
@@ -10282,7 +10280,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -10293,7 +10291,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 203
         }
@@ -10304,7 +10302,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             204, 206
         }
@@ -10315,7 +10313,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 205
         }
@@ -10326,7 +10324,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -10337,7 +10335,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 207
         }
@@ -10348,7 +10346,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -10359,7 +10357,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             209, 210
         }
@@ -10370,7 +10368,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -10381,7 +10379,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             211, 222
         }
@@ -10392,7 +10390,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 212
         }
@@ -10403,7 +10401,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             213, 221
         }
@@ -10414,7 +10412,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             214, 217
         }
@@ -10425,7 +10423,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             215, 216
         }
@@ -10436,7 +10434,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10447,7 +10445,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10458,7 +10456,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             218, -2
         }
@@ -10469,7 +10467,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             219, 220
         }
@@ -10480,7 +10478,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10491,7 +10489,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10502,7 +10500,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -10513,7 +10511,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             223, 224
         }
@@ -10524,7 +10522,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -10535,7 +10533,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 225
         }
@@ -10546,7 +10544,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             226, -2
         }
@@ -10557,7 +10555,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, -1
         }
@@ -10568,7 +10566,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -10579,7 +10577,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3014656,
+        .distance = 3014656,
         .children = {
             229, 257
         }
@@ -10590,7 +10588,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             230, 246
         }
@@ -10601,7 +10599,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             231, -1
         }
@@ -10612,7 +10610,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             232, 241
         }
@@ -10623,7 +10621,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             233, 236
         }
@@ -10634,7 +10632,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 234
         }
@@ -10645,7 +10643,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 235
         }
@@ -10656,7 +10654,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -10667,7 +10665,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 237
         }
@@ -10678,7 +10676,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             238, 239
         }
@@ -10689,7 +10687,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -10700,7 +10698,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 240
         }
@@ -10711,7 +10709,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -10722,7 +10720,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             242, 243
         }
@@ -10733,7 +10731,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, -1
         }
@@ -10744,7 +10742,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 244
         }
@@ -10755,7 +10753,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 245
         }
@@ -10766,7 +10764,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -10777,7 +10775,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 247
         }
@@ -10788,7 +10786,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             248, 255
         }
@@ -10799,7 +10797,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             249, -1
         }
@@ -10810,7 +10808,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             250, 254
         }
@@ -10821,7 +10819,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             251, -2
         }
@@ -10832,7 +10830,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             252, 253
         }
@@ -10843,7 +10841,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10854,7 +10852,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -10865,7 +10863,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -10876,7 +10874,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             256, -2
         }
@@ -10887,7 +10885,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -10898,7 +10896,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             258, 288
         }
@@ -10909,7 +10907,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             259, -1
         }
@@ -10920,7 +10918,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             260, 276
         }
@@ -10931,7 +10929,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             261, 269
         }
@@ -10942,7 +10940,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             262, 265
         }
@@ -10953,7 +10951,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 263
         }
@@ -10964,7 +10962,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 264
         }
@@ -10975,7 +10973,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -10986,7 +10984,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 266
         }
@@ -10997,7 +10995,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686979,
+        .distance = 2686979,
         .children = {
             267, 268
         }
@@ -11008,7 +11006,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -11019,7 +11017,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -11030,7 +11028,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             270, 273
         }
@@ -11041,7 +11039,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 271
         }
@@ -11052,7 +11050,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 272
         }
@@ -11063,7 +11061,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -11074,7 +11072,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 274
         }
@@ -11085,7 +11083,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             275, -2
         }
@@ -11096,7 +11094,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -11107,7 +11105,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 277
         }
@@ -11118,7 +11116,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             278, 287
         }
@@ -11129,7 +11127,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             279, 283
         }
@@ -11140,7 +11138,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             280, 281
         }
@@ -11151,7 +11149,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -11162,7 +11160,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             282, -2
         }
@@ -11173,7 +11171,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -11184,7 +11182,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             284, 285
         }
@@ -11195,7 +11193,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -11206,7 +11204,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             286, -2
         }
@@ -11217,7 +11215,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -11228,7 +11226,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -11239,7 +11237,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             289, -2
         }
@@ -11250,7 +11248,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             290, -1
         }
@@ -11261,7 +11259,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -11272,7 +11270,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             292, 309
         }
@@ -11283,7 +11281,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             293, 303
         }
@@ -11294,7 +11292,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             294, 300
         }
@@ -11305,7 +11303,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             295, 298
         }
@@ -11316,7 +11314,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 296
         }
@@ -11327,7 +11325,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             297, -2
         }
@@ -11338,7 +11336,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -11349,7 +11347,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 299
         }
@@ -11360,7 +11358,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -11371,7 +11369,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 301
         }
@@ -11382,7 +11380,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             302, -2
         }
@@ -11393,7 +11391,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -11404,7 +11402,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 304
         }
@@ -11415,7 +11413,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             305, -1
         }
@@ -11426,7 +11424,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             306, 308
         }
@@ -11437,7 +11435,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             307, -2
         }
@@ -11448,7 +11446,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -11459,7 +11457,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -11470,7 +11468,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             310, -2
         }
@@ -11481,7 +11479,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             311, -1
         }
@@ -11492,7 +11490,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             312, -2
         }
@@ -11503,7 +11501,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             313, -2
         }
@@ -11514,7 +11512,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -11525,7 +11523,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3670016,
+        .distance = 3670016,
         .children = {
             315, 358
         }
@@ -11536,7 +11534,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             316, -1
         }
@@ -11547,7 +11545,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4849664,
+        .distance = 4849664,
         .children = {
             317, 319
         }
@@ -11558,7 +11556,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             318, -1
         }
@@ -11569,7 +11567,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4915200,
+        .distance = 4915200,
         .children = {
             -1, -2
         }
@@ -11580,7 +11578,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             320, 357
         }
@@ -11591,7 +11589,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             321, 337
         }
@@ -11602,7 +11600,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             322, 323
         }
@@ -11613,7 +11611,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, -1
         }
@@ -11624,7 +11622,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4521984,
+        .distance = 4521984,
         .children = {
             -2, 324
         }
@@ -11635,7 +11633,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 325
         }
@@ -11646,7 +11644,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             326, 330
         }
@@ -11657,7 +11655,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, 327
         }
@@ -11668,7 +11666,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             328, -2
         }
@@ -11679,7 +11677,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             329, -2
         }
@@ -11690,7 +11688,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, -2
         }
@@ -11701,7 +11699,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -753664,
+        .distance = -753664,
         .children = {
             331, 336
         }
@@ -11712,7 +11710,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4194304,
+        .distance = 4194304,
         .children = {
             332, 334
         }
@@ -11723,7 +11721,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             333, -2
         }
@@ -11734,7 +11732,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -11745,7 +11743,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             335, -2
         }
@@ -11756,7 +11754,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -11767,7 +11765,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -11778,7 +11776,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 4325376,
+        .distance = 4325376,
         .children = {
             -2, 338
         }
@@ -11789,7 +11787,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             339, 352
         }
@@ -11800,7 +11798,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             340, 346
         }
@@ -11811,7 +11809,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             341, 343
         }
@@ -11822,7 +11820,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 342
         }
@@ -11833,7 +11831,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -11844,7 +11842,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 344
         }
@@ -11855,7 +11853,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 345
         }
@@ -11866,7 +11864,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -11877,7 +11875,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             347, 349
         }
@@ -11888,7 +11886,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 348
         }
@@ -11899,7 +11897,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -11910,7 +11908,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 350
         }
@@ -11921,7 +11919,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 351
         }
@@ -11932,7 +11930,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -11943,7 +11941,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             353, -1
         }
@@ -11954,7 +11952,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 354
         }
@@ -11965,7 +11963,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3997696,
+        .distance = 3997696,
         .children = {
             355, 356
         }
@@ -11976,7 +11974,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -11987,7 +11985,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -11998,7 +11996,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12009,7 +12007,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             359, -1
         }
@@ -12020,7 +12018,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3014656,
+        .distance = 3014656,
         .children = {
             360, 389
         }
@@ -12031,7 +12029,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             361, 388
         }
@@ -12042,7 +12040,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             362, 366
         }
@@ -12053,7 +12051,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, 363
         }
@@ -12064,7 +12062,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             364, -2
         }
@@ -12075,7 +12073,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             365, -2
         }
@@ -12086,7 +12084,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, -2
         }
@@ -12097,7 +12095,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             367, 377
         }
@@ -12108,7 +12106,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             368, 375
         }
@@ -12119,7 +12117,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             369, 372
         }
@@ -12130,7 +12128,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, 370
         }
@@ -12141,7 +12139,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 371
         }
@@ -12152,7 +12150,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -12163,7 +12161,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 373
         }
@@ -12174,7 +12172,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 374
         }
@@ -12185,7 +12183,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12196,7 +12194,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, 376
         }
@@ -12207,7 +12205,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12218,7 +12216,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             378, -1
         }
@@ -12229,7 +12227,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             379, 381
         }
@@ -12240,7 +12238,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             380, -2
         }
@@ -12251,7 +12249,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -12262,7 +12260,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3342336,
+        .distance = 3342336,
         .children = {
             382, 387
         }
@@ -12273,7 +12271,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 3538944,
+        .distance = 3538944,
         .children = {
             383, 385
         }
@@ -12284,7 +12282,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 384
         }
@@ -12295,7 +12293,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -12306,7 +12304,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 386
         }
@@ -12317,7 +12315,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -12328,7 +12326,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -12339,7 +12337,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12350,7 +12348,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             390, 426
         }
@@ -12361,7 +12359,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             391, 422
         }
@@ -12372,7 +12370,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             392, 403
         }
@@ -12383,7 +12381,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 393
         }
@@ -12394,7 +12392,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 394
         }
@@ -12405,7 +12403,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             395, 398
         }
@@ -12416,7 +12414,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             396, 397
         }
@@ -12427,7 +12425,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -12438,7 +12436,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -12449,7 +12447,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             399, 401
         }
@@ -12460,7 +12458,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             400, -2
         }
@@ -12471,7 +12469,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -12482,7 +12480,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             402, -2
         }
@@ -12493,7 +12491,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -12504,7 +12502,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             404, 417
         }
@@ -12515,7 +12513,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             405, 411
         }
@@ -12526,7 +12524,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             406, 408
         }
@@ -12537,7 +12535,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 407
         }
@@ -12548,7 +12546,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -12559,7 +12557,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 409
         }
@@ -12570,7 +12568,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 410
         }
@@ -12581,7 +12579,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12592,7 +12590,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             412, 414
         }
@@ -12603,7 +12601,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 413
         }
@@ -12614,7 +12612,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -12625,7 +12623,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 415
         }
@@ -12636,7 +12634,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 416
         }
@@ -12647,7 +12645,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12658,7 +12656,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             418, -1
         }
@@ -12669,7 +12667,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 419
         }
@@ -12680,7 +12678,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2686976,
+        .distance = 2686976,
         .children = {
             420, 421
         }
@@ -12691,7 +12689,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -12702,7 +12700,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -12713,7 +12711,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 423
         }
@@ -12724,7 +12722,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             424, -1
         }
@@ -12735,7 +12733,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 425
         }
@@ -12746,7 +12744,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -12757,7 +12755,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             427, 428
         }
@@ -12768,7 +12766,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, -2
         }
@@ -12779,7 +12777,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             429, 450
         }
@@ -12790,7 +12788,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             430, 440
         }
@@ -12801,7 +12799,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 431
         }
@@ -12812,7 +12810,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             432, 436
         }
@@ -12823,7 +12821,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, 433
         }
@@ -12834,7 +12832,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             434, -2
         }
@@ -12845,7 +12843,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             435, -2
         }
@@ -12856,7 +12854,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, -2
         }
@@ -12867,7 +12865,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -753664,
+        .distance = -753664,
         .children = {
             437, 439
         }
@@ -12878,7 +12876,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             438, -2
         }
@@ -12889,7 +12887,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -12900,7 +12898,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -12911,7 +12909,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             441, 447
         }
@@ -12922,7 +12920,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             442, 444
         }
@@ -12933,7 +12931,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 443
         }
@@ -12944,7 +12942,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -12955,7 +12953,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 445
         }
@@ -12966,7 +12964,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, 446
         }
@@ -12977,7 +12975,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -12988,7 +12986,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             448, -1
         }
@@ -12999,7 +12997,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 449
         }
@@ -13010,7 +13008,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -13021,7 +13019,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -13032,7 +13030,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1179648,
+        .distance = 1179648,
         .children = {
             -1, 452
         }
@@ -13043,7 +13041,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             453, -1
         }
@@ -13054,7 +13052,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             454, 918
         }
@@ -13065,7 +13063,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             455, 625
         }
@@ -13076,7 +13074,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -425984,
+        .distance = -425984,
         .children = {
             456, -1
         }
@@ -13087,7 +13085,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -1, 457
         }
@@ -13098,7 +13096,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1572864,
+        .distance = 1572864,
         .children = {
             458, 549
         }
@@ -13109,7 +13107,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             459, -1
         }
@@ -13120,7 +13118,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             -1, 460
         }
@@ -13131,7 +13129,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             461, 505
         }
@@ -13142,7 +13140,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             462, 486
         }
@@ -13153,7 +13151,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2392064,
+        .distance = 2392064,
         .children = {
             -1, 463
         }
@@ -13164,7 +13162,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             464, 466
         }
@@ -13175,7 +13173,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, 465
         }
@@ -13186,7 +13184,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             -1, -2
         }
@@ -13197,7 +13195,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             467, 471
         }
@@ -13208,7 +13206,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             468, 469
         }
@@ -13219,7 +13217,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 294912,
+        .distance = 294912,
         .children = {
             -1, -2
         }
@@ -13230,7 +13228,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 294912,
+        .distance = 294912,
         .children = {
             -1, 470
         }
@@ -13241,7 +13239,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -13252,7 +13250,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             472, 485
         }
@@ -13263,7 +13261,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, 473
         }
@@ -13274,7 +13272,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             474, -2
         }
@@ -13285,7 +13283,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             -2, 475
         }
@@ -13296,7 +13294,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 294912,
+        .distance = 294912,
         .children = {
             -2, 476
         }
@@ -13307,7 +13305,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 163840,
+        .distance = 163840,
         .children = {
             477, 482
         }
@@ -13318,7 +13316,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             478, -2
         }
@@ -13329,7 +13327,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2228224,
+        .distance = 2228224,
         .children = {
             -2, 479
         }
@@ -13340,7 +13338,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 480
         }
@@ -13351,7 +13349,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 481
         }
@@ -13362,7 +13360,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2195456,
+        .distance = 2195456,
         .children = {
             -2, -1
         }
@@ -13373,7 +13371,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             483, -2
         }
@@ -13384,7 +13382,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 484
         }
@@ -13395,7 +13393,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2228224,
+        .distance = 2228224,
         .children = {
             -2, -1
         }
@@ -13406,7 +13404,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -13417,7 +13415,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1900544,
+        .distance = 1900544,
         .children = {
             487, 497
         }
@@ -13428,7 +13426,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             488, 491
         }
@@ -13439,7 +13437,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             489, -2
         }
@@ -13450,7 +13448,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             490, -2
         }
@@ -13461,7 +13459,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -13472,7 +13470,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             492, 493
         }
@@ -13483,7 +13481,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -13494,7 +13492,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             494, -2
         }
@@ -13505,7 +13503,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             495, -2
         }
@@ -13516,7 +13514,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 496
         }
@@ -13527,7 +13525,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -13538,7 +13536,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             498, 503
         }
@@ -13549,7 +13547,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             499, 501
         }
@@ -13560,7 +13558,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             500, -2
         }
@@ -13571,7 +13569,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -13582,7 +13580,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, 502
         }
@@ -13593,7 +13591,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -13604,7 +13602,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 504
         }
@@ -13615,7 +13613,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -1, -2
         }
@@ -13626,7 +13624,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1900544,
+        .distance = 1900544,
         .children = {
             506, 535
         }
@@ -13637,7 +13635,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2392064,
+        .distance = 2392064,
         .children = {
             -1, 507
         }
@@ -13648,7 +13646,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             508, 510
         }
@@ -13659,7 +13657,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             509, -1
         }
@@ -13670,7 +13668,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             -1, -2
         }
@@ -13681,7 +13679,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2359296,
+        .distance = 2359296,
         .children = {
             511, 515
         }
@@ -13692,7 +13690,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             512, 513
         }
@@ -13703,7 +13701,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, -1
         }
@@ -13714,7 +13712,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             514, -1
         }
@@ -13725,7 +13723,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -13736,7 +13734,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             516, 534
         }
@@ -13747,7 +13745,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             517, -2
         }
@@ -13758,7 +13756,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             518, 530
         }
@@ -13769,7 +13767,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             519, -2
         }
@@ -13780,7 +13778,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             -2, 520
         }
@@ -13791,7 +13789,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             521, -2
         }
@@ -13802,7 +13800,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -163840,
+        .distance = -163840,
         .children = {
             522, 525
         }
@@ -13813,7 +13811,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             523, -2
         }
@@ -13824,7 +13822,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 524
         }
@@ -13835,7 +13833,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2228224,
+        .distance = 2228224,
         .children = {
             -2, -1
         }
@@ -13846,7 +13844,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             526, -2
         }
@@ -13857,7 +13855,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2228224,
+        .distance = 2228224,
         .children = {
             -2, 527
         }
@@ -13868,7 +13866,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             528, -2
         }
@@ -13879,7 +13877,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 529
         }
@@ -13890,7 +13888,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2195456,
+        .distance = 2195456,
         .children = {
             -2, -1
         }
@@ -13901,7 +13899,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             -2, 531
         }
@@ -13912,7 +13910,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             532, -2
         }
@@ -13923,7 +13921,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             533, -2
         }
@@ -13934,7 +13932,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -13945,7 +13943,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -13956,7 +13954,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             536, 539
         }
@@ -13967,7 +13965,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 537
         }
@@ -13978,7 +13976,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             538, -2
         }
@@ -13989,7 +13987,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -14000,7 +13998,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             540, 548
         }
@@ -14011,7 +14009,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             541, -2
         }
@@ -14022,7 +14020,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             542, 545
         }
@@ -14033,7 +14031,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             543, -2
         }
@@ -14044,7 +14042,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             544, -2
         }
@@ -14055,7 +14053,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -14066,7 +14064,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             546, -2
         }
@@ -14077,7 +14075,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             547, -2
         }
@@ -14088,7 +14086,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -14099,7 +14097,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14110,7 +14108,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             -1, 550
         }
@@ -14121,7 +14119,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             551, 621
         }
@@ -14132,7 +14130,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             552, 586
         }
@@ -14143,7 +14141,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             553, 584
         }
@@ -14154,7 +14152,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1245184,
+        .distance = 1245184,
         .children = {
             554, 573
         }
@@ -14165,7 +14163,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             555, 563
         }
@@ -14176,7 +14174,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             556, -2
         }
@@ -14187,7 +14185,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             557, 560
         }
@@ -14198,7 +14196,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             558, -2
         }
@@ -14209,7 +14207,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             559, -2
         }
@@ -14220,7 +14218,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -14231,7 +14229,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             561, -2
         }
@@ -14242,7 +14240,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             562, -2
         }
@@ -14253,7 +14251,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             -1, -2
         }
@@ -14264,7 +14262,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             564, 572
         }
@@ -14275,7 +14273,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -2, 565
         }
@@ -14286,7 +14284,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             566, 569
         }
@@ -14297,7 +14295,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             -2, 567
         }
@@ -14308,7 +14306,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             568, -2
         }
@@ -14319,7 +14317,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14330,7 +14328,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             570, -2
         }
@@ -14341,7 +14339,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             -2, 571
         }
@@ -14352,7 +14350,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14363,7 +14361,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -1, -2
         }
@@ -14374,7 +14372,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             574, 578
         }
@@ -14385,7 +14383,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             575, -2
         }
@@ -14396,7 +14394,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             576, -2
         }
@@ -14407,7 +14405,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             577, -2
         }
@@ -14418,7 +14416,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, -2
         }
@@ -14429,7 +14427,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             579, 581
         }
@@ -14440,7 +14438,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             -2, 580
         }
@@ -14451,7 +14449,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14462,7 +14460,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             582, -2
         }
@@ -14473,7 +14471,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 583
         }
@@ -14484,7 +14482,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -1, -2
         }
@@ -14495,7 +14493,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 294912,
+        .distance = 294912,
         .children = {
             -1, 585
         }
@@ -14506,7 +14504,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -1, -2
         }
@@ -14517,7 +14515,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1245184,
+        .distance = 1245184,
         .children = {
             587, 602
         }
@@ -14528,7 +14526,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             588, -1
         }
@@ -14539,7 +14537,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1277952,
+        .distance = 1277952,
         .children = {
             589, 592
         }
@@ -14550,7 +14548,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 590
         }
@@ -14561,7 +14559,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             591, -2
         }
@@ -14572,7 +14570,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -14583,7 +14581,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             593, 601
         }
@@ -14594,7 +14592,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             594, -2
         }
@@ -14605,7 +14603,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             595, 598
         }
@@ -14616,7 +14614,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             596, -2
         }
@@ -14627,7 +14625,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             597, -2
         }
@@ -14638,7 +14636,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -14649,7 +14647,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             599, -2
         }
@@ -14660,7 +14658,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             600, -2
         }
@@ -14671,7 +14669,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -14682,7 +14680,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14693,7 +14691,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1605632,
+        .distance = 1605632,
         .children = {
             603, 604
         }
@@ -14704,7 +14702,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -14715,7 +14713,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             605, 607
         }
@@ -14726,7 +14724,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             606, -2
         }
@@ -14737,7 +14735,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, -1
         }
@@ -14748,7 +14746,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             608, 619
         }
@@ -14759,7 +14757,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, 609
         }
@@ -14770,7 +14768,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             610, 612
         }
@@ -14781,7 +14779,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             611, -2
         }
@@ -14792,7 +14790,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, -1
         }
@@ -14803,7 +14801,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             -2, 613
         }
@@ -14814,7 +14812,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             614, 617
         }
@@ -14825,7 +14823,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, 615
         }
@@ -14836,7 +14834,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             616, -2
         }
@@ -14847,7 +14845,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, -1
         }
@@ -14858,7 +14856,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, 618
         }
@@ -14869,7 +14867,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, -1
         }
@@ -14880,7 +14878,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             -2, 620
         }
@@ -14891,7 +14889,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, -1
         }
@@ -14902,7 +14900,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             622, -1
         }
@@ -14913,7 +14911,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 294912,
+        .distance = 294912,
         .children = {
             -1, 623
         }
@@ -14924,7 +14922,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -1, 624
         }
@@ -14935,7 +14933,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -14946,7 +14944,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             626, 782
         }
@@ -14957,7 +14955,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             627, 669
         }
@@ -14968,7 +14966,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             628, 659
         }
@@ -14979,7 +14977,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             629, 640
         }
@@ -14990,7 +14988,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             630, 638
         }
@@ -15001,7 +14999,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             631, 636
         }
@@ -15012,7 +15010,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             632, 634
         }
@@ -15023,7 +15021,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             633, -2
         }
@@ -15034,7 +15032,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15045,7 +15043,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             635, -2
         }
@@ -15056,7 +15054,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15067,7 +15065,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             637, -2
         }
@@ -15078,7 +15076,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15089,7 +15087,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             639, -2
         }
@@ -15100,7 +15098,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15111,7 +15109,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1572864,
+        .distance = 1572864,
         .children = {
             641, 646
         }
@@ -15122,7 +15120,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1900544,
+        .distance = 1900544,
         .children = {
             642, 644
         }
@@ -15133,7 +15131,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, 643
         }
@@ -15144,7 +15142,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, -1
         }
@@ -15155,7 +15153,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, 645
         }
@@ -15166,7 +15164,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, -1
         }
@@ -15177,7 +15175,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             647, 651
         }
@@ -15188,7 +15186,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             648, 649
         }
@@ -15199,7 +15197,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15210,7 +15208,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 650
         }
@@ -15221,7 +15219,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15232,7 +15230,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             652, 655
         }
@@ -15243,7 +15241,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             653, 654
         }
@@ -15254,7 +15252,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15265,7 +15263,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15276,7 +15274,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 656
         }
@@ -15287,7 +15285,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             657, 658
         }
@@ -15298,7 +15296,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15309,7 +15307,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15320,7 +15318,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             660, 666
         }
@@ -15331,7 +15329,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             661, -2
         }
@@ -15342,7 +15340,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             662, -2
         }
@@ -15353,7 +15351,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             663, -2
         }
@@ -15364,7 +15362,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             664, -2
         }
@@ -15375,7 +15373,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 665
         }
@@ -15386,7 +15384,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1900544,
+        .distance = 1900544,
         .children = {
             -2, -1
         }
@@ -15397,7 +15395,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             667, -1
         }
@@ -15408,7 +15406,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             668, -1
         }
@@ -15419,7 +15417,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -15430,7 +15428,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             670, 752
         }
@@ -15441,7 +15439,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             671, 685
         }
@@ -15452,7 +15450,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             672, 676
         }
@@ -15463,7 +15461,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             673, -2
         }
@@ -15474,7 +15472,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             674, -2
         }
@@ -15485,7 +15483,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             675, -2
         }
@@ -15496,7 +15494,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15507,7 +15505,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             677, 680
         }
@@ -15518,7 +15516,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             -2, 678
         }
@@ -15529,7 +15527,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             679, -1
         }
@@ -15540,7 +15538,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -15551,7 +15549,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             681, -1
         }
@@ -15562,7 +15560,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             682, 683
         }
@@ -15573,7 +15571,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15584,7 +15582,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 684
         }
@@ -15595,7 +15593,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15606,7 +15604,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             686, 740
         }
@@ -15617,7 +15615,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             687, 724
         }
@@ -15628,7 +15626,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             688, 702
         }
@@ -15639,7 +15637,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             689, 694
         }
@@ -15650,7 +15648,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             690, -2
         }
@@ -15661,7 +15659,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             691, 692
         }
@@ -15672,7 +15670,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -15683,7 +15681,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             693, -2
         }
@@ -15694,7 +15692,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -1, -2
         }
@@ -15705,7 +15703,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             695, 700
         }
@@ -15716,7 +15714,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             696, 698
         }
@@ -15727,7 +15725,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             697, -2
         }
@@ -15738,7 +15736,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -15749,7 +15747,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, 699
         }
@@ -15760,7 +15758,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1169592,
+        .distance = 1169592,
         .children = {
             -1, -2
         }
@@ -15771,7 +15769,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 701
         }
@@ -15782,7 +15780,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -15793,7 +15791,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             703, 718
         }
@@ -15804,7 +15802,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             704, 716
         }
@@ -15815,7 +15813,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             705, 712
         }
@@ -15826,7 +15824,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -2, 706
         }
@@ -15837,7 +15835,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             707, 709
         }
@@ -15848,7 +15846,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             708, -2
         }
@@ -15859,7 +15857,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15870,7 +15868,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             710, -2
         }
@@ -15881,7 +15879,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -1831
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 263776,
+        .distance = 263776,
         .children = {
             711, -2
         }
@@ -15892,7 +15890,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15903,7 +15901,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 713
         }
@@ -15914,7 +15912,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             714, -2
         }
@@ -15925,7 +15923,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 715
         }
@@ -15936,7 +15934,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15947,7 +15945,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             717, -2
         }
@@ -15958,7 +15956,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -15969,7 +15967,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             719, -2
         }
@@ -15980,7 +15978,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 720
         }
@@ -15991,7 +15989,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             721, 722
         }
@@ -16002,7 +16000,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -16013,7 +16011,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             723, -2
         }
@@ -16024,7 +16022,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -16035,7 +16033,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             725, 735
         }
@@ -16046,7 +16044,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             726, 729
         }
@@ -16057,7 +16055,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 727
         }
@@ -16068,7 +16066,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 728
         }
@@ -16079,7 +16077,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1169592,
+        .distance = 1169592,
         .children = {
             -1, -2
         }
@@ -16090,7 +16088,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -2, 730
         }
@@ -16101,7 +16099,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 731
         }
@@ -16112,7 +16110,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 732
         }
@@ -16123,7 +16121,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 733
         }
@@ -16134,7 +16132,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             734, -2
         }
@@ -16145,7 +16143,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -16156,7 +16154,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             736, 739
         }
@@ -16167,7 +16165,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             737, -2
         }
@@ -16178,7 +16176,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             738, -2
         }
@@ -16189,7 +16187,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -16200,7 +16198,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -16211,7 +16209,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             741, 751
         }
@@ -16222,7 +16220,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 742
         }
@@ -16233,7 +16231,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, 743
         }
@@ -16244,7 +16242,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 744
         }
@@ -16255,7 +16253,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, 745
         }
@@ -16266,7 +16264,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -196608,
+        .distance = -196608,
         .children = {
             -2, 746
         }
@@ -16277,7 +16275,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             747, 748
         }
@@ -16288,7 +16286,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -16299,7 +16297,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 749
         }
@@ -16310,7 +16308,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             750, -2
         }
@@ -16321,7 +16319,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, -1
         }
@@ -16332,7 +16330,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -16343,7 +16341,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             753, 781
         }
@@ -16354,7 +16352,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 131072,
+        .distance = 131072,
         .children = {
             754, 766
         }
@@ -16365,7 +16363,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, 755
         }
@@ -16376,7 +16374,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 756
         }
@@ -16387,7 +16385,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 757
         }
@@ -16398,7 +16396,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             758, 765
         }
@@ -16409,7 +16407,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 0,
+        .distance = 0,
         .children = {
             -2, 759
         }
@@ -16420,7 +16418,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 760
         }
@@ -16431,7 +16429,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -131072,
+        .distance = -131072,
         .children = {
             -2, 761
         }
@@ -16442,7 +16440,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             762, -2
         }
@@ -16453,7 +16451,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -196608,
+        .distance = -196608,
         .children = {
             -2, 763
         }
@@ -16464,7 +16462,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             764, -2
         }
@@ -16475,7 +16473,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -16486,7 +16484,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -16497,7 +16495,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             -2, 767
         }
@@ -16508,7 +16506,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, 768
         }
@@ -16519,7 +16517,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 769
         }
@@ -16530,7 +16528,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             770, 776
         }
@@ -16541,7 +16539,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -196608,
+        .distance = -196608,
         .children = {
             -2, 771
         }
@@ -16552,7 +16550,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             772, 773
         }
@@ -16563,7 +16561,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -16574,7 +16572,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 774
         }
@@ -16585,7 +16583,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             775, -2
         }
@@ -16596,7 +16594,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, -1
         }
@@ -16607,7 +16605,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -196608,
+        .distance = -196608,
         .children = {
             -2, 777
         }
@@ -16618,7 +16616,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 778
         }
@@ -16629,7 +16627,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 779
         }
@@ -16640,7 +16638,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             780, -2
         }
@@ -16651,7 +16649,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, -1
         }
@@ -16662,7 +16660,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -16673,7 +16671,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             783, 842
         }
@@ -16684,7 +16682,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             784, -1
         }
@@ -16695,7 +16693,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             785, 804
         }
@@ -16706,7 +16704,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             786, 802
         }
@@ -16717,7 +16715,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             787, 795
         }
@@ -16728,7 +16726,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1900544,
+        .distance = 1900544,
         .children = {
             -2, 788
         }
@@ -16739,7 +16737,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 425984,
+        .distance = 425984,
         .children = {
             -2, 789
         }
@@ -16750,7 +16748,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1638400,
+        .distance = 1638400,
         .children = {
             -2, 790
         }
@@ -16761,7 +16759,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 791
         }
@@ -16772,7 +16770,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 792
         }
@@ -16783,7 +16781,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             793, -2
         }
@@ -16794,7 +16792,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -2, 794
         }
@@ -16805,7 +16803,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             -1, -2
         }
@@ -16816,7 +16814,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             796, -2
         }
@@ -16827,7 +16825,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             -2, 797
         }
@@ -16838,7 +16836,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             798, -2
         }
@@ -16849,7 +16847,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 950272,
+        .distance = 950272,
         .children = {
             799, -2
         }
@@ -16860,7 +16858,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             -2, 800
         }
@@ -16871,7 +16869,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1081344,
+        .distance = 1081344,
         .children = {
             -2, 801
         }
@@ -16882,7 +16880,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -2, -1
         }
@@ -16893,7 +16891,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             803, -1
         }
@@ -16904,7 +16902,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -16915,7 +16913,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             805, 831
         }
@@ -16926,7 +16924,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             806, 826
         }
@@ -16937,7 +16935,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             807, 813
         }
@@ -16948,7 +16946,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             808, 812
         }
@@ -16959,7 +16957,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             809, 810
         }
@@ -16970,7 +16968,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -16981,7 +16979,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             811, -2
         }
@@ -16992,7 +16990,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17003,7 +17001,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -17014,7 +17012,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             814, 821
         }
@@ -17025,7 +17023,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             815, 820
         }
@@ -17036,7 +17034,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             816, 819
         }
@@ -17047,7 +17045,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             817, 818
         }
@@ -17058,7 +17056,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -17069,7 +17067,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17080,7 +17078,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -17091,7 +17089,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -17102,7 +17100,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             822, 824
         }
@@ -17113,7 +17111,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             823, -2
         }
@@ -17124,7 +17122,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -17135,7 +17133,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             825, -2
         }
@@ -17146,7 +17144,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17157,7 +17155,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             827, 829
         }
@@ -17168,7 +17166,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 828
         }
@@ -17179,7 +17177,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -17190,7 +17188,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             830, -2
         }
@@ -17201,7 +17199,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17212,7 +17210,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             832, 837
         }
@@ -17223,7 +17221,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             833, 835
         }
@@ -17234,7 +17232,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 834
         }
@@ -17245,7 +17243,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -17256,7 +17254,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             836, -2
         }
@@ -17267,7 +17265,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17278,7 +17276,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             838, 840
         }
@@ -17289,7 +17287,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 839
         }
@@ -17300,7 +17298,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             -1, -2
         }
@@ -17311,7 +17309,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             841, -2
         }
@@ -17322,7 +17320,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -17333,7 +17331,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             843, -1
         }
@@ -17344,7 +17342,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             844, 859
         }
@@ -17355,7 +17353,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             845, 858
         }
@@ -17366,7 +17364,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             846, 855
         }
@@ -17377,7 +17375,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             847, 849
         }
@@ -17388,7 +17386,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 848
         }
@@ -17399,7 +17397,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -17410,7 +17408,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             850, -2
         }
@@ -17421,7 +17419,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             851, 854
         }
@@ -17432,7 +17430,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             852, -2
         }
@@ -17443,7 +17441,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 163840,
+        .distance = 163840,
         .children = {
             -2, 853
         }
@@ -17454,7 +17452,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -17465,7 +17463,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -17476,7 +17474,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             856, -2
         }
@@ -17487,7 +17485,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             857, -2
         }
@@ -17498,7 +17496,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, -2
         }
@@ -17509,7 +17507,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -17520,7 +17518,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             860, 903
         }
@@ -17531,7 +17529,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             861, 881
         }
@@ -17542,7 +17540,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             862, 865
         }
@@ -17553,7 +17551,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             863, -2
         }
@@ -17564,7 +17562,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             864, -2
         }
@@ -17575,7 +17573,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -17586,7 +17584,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             866, 877
         }
@@ -17597,7 +17595,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             867, 873
         }
@@ -17608,7 +17606,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 196608,
+        .distance = 196608,
         .children = {
             868, -2
         }
@@ -17619,7 +17617,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             869, 872
         }
@@ -17630,7 +17628,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             870, -2
         }
@@ -17641,7 +17639,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -163840,
+        .distance = -163840,
         .children = {
             871, -2
         }
@@ -17652,7 +17650,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, -1
         }
@@ -17663,7 +17661,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -17674,7 +17672,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             -2, 874
         }
@@ -17685,7 +17683,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             875, -2
         }
@@ -17696,7 +17694,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 884736,
+        .distance = 884736,
         .children = {
             -2, 876
         }
@@ -17707,7 +17705,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, -1
         }
@@ -17718,7 +17716,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 878
         }
@@ -17729,7 +17727,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             879, -2
         }
@@ -17740,7 +17738,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 880
         }
@@ -17751,7 +17749,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -1, -2
         }
@@ -17762,7 +17760,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             882, 893
         }
@@ -17773,7 +17771,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             883, 887
         }
@@ -17784,7 +17782,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -753664,
+        .distance = -753664,
         .children = {
             884, 886
         }
@@ -17795,7 +17793,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 851968,
+        .distance = 851968,
         .children = {
             -2, 885
         }
@@ -17806,7 +17804,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -17817,7 +17815,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -17828,7 +17826,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 888
         }
@@ -17839,7 +17837,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             889, -2
         }
@@ -17850,7 +17848,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             890, 891
         }
@@ -17861,7 +17859,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -17872,7 +17870,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 892
         }
@@ -17883,7 +17881,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -17894,7 +17892,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             894, 896
         }
@@ -17905,7 +17903,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             895, -2
         }
@@ -17916,7 +17914,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -17927,7 +17925,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             897, 900
         }
@@ -17938,7 +17936,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             898, -1
         }
@@ -17949,7 +17947,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 899
         }
@@ -17960,7 +17958,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -17971,7 +17969,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 901
         }
@@ -17982,7 +17980,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 902
         }
@@ -17993,7 +17991,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1169592,
+        .distance = -1169592,
         .children = {
             -2, -1
         }
@@ -18004,7 +18002,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             904, 905
         }
@@ -18015,7 +18013,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -18026,7 +18024,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             906, 908
         }
@@ -18037,7 +18035,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             907, -2
         }
@@ -18048,7 +18046,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -18059,7 +18057,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             909, 912
         }
@@ -18070,7 +18068,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 910
         }
@@ -18081,7 +18079,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 911
         }
@@ -18092,7 +18090,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1169592,
+        .distance = -1169592,
         .children = {
             -2, -1
         }
@@ -18103,7 +18101,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 913
         }
@@ -18114,7 +18112,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             914, 917
         }
@@ -18125,7 +18123,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, 915
         }
@@ -18136,7 +18134,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 916
         }
@@ -18147,7 +18145,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, -1
         }
@@ -18158,7 +18156,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -18169,7 +18167,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             919, 1090
         }
@@ -18180,7 +18178,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             920, -1
         }
@@ -18191,7 +18189,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             921, 1012
         }
@@ -18202,7 +18200,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             922, 955
         }
@@ -18213,7 +18211,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             923, 936
         }
@@ -18224,7 +18222,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             924, -1
         }
@@ -18235,7 +18233,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             925, 931
         }
@@ -18246,7 +18244,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             926, 930
         }
@@ -18257,7 +18255,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 927
         }
@@ -18268,7 +18266,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 928
         }
@@ -18279,7 +18277,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             929, -2
         }
@@ -18290,7 +18288,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18301,7 +18299,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -18312,7 +18310,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             932, 935
         }
@@ -18323,7 +18321,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 933
         }
@@ -18334,7 +18332,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 934
         }
@@ -18345,7 +18343,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18356,7 +18354,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -18367,7 +18365,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             937, 946
         }
@@ -18378,7 +18376,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             938, 944
         }
@@ -18389,7 +18387,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 939
         }
@@ -18400,7 +18398,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             940, -1
         }
@@ -18411,7 +18409,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             941, 943
         }
@@ -18422,7 +18420,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             942, -2
         }
@@ -18433,7 +18431,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -18444,7 +18442,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -18455,7 +18453,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             945, -2
         }
@@ -18466,7 +18464,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -18477,7 +18475,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             947, 953
         }
@@ -18488,7 +18486,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 948
         }
@@ -18499,7 +18497,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             949, -1
         }
@@ -18510,7 +18508,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             950, 952
         }
@@ -18521,7 +18519,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             951, -2
         }
@@ -18532,7 +18530,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -18543,7 +18541,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -18554,7 +18552,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             954, -2
         }
@@ -18565,7 +18563,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -18576,7 +18574,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             956, 975
         }
@@ -18587,7 +18585,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1245184,
+        .distance = 1245184,
         .children = {
             957, 966
         }
@@ -18598,7 +18596,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1572864,
+        .distance = 1572864,
         .children = {
             958, 962
         }
@@ -18609,7 +18607,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 959
         }
@@ -18620,7 +18618,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             960, -1
         }
@@ -18631,7 +18629,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 961
         }
@@ -18642,7 +18640,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18653,7 +18651,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 963
         }
@@ -18664,7 +18662,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             964, -1
         }
@@ -18675,7 +18673,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 965
         }
@@ -18686,7 +18684,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18697,7 +18695,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             967, 971
         }
@@ -18708,7 +18706,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 968
         }
@@ -18719,7 +18717,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             969, -1
         }
@@ -18730,7 +18728,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 970
         }
@@ -18741,7 +18739,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18752,7 +18750,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 972
         }
@@ -18763,7 +18761,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             973, -1
         }
@@ -18774,7 +18772,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 974
         }
@@ -18785,7 +18783,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -18796,7 +18794,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             976, 988
         }
@@ -18807,7 +18805,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             977, -1
         }
@@ -18818,7 +18816,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1245184,
+        .distance = 1245184,
         .children = {
             978, 983
         }
@@ -18829,7 +18827,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             979, 981
         }
@@ -18840,7 +18838,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 980
         }
@@ -18851,7 +18849,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -18862,7 +18860,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             982, -2
         }
@@ -18873,7 +18871,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -18884,7 +18882,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             984, 986
         }
@@ -18895,7 +18893,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             985, -2
         }
@@ -18906,7 +18904,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -18917,7 +18915,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 987
         }
@@ -18928,7 +18926,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             -1, -2
         }
@@ -18939,7 +18937,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             989, 997
         }
@@ -18950,7 +18948,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             990, 995
         }
@@ -18961,7 +18959,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             991, -1
         }
@@ -18972,7 +18970,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             992, 994
         }
@@ -18983,7 +18981,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             993, -2
         }
@@ -18994,7 +18992,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19005,7 +19003,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -19016,7 +19014,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             996, -2
         }
@@ -19027,7 +19025,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -19038,7 +19036,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             998, 1006
         }
@@ -19049,7 +19047,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             999, 1004
         }
@@ -19060,7 +19058,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1000, -1
         }
@@ -19071,7 +19069,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             1001, 1003
         }
@@ -19082,7 +19080,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1002, -2
         }
@@ -19093,7 +19091,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19104,7 +19102,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -19115,7 +19113,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1005, -2
         }
@@ -19126,7 +19124,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -19137,7 +19135,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1007, 1010
         }
@@ -19148,7 +19146,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1008, -1
         }
@@ -19159,7 +19157,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1009, -2
         }
@@ -19170,7 +19168,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19181,7 +19179,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1011, -2
         }
@@ -19192,7 +19190,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -19203,7 +19201,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1013, 1039
         }
@@ -19214,7 +19212,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             1014, 1038
         }
@@ -19225,7 +19223,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             1015, 1018
         }
@@ -19236,7 +19234,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             -2, 1016
         }
@@ -19247,7 +19245,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1017
         }
@@ -19258,7 +19256,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -19269,7 +19267,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             1019, 1033
         }
@@ -19280,7 +19278,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 983040,
+        .distance = 983040,
         .children = {
             1020, 1028
         }
@@ -19291,7 +19289,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 1021
         }
@@ -19302,7 +19300,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1022, 1026
         }
@@ -19313,7 +19311,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1023
         }
@@ -19324,7 +19322,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, 1024
         }
@@ -19335,7 +19333,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             1025, -2
         }
@@ -19346,7 +19344,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             -2, -1
         }
@@ -19357,7 +19355,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1027
         }
@@ -19368,7 +19366,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             -1, -2
         }
@@ -19379,7 +19377,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1029, 1030
         }
@@ -19390,7 +19388,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -19401,7 +19399,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1031, -2
         }
@@ -19412,7 +19410,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1032, -2
         }
@@ -19423,7 +19421,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -19434,7 +19432,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1034, 1037
         }
@@ -19445,7 +19443,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1169592,
+        .distance = 1169592,
         .children = {
             -2, 1035
         }
@@ -19456,7 +19454,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1036, -2
         }
@@ -19467,7 +19465,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1015360,
+        .distance = 1015360,
         .children = {
             -2, -1
         }
@@ -19478,7 +19476,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1169592,
+        .distance = 1169592,
         .children = {
             -1, -2
         }
@@ -19489,7 +19487,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -19500,7 +19498,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1040, 1085
         }
@@ -19511,7 +19509,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 917504,
+        .distance = 917504,
         .children = {
             1041, 1055
         }
@@ -19522,7 +19520,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             1042, 1051
         }
@@ -19533,7 +19531,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             1043, 1044
         }
@@ -19544,7 +19542,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -19555,7 +19553,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1045, 1049
         }
@@ -19566,7 +19564,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1114112,
+        .distance = 1114112,
         .children = {
             1046, 1047
         }
@@ -19577,7 +19575,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -19588,7 +19586,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1048
         }
@@ -19599,7 +19597,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 327680,
+        .distance = 327680,
         .children = {
             -1, -2
         }
@@ -19610,7 +19608,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             1050, -1
         }
@@ -19621,7 +19619,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1169592,
+        .distance = 1169592,
         .children = {
             -1, -2
         }
@@ -19632,7 +19630,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, 1052
         }
@@ -19643,7 +19641,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -2, 1053
         }
@@ -19654,7 +19652,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1054
         }
@@ -19665,7 +19663,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -19676,7 +19674,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1056, 1064
         }
@@ -19687,7 +19685,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1057, 1061
         }
@@ -19698,7 +19696,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             1058, 1059
         }
@@ -19709,7 +19707,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19720,7 +19718,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1060, -2
         }
@@ -19731,7 +19729,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19742,7 +19740,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1062, -2
         }
@@ -19753,7 +19751,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1063, -1
         }
@@ -19764,7 +19762,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -19775,7 +19773,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             1065, 1077
         }
@@ -19786,7 +19784,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             1066, 1071
         }
@@ -19797,7 +19795,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1067, -2
         }
@@ -19808,7 +19806,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 753664,
+        .distance = 753664,
         .children = {
             1068, 1069
         }
@@ -19819,7 +19817,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19830,7 +19828,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1070, -2
         }
@@ -19841,7 +19839,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1065841,
+        .distance = 1065841,
         .children = {
             -2, -1
         }
@@ -19852,7 +19850,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1072
         }
@@ -19863,7 +19861,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1073
         }
@@ -19874,7 +19872,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             1074, 1076
         }
@@ -19885,7 +19883,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             1075, -2
         }
@@ -19896,7 +19894,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -19907,7 +19905,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = -2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1251205,
+        .distance = 1251205,
         .children = {
             -1, -2
         }
@@ -19918,7 +19916,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1078, 1083
         }
@@ -19929,7 +19927,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1079, 1080
         }
@@ -19940,7 +19938,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -19951,7 +19949,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1081
         }
@@ -19962,7 +19960,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1082, -2
         }
@@ -19973,7 +19971,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, -1
         }
@@ -19984,7 +19982,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1084, -2
         }
@@ -19995,7 +19993,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -20006,7 +20004,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -1, 1086
         }
@@ -20017,7 +20015,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 589824,
+        .distance = 589824,
         .children = {
             -2, 1087
         }
@@ -20028,7 +20026,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             -2, 1088
         }
@@ -20039,7 +20037,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 1089
         }
@@ -20050,7 +20048,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
@@ -20061,7 +20059,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1179648,
+        .distance = -1179648,
         .children = {
             1091, -1
         }
@@ -20072,7 +20070,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             1092, -1
         }
@@ -20083,7 +20081,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 720896,
+        .distance = 720896,
         .children = {
             1093, 1149
         }
@@ -20094,7 +20092,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1094, 1136
         }
@@ -20105,7 +20103,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 1095
         }
@@ -20116,7 +20114,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             1096, 1130
         }
@@ -20127,7 +20125,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             1097, 1106
         }
@@ -20138,7 +20136,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1098, 1103
         }
@@ -20149,7 +20147,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1099
         }
@@ -20160,7 +20158,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1100, 1101
         }
@@ -20171,7 +20169,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20182,7 +20180,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1102, -2
         }
@@ -20193,7 +20191,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -20204,7 +20202,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 1104
         }
@@ -20215,7 +20213,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 1105
         }
@@ -20226,7 +20224,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -20237,7 +20235,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1703936,
+        .distance = 1703936,
         .children = {
             1107, 1116
         }
@@ -20248,7 +20246,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1108, 1113
         }
@@ -20259,7 +20257,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1109, 1111
         }
@@ -20270,7 +20268,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1110
         }
@@ -20281,7 +20279,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20292,7 +20290,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 1112
         }
@@ -20303,7 +20301,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -20314,7 +20312,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1114, -1
         }
@@ -20325,7 +20323,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             1115, -2
         }
@@ -20336,7 +20334,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20347,7 +20345,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1117, 1127
         }
@@ -20358,7 +20356,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1118
         }
@@ -20369,7 +20367,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1376256,
+        .distance = 1376256,
         .children = {
             1119, 1123
         }
@@ -20380,7 +20378,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1120, 1121
         }
@@ -20391,7 +20389,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20402,7 +20400,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1122, -2
         }
@@ -20413,7 +20411,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -20424,7 +20422,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1124, 1125
         }
@@ -20435,7 +20433,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20446,7 +20444,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             1126, -2
         }
@@ -20457,7 +20455,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, -2
         }
@@ -20468,7 +20466,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1128
         }
@@ -20479,7 +20477,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1129
         }
@@ -20490,7 +20488,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -20501,7 +20499,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1131, 1134
         }
@@ -20512,7 +20510,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1132
         }
@@ -20523,7 +20521,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1133, -2
         }
@@ -20534,7 +20532,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -20545,7 +20543,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 1135
         }
@@ -20556,7 +20554,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -20567,7 +20565,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1137, -1
         }
@@ -20578,7 +20576,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1138, 1141
         }
@@ -20589,7 +20587,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             1139, -2
         }
@@ -20600,7 +20598,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1140
         }
@@ -20611,7 +20609,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -20622,7 +20620,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 1048576,
+        .distance = 1048576,
         .children = {
             1142, 1147
         }
@@ -20633,7 +20631,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 2031616,
+        .distance = 2031616,
         .children = {
             1143, 1145
         }
@@ -20644,7 +20642,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1144
         }
@@ -20655,7 +20653,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -20666,7 +20664,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1146
         }
@@ -20677,7 +20675,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -20688,7 +20686,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1148
         }
@@ -20699,7 +20697,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -20710,7 +20708,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 393216,
+        .distance = 393216,
         .children = {
             1150, 1169
         }
@@ -20721,7 +20719,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1151, 1164
         }
@@ -20732,7 +20730,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             1152, 1155
         }
@@ -20743,7 +20741,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             1153, -2
         }
@@ -20754,7 +20752,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1154
         }
@@ -20765,7 +20763,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -20776,7 +20774,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1156, 1160
         }
@@ -20787,7 +20785,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -1, 1157
         }
@@ -20798,7 +20796,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             -1, 1158
         }
@@ -20809,7 +20807,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1159, -2
         }
@@ -20820,7 +20818,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -20831,7 +20829,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1161, 1162
         }
@@ -20842,7 +20840,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -20853,7 +20851,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1163
         }
@@ -20864,7 +20862,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, -1
         }
@@ -20875,7 +20873,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 1165
         }
@@ -20886,7 +20884,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 1166
         }
@@ -20897,7 +20895,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1167, -1
         }
@@ -20908,7 +20906,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -753664,
+        .distance = -753664,
         .children = {
             -2, 1168
         }
@@ -20919,7 +20917,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -20930,7 +20928,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1170, 1229
         }
@@ -20941,7 +20939,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1171, 1186
         }
@@ -20952,7 +20950,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1172, 1178
         }
@@ -20963,7 +20961,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             1173, 1174
         }
@@ -20974,7 +20972,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, -2
         }
@@ -20985,7 +20983,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -1, 1175
         }
@@ -20996,7 +20994,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             1176, -2
         }
@@ -21007,7 +21005,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1177, -2
         }
@@ -21018,7 +21016,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             -1, -2
         }
@@ -21029,7 +21027,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 1179
         }
@@ -21040,7 +21038,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1180
         }
@@ -21051,7 +21049,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 1181
         }
@@ -21062,7 +21060,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1182
         }
@@ -21073,7 +21071,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             -2, 1183
         }
@@ -21084,7 +21082,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1184
         }
@@ -21095,7 +21093,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, 1185
         }
@@ -21106,7 +21104,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, -1
         }
@@ -21117,7 +21115,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1187, 1196
         }
@@ -21128,7 +21126,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1188, 1189
         }
@@ -21139,7 +21137,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -1, -2
         }
@@ -21150,7 +21148,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             -2, 1190
         }
@@ -21161,7 +21159,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -294912,
+        .distance = -294912,
         .children = {
             1191, 1195
         }
@@ -21172,7 +21170,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1192
         }
@@ -21183,7 +21181,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             -2, 1193
         }
@@ -21194,7 +21192,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1194
         }
@@ -21205,7 +21203,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             -2, -1
         }
@@ -21216,7 +21214,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -21227,7 +21225,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -589824,
+        .distance = -589824,
         .children = {
             1197, 1207
         }
@@ -21238,7 +21236,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1198, 1199
         }
@@ -21249,7 +21247,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             -1, -2
         }
@@ -21260,7 +21258,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             1200, 1204
         }
@@ -21271,7 +21269,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             1201, -2
         }
@@ -21282,7 +21280,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             1202, -2
         }
@@ -21293,7 +21291,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1203, -2
         }
@@ -21304,7 +21302,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1015360,
+        .distance = -1015360,
         .children = {
             -1, -2
         }
@@ -21315,7 +21313,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, 1205
         }
@@ -21326,7 +21324,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1114112,
+        .distance = -1114112,
         .children = {
             1206, -1
         }
@@ -21337,7 +21335,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1169592,
+        .distance = -1169592,
         .children = {
             -2, -1
         }
@@ -21348,7 +21346,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -917504,
+        .distance = -917504,
         .children = {
             1208, 1220
         }
@@ -21359,7 +21357,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             1209, 1214
         }
@@ -21370,7 +21368,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 262144,
+        .distance = 262144,
         .children = {
             1210, -2
         }
@@ -21381,7 +21379,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -753664,
+        .distance = -753664,
         .children = {
             1211, 1213
         }
@@ -21392,7 +21390,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -851968,
+        .distance = -851968,
         .children = {
             1212, -2
         }
@@ -21403,7 +21401,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -21414,7 +21412,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1065841,
+        .distance = -1065841,
         .children = {
             -1, -2
         }
@@ -21425,7 +21423,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1215
         }
@@ -21436,7 +21434,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1216
         }
@@ -21447,7 +21445,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -983040,
+        .distance = -983040,
         .children = {
             1217, 1219
         }
@@ -21458,7 +21456,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1218
         }
@@ -21469,7 +21467,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -21480,7 +21478,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -21491,7 +21489,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             1221, 1223
         }
@@ -21502,7 +21500,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             -2, 1222
         }
@@ -21513,7 +21511,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             -2, -1
         }
@@ -21524,7 +21522,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1048576,
+        .distance = -1048576,
         .children = {
             1224, 1226
         }
@@ -21535,7 +21533,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1225
         }
@@ -21546,7 +21544,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 2896
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1251205,
+        .distance = -1251205,
         .children = {
             -2, -1
         }
@@ -21557,7 +21555,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 4096
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -720896,
+        .distance = -720896,
         .children = {
             1227, -1
         }
@@ -21568,7 +21566,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, 1228
         }
@@ -21579,7 +21577,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 803
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -1169592,
+        .distance = -1169592,
         .children = {
             -2, -1
         }
@@ -21590,7 +21588,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * 65536,
+        .distance = 65536,
         .children = {
             1230, 1232
         }
@@ -21601,7 +21599,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -65536,
+        .distance = -65536,
         .children = {
             -2, 1231
         }
@@ -21612,7 +21610,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             -2, -1
         }
@@ -21623,7 +21621,7 @@ BSPNode3 bspNodes_player[] = {
             .y = 0,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -393216,
+        .distance = -393216,
         .children = {
             1233, -1
         }
@@ -21634,7 +21632,7 @@ BSPNode3 bspNodes_player[] = {
             .y = -4096,
             .z = 0
         },
-        .distance = MODEL_SCALE_MULTIPLIER * -262144,
+        .distance = -262144,
         .children = {
             -2, -1
         }
