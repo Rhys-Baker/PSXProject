@@ -59,8 +59,6 @@ extern const uint8_t default_32Palette[];
 TextureInfo default_32;
 
 
-
-
 Camera mainCamera;
 Player3 player;
 char str_Buffer[256];
