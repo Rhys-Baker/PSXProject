@@ -10,6 +10,12 @@ typedef struct Vector2{
 typedef struct Vector2_16{
     int16_t x, y;
 } Vector2_16;
+static inline Vector2 Vector2_16toVector2(Vector2_16 v){
+    return (Vector2){v.x, v.y};
+}
+static inline Vector2_16 Vector2toVector2_16(Vector2 v){
+    return (Vector2_16){v.x, v.y};
+}
 
 /// @brief Stores a 3D vector in 20.12 fixed-point format
 typedef struct Vector3{

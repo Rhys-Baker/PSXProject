@@ -31,6 +31,10 @@
 #include "system.h"
 #pragma endregion
 
+#define MAX_POLYGON_WIDTH 1023
+#define MAX_POLYGON_HEIGHT 511
+
+
 #define MOVEMENT_SPEED (ONE * 5 * MODEL_SCALE_MULTIPLIER)
 
 #define ACCELERATION_CONSTANT (ONE * MODEL_SCALE_MULTIPLIER)
@@ -60,13 +64,13 @@ TextureInfo default_32;
 Camera mainCamera;
 Player3 player;
 char str_Buffer[256];
-//int screenColor = 0xfa823c;
 int screenColor = 0x000000;
 int wallColor = 0x3c82fa;
 int gteScaleFactor = 0;
 bool drawOutlines = false;
 int cameraHeight = 0;
 int debugVariable = 0;
+int drawnQuads = 0;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -218,23 +222,7 @@ void drawQuad2(Quad2 quad, uint32_t colour){
     dmaPtr[3] = gp0_xy(quad.c.x, quad.c.y);
     dmaPtr[4] = gp0_xy(quad.d.x, quad.d.y);
 }
-void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo, int max_recursion){
-    int32_t maxX = max32s(max32s(quad.a.x, quad.b.x), max32s(quad.c.x, quad.d.x));
-    int32_t minX = min32s(max32s(quad.a.x, quad.b.x), min32s(quad.c.x, quad.d.x));
-    int32_t maxY = max32s(max32s(quad.a.y, quad.b.y), max32s(quad.c.y, quad.d.y));
-    int32_t minY = min32s(max32s(quad.a.y, quad.b.y), min32s(quad.c.y, quad.d.y));
-
-    if(maxX < 0 || minX > SCREEN_WIDTH || maxY < 0 || minY > SCREEN_WIDTH){
-        // Outside screen, don't draw
-        return;
-    }
-
-    int32_t width  = maxX - minX;
-    int32_t height = maxY - minY;
-
-    // Screen-space subdivision should go here
-
-    // Base case: Quad is of renderable size, so render it
+void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo){
     int32_t xy0 = gp0_xy(quad.a.x, quad.a.y);
     int32_t xy1 = gp0_xy(quad.b.x, quad.b.y);
     int32_t xy2 = gp0_xy(quad.c.x, quad.c.y);
@@ -271,7 +259,7 @@ void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo, int m
         drawLine2((Vector2){quad.d.x, quad.d.y},(Vector2){quad.c.x, quad.c.y}, 0xFFFFFF); // DC
         drawLine2((Vector2){quad.c.x, quad.c.y},(Vector2){quad.a.x, quad.a.y}, 0xFFFFFF); // CA
     }
-
+    return;
 }
 
 bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
@@ -500,7 +488,84 @@ bool transformQuad_texturedFlat(Camera *cam, Quad3_texturedFlat quad, Quad2_text
     return ret;
 }
 
+// A--1--B
+// | /| /|
+// |/ |/ |
+// 4--m--2
+// | /| /|
+// |/ |/ |
+// C--3--D
 
+// In:
+// A->B->C->D 
+// Out:
+// A->1->4->m
+// 1->B->m->2
+// 4->m->C->3
+// m->2->3->D
+void subdivideQuad3(Quad3_texturedFlat quad, Quad3_texturedFlat childQuads[4]){
+    Vector3 VA, VB, VC, VD;
+    Vector2 VAu,VBu,VCu,VDu;
+    Vector3 V1, V2, V3, V4;
+    Vector2 V1u,V2u,V3u,V4u;
+    Vector3 Vm;
+    Vector2 Vmu;
+
+    VA = quad.a; VB = quad.b; VC = quad.c; VD = quad.d;
+    VAu=quad.auv;VBu=quad.buv;VCu=quad.cuv;VDu=quad.duv;
+
+    V1 = (Vector3){(VA.x + VB.x)>>1,(VA.y + VB.y)>>1,(VA.z + VB.z)>>1};
+    V1u= (Vector2){(VAu.x+VBu.x)>>1,(VAu.y+VBu.y)>>1};
+    V2 = (Vector3){(VB.x + VD.x)>>1,(VB.y + VD.y)>>1,(VB.z + VD.z)>>1};
+    V2u= (Vector2){(VBu.x+VDu.x)>>1,(VBu.y+VDu.y)>>1};
+    V3 = (Vector3){(VC.x + VD.x)>>1,(VC.y + VD.y)>>1,(VC.z + VD.z)>>1};
+    V3u= (Vector2){(VCu.x+VDu.x)>>1,(VCu.y+VDu.y)>>1};
+    V4 = (Vector3){(VA.x + VC.x)>>1,(VA.y + VC.y)>>1,(VA.z + VC.z)>>1};
+    V4u= (Vector2){(VAu.x+VCu.x)>>1,(VAu.y+VCu.y)>>1};
+
+    Vm = (Vector3){
+        (VA.x + VB.x + VC.x + VD.x) >>2,
+        (VA.y + VB.y + VC.y + VD.y) >>2,
+        (VA.z + VB.z + VC.z + VD.z) >>2
+    };
+    Vmu= (Vector2){
+        (VAu.x + VBu.x + VCu.x + VDu.x) >>2,
+        (VAu.y + VBu.y + VCu.y + VDu.y) >>2,
+    };
+
+    childQuads[0]=(Quad3_texturedFlat){
+        VA, V1, V4, Vm,
+        VAu,V1u,V4u,Vmu,
+        quad.textureIndex
+    };
+    childQuads[1]=(Quad3_texturedFlat){
+        V1, VB, Vm, V2,
+        V1u,VBu,Vmu,V2u,
+        quad.textureIndex
+    };
+    childQuads[2]=(Quad3_texturedFlat){
+        V4, Vm, VC, V3,
+        V4u,Vmu,VCu,V3u,
+        quad.textureIndex
+    };
+    childQuads[3]=(Quad3_texturedFlat){
+        Vm, V2, V3, VD,
+        Vmu,V2u,V3u,VDu,
+        quad.textureIndex
+    };
+}
+
+void fullRenderQuad3_texturedFlat(Quad3_texturedFlat quad, Camera *cam, TextureInfo *texinfo){    
+    // Transform the quad initially
+    Quad2_texturedFlat result;
+    transformQuad_texturedFlat(cam, quad, &result);
+
+    // Should do some world-space subdivisions here
+
+    drawQuad2_texturedFlat(result, texinfo);
+    drawnQuads++;
+
+}
 #pragma endregion
 
 
@@ -27475,8 +27540,6 @@ Quad3_texturedFlat quads[] = {
         16
     },
 };
-
-
 #pragma endregion
 
 //////////////////////////
@@ -27606,13 +27669,6 @@ void initHardware(void){
     // Upload textures
     uploadIndexedTexture(&font, fontData, 960, 0, FONT_WIDTH, FONT_HEIGHT, 
         fontPalette, 960, FONT_HEIGHT, GP0_COLOR_4BPP);
-    //uploadIndexedTexture(&default_32, default_32Data, 960-64, 128, 32, 32,
-    //    default_32Palette, SCREEN_WIDTH, 128+32, GP0_COLOR_8BPP);
-    //uploadTexture(&default_32, default_32Data, SCREEN_WIDTH+32, 0, 32, 32);
-    // Initalise the transformed verts list
-    // TODO: Look into whether this is actually useful or not
-    transformedVerts = malloc(sizeof(TransformedVert) * maxNumVerts);
-
     
     // Point to the relevant DMA chain for this frame, then swap the active frame.
     activeChain = &dmaChains[usingSecondFrame];
@@ -27659,40 +27715,16 @@ void main(void){
     // Load all the necessary textures from disc
     printf("Loading textures from disc...\n");
     for(int i = 0; i<numTextures; i++){
-        //printf(" %d | Need to load texture %s\n", i, bspTextureInfo[i].name);
         int bytesLoaded = texture_loadTIM(bspTextureInfo[i].name, &bspTextureInfo[i].textureInfo);
-        if(bytesLoaded >= 0){
-            //printf("Loaded %d bytes\n", bytesLoaded);
-        } else {
+        if(bytesLoaded < 0){
             printf("Error loading texture: %d", bytesLoaded);
         }
     }
 
     int t = 4;
-
-    //printf("Texinfo: %d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.w, bspTextureInfo[t].textureInfo.h);
     
     uint8_t bitmask_u = 0xFF << (31-__builtin_clz(bspTextureInfo[t].textureInfo.w));
     uint8_t bitmask_v = 0xFF << (31-__builtin_clz(bspTextureInfo[t].textureInfo.h));
-    //printf("texwindow(%d, %d, %d, %d)\n",
-    //    bspTextureInfo[t].textureInfo.u>>3,
-    //    bspTextureInfo[t].textureInfo.v>>3,
-    //    bitmask_u,
-    //    bitmask_v
-    //);
-    //printf("(%d, %d, %x, %x)\n",
-    //    bspTextureInfo[t].textureInfo.u,
-    //    bspTextureInfo[t].textureInfo.v,
-    //    bitmask_u,
-    //    bitmask_v
-    //);
-    //printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.w, bspTextureInfo[t].textureInfo.h);
-    //printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.w, __builtin_clz(bspTextureInfo[t].textureInfo.w), 31-__builtin_clz(bspTextureInfo[t].textureInfo.w), bitmask_u);
-    //printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.h, __builtin_clz(bspTextureInfo[t].textureInfo.h), 31-__builtin_clz(bspTextureInfo[t].textureInfo.h), bitmask_v);
-    //printf("%d %d %d %d\n", bspTextureInfo[t].textureInfo.u, bspTextureInfo[t].textureInfo.u>>3, bspTextureInfo[t].textureInfo.v, bspTextureInfo[t].textureInfo.v>>3);
-
-
-    
 
     // Init camera
     mainCamera.x     = 0;
@@ -27718,14 +27750,13 @@ void main(void){
         player.position.x, player.position.y, player.position.z
     );
 
-    //while(true){
-    //    // Do nothing
-    //}
 
 
     debug("Start of main loop\n");
     // Main loop. Runs every frame, forever
     for(;;){
+
+        drawnQuads = 0;
 
         ///////////////////////////
         //       Game logic      //
@@ -27762,17 +27793,14 @@ void main(void){
 
         // Collide with the BSP tree
         Player3_move(&bsp_player, &player);
-        //int playerColour = BSPTree3_pointContents(&bsp_player, 0, player.position) == -1 ? 0xFFFFFF : 0x000000;
 
         // Move camera to player position
         mainCamera.x     = (player.position.x);
         mainCamera.z     = (player.position.z);
-        //mainCamera.y     = (player.position.y-(20<<12))>>GTE_SCALE_FACTOR; // the same height as the camera in the game
         mainCamera.y = ((player.position.y)) + (cameraHeight);
 
 
         #pragma endregion
-
 
 
         ///////////////////////////
@@ -27834,11 +27862,11 @@ void main(void){
                 drawTri2_texturedFlat(transformedTri, &bspTextureInfo[ti].textureInfo, 20);
             }
         }
-        Quad2_texturedFlat transformedQuad;
-        for(int i = 0; i<numQuads; i++){
+        
+        for(int i=0; i<numQuads; i++){
             int32_t ti = quads[i].textureIndex;
             if(ti == -1){
-                continue;
+                continue; // Don't render empty brushes.
             }
             if(ti > numTextures){
                 printf(
@@ -27847,27 +27875,17 @@ void main(void){
                 );
                 continue;
             }
-            if(
-                transformQuad_texturedFlat(&mainCamera, quads[i], &transformedQuad)
-            ){
-                // Assume texture is loaded otherwise.
-                // Ideally, if the correct texture isn't loaded, then the "missing"
-                // texture will take its place in the texinfo field.
-                drawQuad2_texturedFlat(transformedQuad, &bspTextureInfo[ti].textureInfo, 20);
-                //Quad2 quad;
-                //quad.a = transformedQuad.a;
-                //quad.b = transformedQuad.b;
-                //quad.c = transformedQuad.c;
-                //quad.d = transformedQuad.d;
-                //drawQuad2(quad, 0x00ffff);
-            }
+            fullRenderQuad3_texturedFlat(quads[i], &mainCamera, &bspTextureInfo[ti].textureInfo);
         }
 
         // Crosshair
         drawCross2((Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
 
-        //sprintf(str_Buffer, "Controls:\n D-Pad: Move\n Face Buttons: Look\n Select: Show wireframe\n R2: Jump\n\nCamera Offset: %d", cameraHeight);
-        sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d", player.position.x, player.position.y, player.position.z, mainCamera.yaw, isin(mainCamera.yaw), icos(mainCamera.yaw));
+        sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d, Quads: %d",
+            player.position.x, player.position.y, player.position.z,
+            mainCamera.yaw, isin(mainCamera.yaw), icos(mainCamera.yaw),
+            drawnQuads
+        );
         printString(activeChain, &font, 10, 10, str_Buffer);
         
         // Draw a plain background
