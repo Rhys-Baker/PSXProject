@@ -454,40 +454,68 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
 
     return true;
 }
-bool transformQuad_texturedFlat(Camera *cam, Quad3_texturedFlat quad, Quad2_texturedFlat *result){
-    // Convert the textured_flat triangle to a regular triangle
-    Quad3 _quad;
-    _quad.a = quad.a;
-    _quad.b = quad.b;
-    _quad.c = quad.c;
-    _quad.d = quad.d;
-
-    // To store the result
-    Quad2 _result = {
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        {0, 0},
-        0
-    };
-
-    bool ret = transformQuad(cam, _quad, &_result);
-
-    result->a = _result.a;
-    result->b = _result.b;
-    result->c = _result.c;
-    result->d = _result.d;
-
-    result->z = _result.z;
+bool transformQuad_texturedFlat(Camera *cam, Quad3_texturedFlat *quad, Quad2_texturedFlat *result){
+        gte_loadV0(&(GTEVector16){(int16_t)((quad->a.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_loadV1(&(GTEVector16){(int16_t)((quad->b.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_loadV2(&(GTEVector16){(int16_t)((quad->c.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->c.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->c.z * MODEL_SCALE_MULTIPLIER)>>12)});
     
-    result->auv=quad.auv;
-    result->buv=quad.buv;
-    result->cuv=quad.cuv;
-    result->duv=quad.duv;
+    gte_command(GTE_CMD_RTPT | GTE_SF);
+    gte_command(GTE_CMD_NCLIP);
+    
 
+    // Ensure the command has “gone to hardware” before we read back regs:
+    __asm__ volatile ("" ::: "memory");
+    
+    int MAC0;
+    __asm__ volatile("mfc2 %0, $24\n" : "=r"(MAC0));
+    if(MAC0 <= 0){
+        return false;
+    }
+    if(gte_getControlReg(GTE_FLAG) & GTE_FLAG_DIVIDE_OVERFLOW){
+        return false;
+    }
 
-    return ret;
+    uint32_t xy0 = gte_getDataReg(GTE_SXY0);
+    result->a = (Vector2_16){xy0 & 0xFFFF, xy0 >> 16};
+
+    // Ensure the command has “gone to hardware” before we read back regs:
+    __asm__ volatile ("" ::: "memory");
+
+    gte_loadV0(&(GTEVector16){(int16_t)((quad->d.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->d.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->d.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_command(GTE_CMD_RTPS | GTE_SF);
+
+    // Ensure the command has “gone to hardware” before we read back regs:
+    __asm__ volatile ("" ::: "memory");
+
+    uint32_t xy1 = gte_getDataReg(GTE_SXY0);
+    uint32_t xy2 = gte_getDataReg(GTE_SXY1);
+    uint32_t xy3 = gte_getDataReg(GTE_SXY2);
+
+    gte_command(GTE_CMD_AVSZ4 | GTE_SF);
+    int zIndex;
+    __asm__ volatile("mfc2 %0, $7\n" : "=r"(zIndex));
+
+    if(zIndex < 1 || zIndex >= ORDERING_TABLE_SIZE){
+        return false;
+    }
+    
+    result->b = (Vector2_16){xy1 & 0xFFFF, xy1 >> 16};
+    result->c = (Vector2_16){xy2 & 0xFFFF, xy2 >> 16};
+    result->d = (Vector2_16){xy3 & 0xFFFF, xy3 >> 16};
+
+    result->z = zIndex;
+
+    result->auv=quad->auv;
+    result->buv=quad->buv;
+    result->cuv=quad->cuv;
+    result->duv=quad->duv;
+
+    result->textureIndex = quad->textureIndex;
+
+    return true;
 }
+
+
 
 // A--1--B
 // | /| /|
@@ -559,13 +587,9 @@ void subdivideQuad3(Quad3_texturedFlat quad, Quad3_texturedFlat childQuads[4]){
 void fullRenderQuad3_texturedFlat(Quad3_texturedFlat quad, Camera *cam, TextureInfo *texinfo){    
     // Transform the quad initially
     Quad2_texturedFlat result;
-    transformQuad_texturedFlat(cam, quad, &result);
-
-    // Should do some world-space subdivisions here
-
+    if(!transformQuad_texturedFlat(cam, &quad, &result)) return;
     drawQuad2_texturedFlat(result, texinfo);
     drawnQuads++;
-
 }
 #pragma endregion
 
@@ -917,7 +941,7 @@ void main(void){
 
         // Crosshair
         drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
-
+        
         
 
         // Framerate cheatsheet:
@@ -966,7 +990,7 @@ void main(void){
 
         // This will wait for the GPU to be ready,
         waitForGP0Ready();
-
+        
         // Give DMA a pointer to the last item in the ordering table.
         // We don't need to add a terminator, as it is already done for us by the OTC.
         sendLinkedList(&(activeChain->orderingTable)[ORDERING_TABLE_SIZE - 1]);
