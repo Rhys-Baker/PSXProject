@@ -85,35 +85,35 @@ Vector2 transformedGizmoPoints[4];
 // Drawing Helper Functions //
 //////////////////////////////
 #pragma region Drawing Helpers
-void drawCross2(Vector2 p, uint32_t colour){
+static void drawCross2(DMAChain *chain, Vector2 p, uint32_t colour){
     int32_t x, y;
     x = p.x;
     y = p.y;
 
-    dmaPtr = allocatePacket(activeChain, 0, 3);
+    dmaPtr = allocatePacket(chain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x-2, y-2);
     dmaPtr[2] = gp0_xy(x+2, y+2);
 
-    dmaPtr = allocatePacket(activeChain, 0, 3);
+    dmaPtr = allocatePacket(chain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(x+2, y-2);
     dmaPtr[2] = gp0_xy(x-2, y+2);
 }
-void drawLine2(Vector2 a, Vector2 b, uint32_t colour){
-    dmaPtr = allocatePacket(activeChain, 0, 3);
+static void drawLine2(DMAChain *chain, Vector2 a, Vector2 b, uint32_t colour){
+    dmaPtr = allocatePacket(chain, 0, 3);
     dmaPtr[0] = colour | gp0_line(false, false);
     dmaPtr[1] = gp0_xy(a.x, a.y);
     dmaPtr[2] = gp0_xy(b.x, b.y);
 }
-void drawTri2(Tri2 tri, uint32_t colour){
-    dmaPtr = allocatePacket(activeChain, tri.z, 4);
+static void drawTri2(DMAChain *chain, Tri2 tri, uint32_t colour){
+    dmaPtr = allocatePacket(chain, tri.z, 4);
     dmaPtr[0] = colour | gp0_triangle(false, false);
     dmaPtr[1] = gp0_xy(tri.a.x, tri.a.y);
     dmaPtr[2] = gp0_xy(tri.b.x, tri.b.y);
     dmaPtr[3] = gp0_xy(tri.c.x, tri.c.y);
 }
-void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_recursion){
+static void drawTri2_texturedFlat(DMAChain *chain, Tri2_texturedFlat tri, TextureInfo *texinfo, int max_recursion){
 
     int32_t maxX = max32s(tri.a.x, max32s(tri.b.x, tri.c.x));
     int32_t minX = min32s(tri.a.x, min32s(tri.b.x, tri.c.x));
@@ -141,6 +141,7 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
 
         // Repeat the process for all sub-triangles
         drawTri2_texturedFlat(
+            activeChain,
             (Tri2_texturedFlat) {
                 tri.a, va, vc,
                 tri.z,
@@ -150,6 +151,7 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
             max_recursion
         );
         drawTri2_texturedFlat(
+            activeChain,
             (Tri2_texturedFlat) {
                 va, tri.b, vb,
                 tri.z,
@@ -159,6 +161,7 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
             max_recursion
         );
         drawTri2_texturedFlat(
+            activeChain,
             (Tri2_texturedFlat) {
                 vb, tri.c, vc,
                 tri.z,
@@ -168,6 +171,7 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
             max_recursion
         );
         drawTri2_texturedFlat(
+            activeChain,
             (Tri2_texturedFlat) {
                 va, vb, vc,
                 tri.z,
@@ -194,7 +198,7 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     uint8_t bitmask_u = 0xFF << (31-__builtin_clz(texinfo->w));
     uint8_t bitmask_v = 0xFF << (31-__builtin_clz(texinfo->h));
 
-    dmaPtr = allocatePacket(activeChain, tri.z, 8);
+    dmaPtr = allocatePacket(chain, tri.z, 8);
     dmaPtr[0] = gp0_texwindow(texinfo->u>>3, texinfo->v>>3, bitmask_u>>3, bitmask_v>>3);
     //dmaPtr[0] = gp0_texwindow(0, 4, 0b11100, 0b11100);
     //printf("%d %d\n", texinfo->u, bitmask_u);
@@ -207,13 +211,13 @@ void drawTri2_texturedFlat(Tri2_texturedFlat tri, TextureInfo *texinfo, int max_
     dmaPtr[7] = uv2;
 
     if(drawOutlines){
-        drawLine2((Vector2){tri.a.x, tri.a.y},(Vector2){tri.b.x, tri.b.y}, 0xFFFFFF); // AB
-        drawLine2((Vector2){tri.b.x, tri.b.y},(Vector2){tri.c.x, tri.c.y}, 0xFFFFFF); // BC
-        drawLine2((Vector2){tri.c.x, tri.c.y},(Vector2){tri.a.x, tri.a.y}, 0xFFFFFF); // CA
+        drawLine2(activeChain, (Vector2){tri.a.x, tri.a.y},(Vector2){tri.b.x, tri.b.y}, 0xFFFFFF); // AB
+        drawLine2(activeChain, (Vector2){tri.b.x, tri.b.y},(Vector2){tri.c.x, tri.c.y}, 0xFFFFFF); // BC
+        drawLine2(activeChain, (Vector2){tri.c.x, tri.c.y},(Vector2){tri.a.x, tri.a.y}, 0xFFFFFF); // CA
     }
 
 }
-void drawQuad2(Quad2 quad, uint32_t colour){    
+static void drawQuad2(DMAChain *chain, Quad2 quad, uint32_t colour){    
     dmaPtr = allocatePacket(activeChain, quad.z, 5);
     dmaPtr[0] = colour | gp0_shadedQuad(false, false, false);
     dmaPtr[1] = gp0_xy(quad.a.x, quad.a.y);
@@ -221,7 +225,7 @@ void drawQuad2(Quad2 quad, uint32_t colour){
     dmaPtr[3] = gp0_xy(quad.c.x, quad.c.y);
     dmaPtr[4] = gp0_xy(quad.d.x, quad.d.y);
 }
-void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo){
+static void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo){
     int32_t xy0 = gp0_xy(quad.a.x, quad.a.y);
     int32_t xy1 = gp0_xy(quad.b.x, quad.b.y);
     int32_t xy2 = gp0_xy(quad.c.x, quad.c.y);
@@ -253,10 +257,10 @@ void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo){
     dmaPtr[9] = uv3;
 
     if(drawOutlines){
-        drawLine2((Vector2){quad.a.x, quad.a.y},(Vector2){quad.b.x, quad.b.y}, 0xFFFFFF); // AB
-        drawLine2((Vector2){quad.b.x, quad.b.y},(Vector2){quad.d.x, quad.d.y}, 0xFFFFFF); // BD
-        drawLine2((Vector2){quad.d.x, quad.d.y},(Vector2){quad.c.x, quad.c.y}, 0xFFFFFF); // DC
-        drawLine2((Vector2){quad.c.x, quad.c.y},(Vector2){quad.a.x, quad.a.y}, 0xFFFFFF); // CA
+        drawLine2(activeChain, (Vector2){quad.a.x, quad.a.y},(Vector2){quad.b.x, quad.b.y}, 0xFFFFFF); // AB
+        drawLine2(activeChain, (Vector2){quad.b.x, quad.b.y},(Vector2){quad.d.x, quad.d.y}, 0xFFFFFF); // BD
+        drawLine2(activeChain, (Vector2){quad.d.x, quad.d.y},(Vector2){quad.c.x, quad.c.y}, 0xFFFFFF); // DC
+        drawLine2(activeChain, (Vector2){quad.c.x, quad.c.y},(Vector2){quad.a.x, quad.a.y}, 0xFFFFFF); // CA
     }
     return;
 }
@@ -848,11 +852,11 @@ void main(void){
         // Render gizmo
         for (int i = 0; i<4; i++){
             transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
-            drawCross2(transformedGizmoPoints[i], 0xFFFFFF);
+            drawCross2(activeChain, transformedGizmoPoints[i], 0xFFFFFF);
         };
-        drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
-        drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
-        drawLine2(transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
+        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
+        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
+        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
 
 
 
@@ -882,7 +886,7 @@ void main(void){
                 // Assume texture is loaded otherwise.
                 // Ideally, if the correct texture isn't loaded, then the "missing"
                 // texture will take its place in the texinfo field.
-                drawTri2_texturedFlat(transformedTri, &bspTextureInfo[ti].textureInfo, 20);
+                drawTri2_texturedFlat(activeChain, transformedTri, &bspTextureInfo[ti].textureInfo, 20);
             }
         }
         
@@ -902,7 +906,7 @@ void main(void){
         }
 
         // Crosshair
-        drawCross2((Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
+        drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
 
         sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d, Quads: %d",
             player.position.x, player.position.y, player.position.z,
