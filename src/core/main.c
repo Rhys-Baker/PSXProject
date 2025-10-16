@@ -778,11 +778,21 @@ void main(void){
     );
 
 
+    int timerValueA, timerValueB, timerValueC, timerValueD;
+    timerValueA = timerValueB = timerValueC = timerValueD = 0;
 
     debug("Start of main loop\n");
     // Main loop. Runs every frame, forever
     for(;;){
         drawnQuads = 0;
+        // Reset the timer value to zero at the start of the loop.
+        TIMER_CTRL(1) = (
+            TIMER_CTRL_ENABLE_SYNC |
+            TIMER_CTRL_SYNC_PAUSE_ONCE |
+            TIMER_CTRL_IRQ_REPEAT |
+            TIMER_CTRL_EXT_CLOCK
+        );
+        
 
         ///////////////////////////
         //       Game logic      //
@@ -826,7 +836,7 @@ void main(void){
         mainCamera.z     = (player.position.z);
         mainCamera.y = ((player.position.y)) + (cameraHeight);
 
-
+        timerValueA = TIMER_VALUE(1);
         #pragma endregion
 
 
@@ -908,10 +918,22 @@ void main(void){
         // Crosshair
         drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
 
-        sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d, Quads: %d",
+        
+
+        // Framerate cheatsheet:
+        //  60fps <  263 hblanks
+        //  30fps <  526 hblanks
+        //  15fps < 1052 hblanks
+        sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d, Quads: %d\n\n"
+            "Timers: \t \t Hblank\n"
+            " Game Logic: \t%d\n"
+            " Rendering: \t%d\n"
+            " Framebuffer:\t%d\n"
+            " Total: \t \t%d",
             player.position.x, player.position.y, player.position.z,
             mainCamera.yaw, isin(mainCamera.yaw), icos(mainCamera.yaw),
-            drawnQuads
+            drawnQuads,
+            timerValueA, timerValueB - timerValueA, timerValueC - timerValueB, timerValueC
         );
         printString(activeChain, &font, 10, 10, str_Buffer);
         
@@ -921,7 +943,7 @@ void main(void){
         dmaPtr[1] = gp0_xy(bufferX, bufferY);
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
         
-        
+        timerValueB = TIMER_VALUE(1);
         #pragma endregion
 
 
@@ -961,6 +983,7 @@ void main(void){
         clearOrderingTable((activeChain->orderingTable), ORDERING_TABLE_SIZE);
         activeChain->nextPacket = activeChain->data;
         
+        timerValueC = TIMER_VALUE(1);
         #pragma endregion
    
 
