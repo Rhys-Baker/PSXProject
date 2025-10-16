@@ -413,7 +413,6 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     int MAC0 = gte_getDataReg(GTE_MAC0);
     uint32_t flags = gte_getControlReg(GTE_FLAG);
     bool clip = flags & GTE_FLAG_DIVIDE_OVERFLOW;
-
     if(MAC0 <= 0){
         return false;
     }
@@ -434,7 +433,6 @@ bool transformQuad(Camera *cam, Quad3 quad, Quad2 *result){
     uint32_t xy1 = gte_getDataReg(GTE_SXY0);
     uint32_t xy2 = gte_getDataReg(GTE_SXY1);
     uint32_t xy3 = gte_getDataReg(GTE_SXY2);
-
 
     gte_command(GTE_CMD_AVSZ4 | GTE_SF);
     int zIndex = gte_getDataReg(GTE_OTZ);
@@ -727,8 +725,6 @@ void main(void){
     controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
     controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
     controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
-    controller_subscribeOnKeyHold(incrementDebugVariable, BUTTON_INDEX_R2      );
-    controller_subscribeOnKeyHold(decrementDebugVariable, BUTTON_INDEX_L2      );
     controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
     controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
     controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
@@ -782,7 +778,6 @@ void main(void){
     debug("Start of main loop\n");
     // Main loop. Runs every frame, forever
     for(;;){
-
         drawnQuads = 0;
 
         ///////////////////////////
@@ -792,6 +787,7 @@ void main(void){
         #pragma region Game logic
         // Poll the controllers and run their assoicated functions
         controller_update();
+        
 
         // Apply gravity if not grounded
         if(!player.isGrounded){
@@ -939,9 +935,11 @@ void main(void){
         dmaPtr[2] = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
         dmaPtr[3] = gp0_fbOrigin(bufferX, bufferY);
 
+
+        
+
         // This will wait for the GPU to be ready,
         waitForGP0Ready();
-        
 
         // Give DMA a pointer to the last item in the ordering table.
         // We don't need to add a terminator, as it is already done for us by the OTC.
