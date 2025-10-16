@@ -584,10 +584,10 @@ void subdivideQuad3(Quad3_texturedFlat quad, Quad3_texturedFlat childQuads[4]){
     };
 }
 
-void fullRenderQuad3_texturedFlat(Quad3_texturedFlat quad, Camera *cam, TextureInfo *texinfo){    
+void fullRenderQuad3_texturedFlat(Quad3_texturedFlat *quad, Camera *cam, TextureInfo *texinfo){    
     // Transform the quad initially
     Quad2_texturedFlat result;
-    if(!transformQuad_texturedFlat(cam, &quad, &result)) return;
+    if(!transformQuad_texturedFlat(cam, quad, &result)) return;
     drawQuad2_texturedFlat(result, texinfo);
     drawnQuads++;
 }
@@ -936,7 +936,7 @@ void main(void){
                 );
                 continue;
             }
-            fullRenderQuad3_texturedFlat(quads[i], &mainCamera, &bspTextureInfo[ti].textureInfo);
+            fullRenderQuad3_texturedFlat(&quads[i], &mainCamera, &bspTextureInfo[ti].textureInfo);
         }
 
         // Crosshair
