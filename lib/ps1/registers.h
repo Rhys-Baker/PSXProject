@@ -208,11 +208,13 @@ typedef enum {
 
 typedef enum {
 	TIMER_CTRL_ENABLE_SYNC     = 1 <<  0,
+	
 	TIMER_CTRL_SYNC_BITMASK    = 3 <<  1,
 	TIMER_CTRL_SYNC_PAUSE      = 0 <<  1,
 	TIMER_CTRL_SYNC_RESET1     = 1 <<  1,
 	TIMER_CTRL_SYNC_RESET2     = 2 <<  1,
 	TIMER_CTRL_SYNC_PAUSE_ONCE = 3 <<  1,
+
 	TIMER_CTRL_RELOAD          = 1 <<  3,
 	TIMER_CTRL_IRQ_ON_RELOAD   = 1 <<  4,
 	TIMER_CTRL_IRQ_ON_OVERFLOW = 1 <<  5,

@@ -231,5 +231,5 @@ clean:
 	rm -f CDROM/$(TARGET_PSEXE)
 	rm -f CDROM/GAME.cue CDROM/GAME.bin CDROM/GAME.EXE
 
-.PHONY: all clean convertImages build release
+.PHONY: all clean convertImages build release asm
 
