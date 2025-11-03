@@ -173,6 +173,20 @@ uint32_t *allocatePacket(DMAChain *chain, int zIndex, int numCommands) {
 
 	return &ptr[1];
 }
+uint32_t *sortPacket(DMAChain *chain, int zIndex, int numCommands, uint32_t *packet) {
+	uint32_t *ptr = packet;
+
+	// Ensure the index is within valid range.
+	assert(zIndex >= 0);
+    assert((zIndex < ORDERING_TABLE_SIZE));
+
+	*ptr = gp0_tag(numCommands, (void *) chain->orderingTable[zIndex]);
+    //printf("gp0_tag: 0x%.8x\n", *ptr);
+	chain->orderingTable[zIndex] = gp0_tag(0, ptr);
+
+	return &ptr[1];
+}
+
 
 void uploadTexture(
     TextureInfo *info, const void *data, int x, int y, int w, int h
@@ -229,7 +243,7 @@ void uploadIndexedTexture(
     // It also handles color depth and how semitransparent pixels are blended.
     info->page = gp0_page(
         x / 64,
-        y / 256, 
+        y / 256,
         GP0_BLEND_SEMITRANS,
         colorDepth
     );

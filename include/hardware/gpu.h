@@ -49,6 +49,7 @@ void sendLinkedList(const void *data);
 void sendVRAMData(const void *data, int x, int y, int w, int h);
 void clearOrderingTable(uint32_t *table, int numEntries);
 uint32_t *allocatePacket(DMAChain *chain, int zIndex, int numCommands);
+uint32_t *sortPacket(DMAChain *chain, int zIndex, int numCommands, uint32_t *packet);
 
 void uploadTexture(
     TextureInfo *info, const void *data, int x, int y, int w, int h
