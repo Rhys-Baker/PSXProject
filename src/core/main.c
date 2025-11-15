@@ -71,6 +71,7 @@ int cameraHeight = 0;
 int debugVariable = 0;
 int drawnTris = 0;
 int drawnQuads = 0;
+int subbedQuads = 0;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -82,6 +83,13 @@ Vector3 gizmoPoints[4] = {
 Vector2 transformedGizmoPoints[4];
 
 bool needToPrintDebugInfo;
+
+int imax(int a, int b){
+    return a>b?a:b;
+}
+int imin(int a, int b){
+    return a>b?b:a;
+}
 
 //////////////////////////////
 // Drawing Helper Functions //
@@ -400,6 +408,152 @@ void transformAndSortQuad(Quad3 *quad, uint32_t *primitive, Camera *cam){
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[ 4 ]^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^//
 }
 
+// TODO: This feels terrible, optimise it?
+bool recursiveSubdivideAndSort_screenspace(int depth, int zIndex, Vector2_16 A, Vector2_16 B, Vector2_16 C, Vector2_16 D, Vector2_16 UVA, Vector2_16 UVB, Vector2_16 UVC, Vector2_16 UVD, int16_t clut, int16_t texpage){
+    if(!depth) return false;
+    // Check if it is too big, if it isn't the sort it right away
+    Vector2_16 max = {imax(imax(A.x, B.x), imax(C.x, D.x)), imax(imax(A.y, B.y), imax(C.y, D.y))};
+    Vector2_16 min = {imin(imin(A.x, B.x), imin(C.x, D.x)), imin(imin(A.y, B.y), imin(C.y, D.y))};
+    
+    if(!((max.x - min.x) > 1023 || (max.y - min.y) > 511)){
+        dmaPtr = allocatePacket(activeChain, zIndex, 9);
+        dmaPtr[0] = 0x808080 | gp0_quad(true, false);
+        
+        dmaPtr[1] = gp0_xy(A.x, A.y); // XY0
+        dmaPtr[2] = gp0_uv(UVA.x, UVA.y, clut); // UV0
+        dmaPtr[3] = gp0_xy(B.x, B.y); // XY1
+        dmaPtr[4] = gp0_uv(UVB.x, UVB.y, texpage); // UV1
+        dmaPtr[5] = gp0_xy(C.x, C.y); // XY2
+        dmaPtr[6] = gp0_uv(UVC.x, UVC.y, 0); // UV2
+        dmaPtr[7] = gp0_xy(D.x, D.y); // XY3
+        dmaPtr[8] = gp0_uv(UVD.x, UVD.y, 0); // UV3
+
+        drawnQuads++;
+        subbedQuads++;
+        return true;
+    }
+
+    // Get the midpoints along the lines and the center point
+    Vector2_16 a = {(A.x + B.x) / 2, (A.y + B.y) / 2};
+    Vector2_16 b = {(B.x + D.x) / 2, (B.y + D.y) / 2};
+    Vector2_16 c = {(D.x + C.x) / 2, (D.y + C.y) / 2};
+    Vector2_16 d = {(C.x + A.x) / 2, (C.y + A.y) / 2};
+    Vector2_16 M = {(A.x + B.x + C.x + D.x) / 4, (A.y + B.y + C.y + D.y) / 4}; // Better
+
+    Vector2_16 UVa = {(UVA.x + UVB.x) / 2, (UVA.y + UVB.y) / 2};
+    Vector2_16 UVb = {(UVB.x + UVD.x) / 2, (UVB.y + UVD.y) / 2};
+    Vector2_16 UVc = {(UVD.x + UVC.x) / 2, (UVD.y + UVC.y) / 2};
+    Vector2_16 UVd = {(UVC.x + UVA.x) / 2, (UVC.y + UVA.y) / 2};
+    Vector2_16 UVM = {(UVA.x + UVB.x + UVC.x + UVD.x) / 4, (UVA.y + UVB.y + UVC.y + UVD.y) / 4};
+    
+    //printf(
+    //    "A: (%d %d)\n"
+    //    "B: (%d %d)\n"
+    //    "C: (%d %d)\n"
+    //    "D: (%d %d)\n"
+    //    "a: (%d %d)\n"
+    //    "b: (%d %d)\n"
+    //    "c: (%d %d)\n"
+    //    "d: (%d %d)\n"
+    //    "M: (%d %d)\n",
+    //    A.x, A.y,
+    //    B.x, B.y,
+    //    C.x, C.y,
+    //    D.x, D.y,
+    //    a.x, a.y,
+    //    b.x, b.y,
+    //    c.x, c.y,
+    //    d.x, d.y,
+    //    M.x, M.y
+    //);
+
+    // A->a->d->M
+    recursiveSubdivideAndSort_screenspace(depth - 1, zIndex, A, a, d, M, UVA, UVa, UVd, UVM, clut, texpage);
+    // a->B->M->b
+    recursiveSubdivideAndSort_screenspace(depth - 1, zIndex, a, B, M, b, UVa, UVB, UVM, UVb, clut, texpage);
+    // d->M->D->c
+    recursiveSubdivideAndSort_screenspace(depth - 1, zIndex, d, M, C, c, UVd, UVM, UVC, UVc, clut, texpage);
+    // M->b->c->C
+    recursiveSubdivideAndSort_screenspace(depth - 1, zIndex, M, b, c, D, UVM, UVb, UVc, UVD, clut, texpage);
+}
+
+bool recursiveSubdivideAndSort_worldspace(int depth, Quad3 *quad, Vector2 *UVA, Vector2 *UVB, Vector2 *UVC, Vector2 *UVD, int16_t texpage){
+
+}
+
+// Handles transforming and sorting quads but also allocates subdivided quads
+void transformAndSortQuadWithSubdivision(Quad3 *quad, uint32_t *primitive, Camera *cam){
+    // TODO: This block needs to have like, all of this stuff be pre-processed to the entire model. It shouldn't need to be scaled so much
+    gte_loadV0(&(GTEVector16){(int16_t)((quad->a.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_loadV1(&(GTEVector16){(int16_t)((quad->b.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_loadV2(&(GTEVector16){(int16_t)((quad->c.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->c.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->c.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    
+    gte_command(GTE_CMD_RTPT | GTE_SF);
+    gte_command(GTE_CMD_NCLIP);
+    
+    
+    int MAC0;
+    __asm__ volatile("mfc2 %0, $24\n" : "=r"(MAC0));
+    if(MAC0 <= 0){
+        return;
+    }
+    if(gte_getControlReg(GTE_FLAG) & GTE_FLAG_DIVIDE_OVERFLOW){
+        return;
+    }
+
+    primitive[3] = gte_getDataReg(GTE_SXY0);
+
+    gte_loadV0(&(GTEVector16){(int16_t)((quad->d.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->d.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->d.z * MODEL_SCALE_MULTIPLIER)>>12)});
+    gte_command(GTE_CMD_RTPS | GTE_SF);
+
+    primitive[5] = gte_getDataReg(GTE_SXY0);
+    primitive[7] = gte_getDataReg(GTE_SXY1);
+    primitive[9] = gte_getDataReg(GTE_SXY2);
+
+    gte_command(GTE_CMD_AVSZ4 | GTE_SF);
+
+    int zIndex;
+    __asm__ volatile("mfc2 %0, $7\n" : "=r"(zIndex));
+    if(zIndex < 1 || zIndex >= ORDERING_TABLE_SIZE){
+        return;
+    }
+
+
+    // Right before sorting, we need to check if the quad is too big to actually be rendered.
+    // Get the width and height
+    Vector2_16 A = {(int16_t)(primitive[3] & 0xFFFF),(int16_t)((primitive[3])>>16)};
+    Vector2_16 B = {(int16_t)(primitive[5] & 0xFFFF),(int16_t)((primitive[5])>>16)};
+    Vector2_16 C = {(int16_t)(primitive[7] & 0xFFFF),(int16_t)((primitive[7])>>16)};
+    Vector2_16 D = {(int16_t)(primitive[9] & 0xFFFF),(int16_t)((primitive[9])>>16)};
+
+    int maxX = imax(imax(A.x, B.x), imax(C.x, D.x));
+    int minX = imin(imin(A.x, B.x), imin(C.x, D.x));
+    int maxY = imax(imax(A.y, B.y), imax(C.y, D.y));
+    int minY = imin(imin(A.y, B.y), imin(C.y, D.y));
+
+    if(!((maxX - minX) > 1023 || (maxY - minY) > 511)){
+        // Sort the primitive if its a valid size
+        sortPacket(activeChain, zIndex, 10, primitive);
+        drawnQuads++;
+        return;
+    }
+
+    //printf("Attempting recursive subdivision\n");
+
+    // Extract UV info
+    Vector2_16 UVa  = {primitive[4]  & 0xFF, (primitive[4]  & 0xFF00) >> 8};
+    Vector2_16 UVb  = {primitive[6]  & 0xFF, (primitive[6]  & 0xFF00) >> 8};
+    Vector2_16 UVc  = {primitive[8]  & 0xFF, (primitive[8]  & 0xFF00) >> 8};
+    Vector2_16 UVd  = {primitive[10] & 0xFF, (primitive[10] & 0xFF00) >> 8};
+    int16_t clut    = primitive[4] >> 16;
+    int16_t texpage = primitive[6] >> 16;
+
+    recursiveSubdivideAndSort_screenspace(5, zIndex, A, B, C, D, UVa, UVb, UVc, UVd, clut, texpage);
+    dmaPtr = allocatePacket(activeChain, zIndex, 1); // Add the texture window after (runs before the other primitives)
+    dmaPtr[0] = primitive[1]; // Texwindow
+    
+}
+
 
 #pragma endregion
 
@@ -431,34 +585,38 @@ void lookDown(void){
     }
 }
 
+#define CAMERA_SPEED_SLOW 8
+#define CAMERA_SPEED_FAST 16
+int cameraSpeed = CAMERA_SPEED_SLOW;
+
 // Functions for move controls
 void moveCameraForward(void){
-    mainCamera.x -=  (isin(mainCamera.yaw)>>12);
-    mainCamera.z +=  (icos(mainCamera.yaw)>>12);
+    mainCamera.x -=  (isin(mainCamera.yaw) * cameraSpeed);
+    mainCamera.z +=  (icos(mainCamera.yaw) * cameraSpeed);
 }
 void moveCameraBackward(void){
-    mainCamera.x +=  (isin(mainCamera.yaw)>>12);
-    mainCamera.z -=  (icos(mainCamera.yaw)>>12);
+    mainCamera.x +=  (isin(mainCamera.yaw) * cameraSpeed);
+    mainCamera.z -=  (icos(mainCamera.yaw) * cameraSpeed);
 }
 void moveCameraLeft(void){
-    mainCamera.x -=  (icos(mainCamera.yaw)>>12);
-    mainCamera.z += -(isin(mainCamera.yaw)>>12);
+    mainCamera.x -=  (icos(mainCamera.yaw) * cameraSpeed);
+    mainCamera.z += -(isin(mainCamera.yaw) * cameraSpeed);
 }
 void moveCameraRight(void){
-    mainCamera.x +=  (icos(mainCamera.yaw)>>12);
-    mainCamera.z -= -(isin(mainCamera.yaw)>>12);
+    mainCamera.x +=  (icos(mainCamera.yaw) * cameraSpeed);
+    mainCamera.z -= -(isin(mainCamera.yaw) * cameraSpeed);
 }
 void moveCameraUp(void){
-    cameraHeight -= 8<<12;
-    if(cameraHeight < -((PLAYER_BBOX_Y/2))){
-        cameraHeight = -((PLAYER_BBOX_Y/2));
-    }
+    mainCamera.y -= cameraSpeed<<12;
 }
 void moveCameraDown(void){
-    cameraHeight += 8<<12;
-    if(cameraHeight > ((PLAYER_BBOX_Y/2))){
-        cameraHeight = ((PLAYER_BBOX_Y/2));
-    }
+    mainCamera.y += cameraSpeed<<12;
+}
+void cameraSpeedUp(void){
+    cameraSpeed = CAMERA_SPEED_FAST;
+}
+void cameraSlowDown(void){
+    cameraSpeed = CAMERA_SPEED_SLOW;
 }
 
 void incrementDebugVariable(void){
@@ -562,10 +720,16 @@ void main(void){
     initHardware();
 
     // Run this stuff once before the main loop.
-    controller_subscribeOnKeyHold(movePlayerLeft,         BUTTON_INDEX_LEFT    );
-    controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
-    controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
-    controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
+    // controller_subscribeOnKeyHold(movePlayerLeft,         BUTTON_INDEX_LEFT    );
+    // controller_subscribeOnKeyHold(movePlayerRight,        BUTTON_INDEX_RIGHT   );
+    // controller_subscribeOnKeyHold(movePlayerForward,      BUTTON_INDEX_UP      );
+    // controller_subscribeOnKeyHold(movePlayerBackward,     BUTTON_INDEX_DOWN    );
+    controller_subscribeOnKeyHold(moveCameraLeft,         BUTTON_INDEX_LEFT    );
+    controller_subscribeOnKeyHold(moveCameraRight,        BUTTON_INDEX_RIGHT   );
+    controller_subscribeOnKeyHold(moveCameraForward,      BUTTON_INDEX_UP      );
+    controller_subscribeOnKeyHold(moveCameraBackward,     BUTTON_INDEX_DOWN    );
+    controller_subscribeOnKeyDown(cameraSpeedUp,          BUTTON_INDEX_R2      );
+    controller_subscribeOnKeyUp  (cameraSlowDown,         BUTTON_INDEX_R2      );
     controller_subscribeOnKeyHold(lookLeft,               BUTTON_INDEX_SQUARE  );
     controller_subscribeOnKeyHold(lookRight,              BUTTON_INDEX_CIRCLE  );
     controller_subscribeOnKeyHold(lookUp,                 BUTTON_INDEX_TRIANGLE);
@@ -595,27 +759,27 @@ void main(void){
 
     // Init camera
     mainCamera.x     = 0;
-    mainCamera.y     = 0;
+    mainCamera.y     = -(300<<12);
     mainCamera.z     = 0;
     mainCamera.pitch = 0;
     mainCamera.roll  = 0;
     mainCamera.yaw   = 0;
 
-    resetPlayer();
+    // resetPlayer();
 
 
-    printf("Player:\n x: %d\n y: %d\n z: %d\n",
-        player.position.x, player.position.y, player.position.z
-    );
-    player.velocity.x = 0;
-    player.velocity.y = GRAVITY_CONSTANT;
-    player.velocity.z = 0;
+    // printf("Player:\n x: %d\n y: %d\n z: %d\n",
+    //     player.position.x, player.position.y, player.position.z
+    // );
+    // player.velocity.x = 0;
+    // player.velocity.y = GRAVITY_CONSTANT;
+    // player.velocity.z = 0;
 
-    Player3_move(&bsp_player, &player);
+    // Player3_move(&bsp_player, &player);
 
-    printf("Player:\n x: %d\n y: %d\n z: %d\n",
-        player.position.x, player.position.y, player.position.z
-    );
+    // printf("Player:\n x: %d\n y: %d\n z: %d\n",
+    //     player.position.x, player.position.y, player.position.z
+    // );
 
 
     int timerValueA, timerValueB, timerValueC, timerValueD;
@@ -634,6 +798,7 @@ void main(void){
     for(;;){
         drawnTris = 0;
         drawnQuads = 0;
+        subbedQuads = 0;
         // Reset the timer value to zero at the start of the loop.
         TIMER_CTRL(1) = (
             TIMER_CTRL_ENABLE_SYNC |
@@ -653,37 +818,37 @@ void main(void){
         
 
         // Apply gravity if not grounded
-        if(!player.isGrounded){
-            if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
-                player.velocity.y = TERMINAL_VELOCITY;
-            } else {
-                player.velocity.y += GRAVITY_CONSTANT;
-            }
-        } else {
-            // Apply friction if grounded
-            if(player.velocity.x >= FRICTION_CONSTANT){
-                player.velocity.x -= FRICTION_CONSTANT;
-            } else if(player.velocity.x <= -FRICTION_CONSTANT){
-                player.velocity.x += FRICTION_CONSTANT;
-            } else {
-                player.velocity.x = 0;
-            }
-            if(player.velocity.z >= FRICTION_CONSTANT){
-                player.velocity.z -= FRICTION_CONSTANT;
-            } else if(player.velocity.z <= -FRICTION_CONSTANT){
-                player.velocity.z += FRICTION_CONSTANT;
-            } else {
-                player.velocity.z = 0;
-            }
-        }
+        // if(!player.isGrounded){
+        //     if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
+        //         player.velocity.y = TERMINAL_VELOCITY;
+        //     } else {
+        //         player.velocity.y += GRAVITY_CONSTANT;
+        //     }
+        // } else {
+        //     // Apply friction if grounded
+        //     if(player.velocity.x >= FRICTION_CONSTANT){
+        //         player.velocity.x -= FRICTION_CONSTANT;
+        //     } else if(player.velocity.x <= -FRICTION_CONSTANT){
+        //         player.velocity.x += FRICTION_CONSTANT;
+        //     } else {
+        //         player.velocity.x = 0;
+        //     }
+        //     if(player.velocity.z >= FRICTION_CONSTANT){
+        //         player.velocity.z -= FRICTION_CONSTANT;
+        //     } else if(player.velocity.z <= -FRICTION_CONSTANT){
+        //         player.velocity.z += FRICTION_CONSTANT;
+        //     } else {
+        //         player.velocity.z = 0;
+        //     }
+        // }
 
-        // Collide with the BSP tree
-        Player3_move(&bsp_player, &player);
+        // // Collide with the BSP tree
+        // Player3_move(&bsp_player, &player);
 
-        // Move camera to player position
-        mainCamera.x     = (player.position.x);
-        mainCamera.z     = (player.position.z);
-        mainCamera.y = ((player.position.y)) + (cameraHeight);
+        // // Move camera to player position
+        // mainCamera.x     = (player.position.x);
+        // mainCamera.z     = (player.position.z);
+        // mainCamera.y = ((player.position.y)) + (cameraHeight);
 
         timerValueA = TIMER_VALUE(1);
         #pragma endregion
@@ -708,25 +873,26 @@ void main(void){
         gte_setControlReg(GTE_TRZ, gte_getControlReg(GTE_TRZ) - debugVariable);
 
         // Render gizmo
-        for (int i = 0; i<4; i++){
-            transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
-            drawCross2(activeChain, transformedGizmoPoints[i], 0xFFFFFF);
-        };
-        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
-        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
-        drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
+        // for (int i = 0; i<4; i++){
+        //     transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
+        //     drawCross2(activeChain, transformedGizmoPoints[i], 0xFFFFFF);
+        // };
+        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
+        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
+        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
 
 
-        
+        nextQuadSub = quadPrims[usingSecondFrame][0];
         for(int i=0; i<numTris; i++){
             transformAndSortTri(&tris[i], &triPrims[usingSecondFrame][i*9], &mainCamera);
         }
-        //for(int i=0; i<numQuads; i++){
-        //    transformAndSortQuad(&quads[i], &quadPrims[usingSecondFrame][i*11], &mainCamera);
-        //}
+        for(int i=0; i<numQuads; i++){
+            //transformAndSortQuad(&quads[i], &quadPrims[usingSecondFrame][i*11], &mainCamera);
+            transformAndSortQuadWithSubdivision(&quads[i], &quadPrims[usingSecondFrame][i*11], &mainCamera);
+        }
 
         // Crosshair
-        drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
+        // drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
         
         
 
@@ -734,17 +900,8 @@ void main(void){
         //  60fps <  263 hblanks
         //  30fps <  526 hblanks
         //  15fps < 1052 hblanks
-        sprintf(str_Buffer, "Player:\n X: %d\n Y: %d\n Z: %d\n\nCamera:\n yaw: %d\n sin: %d\n cos: %d, Quads: %d\n\n"
-            "Timers: \t \t Hblank\n"
-            " Game Logic: \t%d\n"
-            " Rendering: \t%d\n"
-            " Framebuffer:\t%d\n"
-            " Total: \t \t%d\n"
-            " Average: \t%d",
-            player.position.x, player.position.y, player.position.z,
-            mainCamera.yaw, isin(mainCamera.yaw), icos(mainCamera.yaw),
-            drawnQuads,
-            timerValueA, timerValueB - timerValueA, timerValueC - timerValueB, timerValueC, timerAverage
+        sprintf(str_Buffer, "Quads: %d (%d)",
+            drawnQuads, subbedQuads
         );
         printString(activeChain, &font, 10, 10, str_Buffer);
         
