@@ -111,3 +111,51 @@ typedef struct Player3{
     bool isGrounded;
     int coyoteTimer;
 } Player3;
+
+
+
+// Level entity definitions
+typedef enum ENT_TYPE {
+    ENT_INFO_PLAYER_START    = 0,
+    ENT_FUNC_ROOM            = 1,
+    ENT_FUNC_BREAKABLE_PLANK = 2,
+    ENT_FUNC_BREAKABLE_GLASS = 3,
+    ENT_FUNC_BREAKABLE_WALL  = 4,
+} ENT_TYPE;
+
+// Generic entity type. Use ENT_TYPE to know what to cast data to.
+typedef struct ent_generic {
+	ENT_TYPE type;
+} ent_generic;
+
+// Struct for a room (list of entities to load)
+typedef struct room {
+	char name[32]; // TODO: Is this necessary?
+	int entityCount;
+	ent_generic *entities;
+} room;
+
+
+// Contains BSP tree info for a brush entity
+typedef struct brush_bsp{
+	// Contains nothing for now, will have bsp tree
+} brush_bsp;
+// Contains render info for a brush entity
+typedef struct brush_render{
+	int triCount;
+	int quadCount;
+	Tri3 *tris;
+	Quad3 *quads;
+    uint32_t *triPrims;
+    uint32_t *quadPrims;
+} brush_render;
+
+// func_room contains collision and render as well as origin.
+typedef struct ent_func_room {
+    ent_generic base;
+    brush_bsp *bsp;
+    brush_render *render;
+    uint32_t bsp_offset, render_offset;
+} ent_func_room;
+
+
