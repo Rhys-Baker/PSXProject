@@ -17,6 +17,7 @@
 #include "gpu.h"
 #include "gte.h"
 #include "irq.h"
+#include "level.h"
 #include "math.h"
 #include "model.h"
 #include "menu.h"
@@ -26,7 +27,11 @@
 #include "trig.h"
 #include "types.h"
 #include "util.h"
-#include "world.h"
+
+
+
+
+#include "texinfos.h"
 
 #include "registers.h"
 #include "system.h"
@@ -60,6 +65,18 @@ TextureInfo font;
 //TextureInfo default_32;
 
 
+
+
+int subTimerA;
+int subTimerB;
+int subTimerC;
+int subTimerD;
+int subTimerA_average;
+int subTimerB_average;
+int subTimerC_average;
+int subTimerD_average;
+
+
 Camera mainCamera;
 Player3 player;
 char str_Buffer[256];
@@ -72,6 +89,7 @@ int debugVariable = 0;
 int drawnTris = 0;
 int drawnQuads = 0;
 int subbedQuads = 0;
+int selectedRoom = 0;
 
 // 3D direction Gizmo
 Vector3 gizmoPoints[4] = {
@@ -90,12 +108,18 @@ int imax(int a, int b){
 int imin(int a, int b){
     return a>b?b:a;
 }
+/// @brief Hangs forever
+void hang(){
+    while(true){
+        __asm__ volatile("");
+    }
+}
 
 //////////////////////////////
 // Drawing Helper Functions //
 //////////////////////////////
 #pragma region Drawing Helpers
-static void drawCross2(DMAChain *chain, Vector2 p, uint32_t colour){
+static void drawCross2(DMAChain *chain, Vector2_16 p, uint32_t colour){
     int32_t x, y;
     x = p.x;
     y = p.y;
@@ -275,7 +299,7 @@ static void drawQuad2_texturedFlat(Quad2_texturedFlat quad, TextureInfo *texinfo
     return;
 }
 
-bool transformVertex(Camera *cam, Vector3 point, Vector2 *result){
+bool transformVertex(Camera *cam, Vector3 point, Vector2_16 *result){
     GTEVector16 vert;
     vert.x = (int16_t)((point.x * MODEL_SCALE_MULTIPLIER)>>12);
     vert.y = (int16_t)((point.y * MODEL_SCALE_MULTIPLIER)>>12);
@@ -356,7 +380,6 @@ void transformAndSortQuad(Quad3 *quad, uint32_t *primitive, Camera *cam){
     
     //subTimerValueB = TIMER_VALUE(0);
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[ 2 ]^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^//
-
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
     
@@ -400,7 +423,6 @@ void transformAndSortQuad(Quad3 *quad, uint32_t *primitive, Camera *cam){
 
     //subTimerValueC = TIMER_VALUE(0);
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[ 3 ]^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^//
-
     sortPacket(activeChain, zIndex, 10, primitive);
 
     drawnQuads++;
@@ -478,11 +500,12 @@ bool recursiveSubdivideAndSort_screenspace(int depth, int zIndex, Vector2_16 A, 
 }
 
 bool recursiveSubdivideAndSort_worldspace(int depth, Quad3 *quad, Vector2 *UVA, Vector2 *UVB, Vector2 *UVC, Vector2 *UVD, int16_t texpage){
-
+    return false; // Do nothing for now thanks.
 }
 
 // Handles transforming and sorting quads but also allocates subdivided quads
 void transformAndSortQuadWithSubdivision(Quad3 *quad, uint32_t *primitive, Camera *cam){
+    subTimerA = TIMER_VALUE(0);
     // TODO: This block needs to have like, all of this stuff be pre-processed to the entire model. It shouldn't need to be scaled so much
     gte_loadV0(&(GTEVector16){(int16_t)((quad->a.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->a.z * MODEL_SCALE_MULTIPLIER)>>12)});
     gte_loadV1(&(GTEVector16){(int16_t)((quad->b.x * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.y * MODEL_SCALE_MULTIPLIER)>>12), (int16_t)((quad->b.z * MODEL_SCALE_MULTIPLIER)>>12)});
@@ -491,10 +514,12 @@ void transformAndSortQuadWithSubdivision(Quad3 *quad, uint32_t *primitive, Camer
     gte_command(GTE_CMD_RTPT | GTE_SF);
     gte_command(GTE_CMD_NCLIP);
     
+    subTimerB = TIMER_VALUE(0);
     
     int MAC0;
     __asm__ volatile("mfc2 %0, $24\n" : "=r"(MAC0));
     if(MAC0 <= 0){
+
         return;
     }
     if(gte_getControlReg(GTE_FLAG) & GTE_FLAG_DIVIDE_OVERFLOW){
@@ -548,10 +573,28 @@ void transformAndSortQuadWithSubdivision(Quad3 *quad, uint32_t *primitive, Camer
     int16_t clut    = primitive[4] >> 16;
     int16_t texpage = primitive[6] >> 16;
 
+    subTimerC = TIMER_VALUE(0);
+
     recursiveSubdivideAndSort_screenspace(5, zIndex, A, B, C, D, UVa, UVb, UVc, UVd, clut, texpage);
     dmaPtr = allocatePacket(activeChain, zIndex, 1); // Add the texture window after (runs before the other primitives)
     dmaPtr[0] = primitive[1]; // Texwindow
-    
+    subTimerD = TIMER_VALUE(0);
+}
+
+
+static void draw_brush_render(brush_render *render){
+    //for(int i=0; i<render->triCount; i++){
+    //    Tri3 *t = &render->tris[i];
+    //    int primIndex = ((render->triCount*9) * usingSecondFrame) + (i*9);
+    //    uint32_t *p = &render->triPrims[primIndex];
+    //    transformAndSortTri(t, p, &mainCamera);
+    //}
+    for(int i=0; i<render->quadCount; i++){
+        Quad3 *q = &render->quads[i];
+        int primIndex = ((render->quadCount*11) * usingSecondFrame) + (i*11);
+        uint32_t *p = &render->quadPrims[primIndex];
+        transformAndSortQuad(q, p, &mainCamera);
+    }
 }
 
 
@@ -626,6 +669,12 @@ void decrementDebugVariable(void){
     debugVariable--;
 }
 
+void loadNextRoom(void){
+    return;
+}
+void loadPrevRoom(void){
+    return;
+}
 
 // TODO: This overwrites the value rather than add onto it.
 // So if you press two buttons, you only move in one direction.
@@ -699,14 +748,23 @@ void initHardware(void){
     activeChain->nextPacket = activeChain->data;
 
     
-    // TODO: Render a logo/loading screen to the framebuffer
-
+    // Fill framebuffer with red
+    //GPU_GP0 = 0x0000FF | gp0_vramFill();
+    //GPU_GP0 = gp0_xy(bufferX, bufferY);
+    //GPU_GP0 = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
     
+    // Set framebuffer position
+    //GPU_GP0 = gp0_texpage(0, true, false);
+    //GPU_GP0 = gp0_fbOffset1(bufferX, bufferY);
+    //GPU_GP0 = gp0_fbOffset2(bufferX + SCREEN_WIDTH - 1, bufferY + SCREEN_HEIGHT - 2);
+    //GPU_GP0 = gp0_fbOrigin(bufferX, bufferY);
+    
+    
+
     // Manually disable display blanking after all loading is complete
     GPU_GP1 = gp1_dispBlank(false);
 
 
-    
 }
 
 // Start of main
@@ -738,6 +796,8 @@ void main(void){
     controller_subscribeOnKeyHold(moveCameraUp,           BUTTON_INDEX_R1      );
     controller_subscribeOnKeyDown(toggleOutlines,         BUTTON_INDEX_SELECT  );
     controller_subscribeOnKeyDown(playerJump,             BUTTON_INDEX_START   );
+    controller_subscribeOnKeyDown(loadNextRoom,               BUTTON_INDEX_R2  );
+    controller_subscribeOnKeyDown(loadPrevRoom,               BUTTON_INDEX_L2  );
 
 
     // Load all the necessary textures from disc
@@ -745,9 +805,79 @@ void main(void){
     for(int i = 0; i<numTextures; i++){
         int bytesLoaded = texture_loadTIM(bspTextureInfo[i].name, &bspTextureInfo[i].textureInfo);
         if(bytesLoaded < 0){
-            printf("Error loading texture: %d", bytesLoaded);
+            printf("Error loading texture: %s (%d)\n", bspTextureInfo[i].name, bytesLoaded);
         }
     }
+
+    printf("Loading level...\n");
+    FileStream *fs_lvl1 = FileStream_open("UK1.LVL;1");
+    LEVEL_LOAD_ERR err;
+    level_meta *lvl1 = level_load(fs_lvl1, &err);
+    
+    if(err == LOAD_OK){
+        printf("Level loaded successfully.\n");
+    } else {
+        switch(err){
+            case INVALID_HEADER:
+                printf("Error: Invalid header.\n");
+                hang();
+                break;
+            case UNSUPPORTED_VERSION:
+                printf("Error: Unsupported version.\n");
+                hang();
+                break;
+            case WARN_ZERO_ROOMS:
+                printf("Warning: File read successfully but contains zero rooms.\n");
+                break;
+            default:
+                printf("An unspecified error occured while attempting to parse file.");
+                hang();
+                break;
+        }
+    }
+
+    // Attempt to load the entity data for the first room of the level
+    room_load(fs_lvl1, &lvl1->rooms[1]);
+    if(!lvl1->rooms[1].loaded){
+        printf("Room failed to load.\n");
+        hang();
+    }
+    printf("Loaded room %d\n", 1);
+
+    printf(
+        "Entity Count: %d\n",
+        lvl1->rooms[1].entity_count
+    );
+    for(int i=0; i<lvl1->rooms[1].entity_count; i++){
+        ent_generic *eg = lvl1->rooms[1].entities[i];
+        if(eg->type != ENT_FUNC_ROOM){
+            continue;
+        }
+        ent_func_room *e = (ent_func_room *)eg;
+        printf(" Tris: %d\n Quads: %d\n", e->render->triCount, e->render->quadCount);
+        printf("\n\n");
+        for(int j=0; j<e->render->quadCount*2; j++){
+            printf(
+                "%.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n",
+                e->render->quadPrims[(j*11) + 0],
+                e->render->quadPrims[(j*11) + 1],
+                e->render->quadPrims[(j*11) + 2],
+                e->render->quadPrims[(j*11) + 3],
+                e->render->quadPrims[(j*11) + 4],
+                e->render->quadPrims[(j*11) + 5],
+                e->render->quadPrims[(j*11) + 6],
+                e->render->quadPrims[(j*11) + 7],
+                e->render->quadPrims[(j*11) + 8],
+                e->render->quadPrims[(j*11) + 9],
+                e->render->quadPrims[(j*11) + 10],
+                e->render->quadPrims[(j*11) + 11]
+            );
+        }
+        printf("\n\n");
+    }
+    
+
+
 
     // Finally, manually load the default_32 texture for testing
     //uploadTexture(&default_32, default_32Data, SCREEN_WIDTH, 0, 32, 32);
@@ -764,23 +894,6 @@ void main(void){
     mainCamera.pitch = 0;
     mainCamera.roll  = 0;
     mainCamera.yaw   = 0;
-
-    // resetPlayer();
-
-
-    // printf("Player:\n x: %d\n y: %d\n z: %d\n",
-    //     player.position.x, player.position.y, player.position.z
-    // );
-    // player.velocity.x = 0;
-    // player.velocity.y = GRAVITY_CONSTANT;
-    // player.velocity.z = 0;
-
-    // Player3_move(&bsp_player, &player);
-
-    // printf("Player:\n x: %d\n y: %d\n z: %d\n",
-    //     player.position.x, player.position.y, player.position.z
-    // );
-
 
     int timerValueA, timerValueB, timerValueC, timerValueD;
     timerValueA = timerValueB = timerValueC = timerValueD = 0;
@@ -816,40 +929,6 @@ void main(void){
         // Poll the controllers and run their assoicated functions
         controller_update();
         
-
-        // Apply gravity if not grounded
-        // if(!player.isGrounded){
-        //     if(player.velocity.y + GRAVITY_CONSTANT > TERMINAL_VELOCITY){
-        //         player.velocity.y = TERMINAL_VELOCITY;
-        //     } else {
-        //         player.velocity.y += GRAVITY_CONSTANT;
-        //     }
-        // } else {
-        //     // Apply friction if grounded
-        //     if(player.velocity.x >= FRICTION_CONSTANT){
-        //         player.velocity.x -= FRICTION_CONSTANT;
-        //     } else if(player.velocity.x <= -FRICTION_CONSTANT){
-        //         player.velocity.x += FRICTION_CONSTANT;
-        //     } else {
-        //         player.velocity.x = 0;
-        //     }
-        //     if(player.velocity.z >= FRICTION_CONSTANT){
-        //         player.velocity.z -= FRICTION_CONSTANT;
-        //     } else if(player.velocity.z <= -FRICTION_CONSTANT){
-        //         player.velocity.z += FRICTION_CONSTANT;
-        //     } else {
-        //         player.velocity.z = 0;
-        //     }
-        // }
-
-        // // Collide with the BSP tree
-        // Player3_move(&bsp_player, &player);
-
-        // // Move camera to player position
-        // mainCamera.x     = (player.position.x);
-        // mainCamera.z     = (player.position.z);
-        // mainCamera.y = ((player.position.y)) + (cameraHeight);
-
         timerValueA = TIMER_VALUE(1);
         #pragma endregion
 
@@ -858,6 +937,8 @@ void main(void){
         //       Rendering       //
         ///////////////////////////
         #pragma region Rendering
+        
+
         // Set matrices to default
         gte_setRotationMatrix(
             ONE, 0, 0,
@@ -872,35 +953,58 @@ void main(void){
         translateCurrentMatrixByV0();
         gte_setControlReg(GTE_TRZ, gte_getControlReg(GTE_TRZ) - debugVariable);
 
-        // Render gizmo
-        // for (int i = 0; i<4; i++){
-        //     transformVertex(&mainCamera, gizmoPoints[i], &transformedGizmoPoints[i]);
-        //     drawCross2(activeChain, transformedGizmoPoints[i], 0xFFFFFF);
-        // };
-        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[1], 0x0000FF);
-        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[2], 0x00FF00);
-        // drawLine2(activeChain, transformedGizmoPoints[0], transformedGizmoPoints[3], 0xFF0000);
 
-
-        nextQuadSub = quadPrims[usingSecondFrame][0];
+    #if false
         for(int i=0; i<numTris; i++){
             transformAndSortTri(&tris[i], &triPrims[usingSecondFrame][i*9], &mainCamera);
         }
+
+        subTimerA         = 0;
+        subTimerB         = 0;
+        subTimerC         = 0;
+        subTimerD         = 0;
+        subTimerA_average = 0;
+        subTimerB_average = 0;
+        subTimerC_average = 0;
+        subTimerD_average = 0;
+        
+        TIMER_CTRL(0) = (
+            TIMER_CTRL_ENABLE_SYNC |
+            TIMER_CTRL_SYNC_PAUSE_ONCE |
+            TIMER_CTRL_IRQ_REPEAT |
+            TIMER_CTRL_EXT_CLOCK
+        );
+
         for(int i=0; i<numQuads; i++){
             //transformAndSortQuad(&quads[i], &quadPrims[usingSecondFrame][i*11], &mainCamera);
             transformAndSortQuadWithSubdivision(&quads[i], &quadPrims[usingSecondFrame][i*11], &mainCamera);
+            subTimerA_average += subTimerA;
+            subTimerB_average += subTimerB;
+            subTimerC_average += subTimerC;
+            subTimerD_average += subTimerD;
         }
+    #endif
 
-        // Crosshair
-        // drawCross2(activeChain, (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2}, 0x0000FF);
-        
-        
 
-        // Framerate cheatsheet:
-        //  60fps <  263 hblanks
-        //  30fps <  526 hblanks
-        //  15fps < 1052 hblanks
-        sprintf(str_Buffer, "Quads: %d (%d)",
+    #if true
+        room_meta *r = &lvl1->rooms[1];
+        for(int i=0; i<r->entity_count; i++){
+            switch(r->entities[i]->type){
+                case ENT_FUNC_ROOM:
+                    ent_func_room *e = (ent_func_room *)r->entities[i];
+                    draw_brush_render(e->render);
+                    break;
+                default:
+                    break;
+            }
+        }
+    #endif
+    
+
+
+
+        sprintf(str_Buffer, "SelectedRoom: %d/%d\nQuads: %d (%d)",
+            selectedRoom+1, total_rooms,
             drawnQuads, subbedQuads
         );
         printString(activeChain, &font, 10, 10, str_Buffer);
@@ -912,6 +1016,10 @@ void main(void){
         dmaPtr[2] = gp0_xy(SCREEN_WIDTH, SCREEN_HEIGHT);
         
         timerValueB = TIMER_VALUE(1);
+    
+
+        
+
         #pragma endregion
 
 
