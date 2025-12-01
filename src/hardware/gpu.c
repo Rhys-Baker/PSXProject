@@ -181,7 +181,6 @@ uint32_t *sortPacket(DMAChain *chain, int zIndex, int numCommands, uint32_t *pac
     assert((zIndex < ORDERING_TABLE_SIZE));
 
 	*ptr = gp0_tag(numCommands, (void *) chain->orderingTable[zIndex]);
-    //printf("gp0_tag: 0x%.8x\n", *ptr);
 	chain->orderingTable[zIndex] = gp0_tag(0, ptr);
 
 	return &ptr[1];

@@ -114,7 +114,7 @@ void convertLBAToMSF(MSF *msf, uint32_t lba) {
 /// @param ptr Pointer to buffer to store read data
 /// @param numSectors Number of sectors to read
 /// @param sectorSize Size of sector (2048)
-/// @param doubleSpeed Read at double speed
+/// @param doubleSpeed Read at double speed (true by default)
 /// @param wait Block until read completed
 void startCDROMRead(uint32_t lba, void *ptr, size_t numSectors, size_t sectorSize, bool doubleSpeed, bool wait)
 {
